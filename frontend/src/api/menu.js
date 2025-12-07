@@ -1,15 +1,8 @@
 import request from './request'
 
-export function getAllMenus() {
-  return request({
-    url: '/menu/list',
-    method: 'get'
-  })
-}
-
-export function getMenusByUserId(userId) {
-  return request({
-    url: `/menu/user/${userId}`,
-    method: 'get'
-  })
-}
+export const getAllMenus = () => request.get('/menu/list')
+export const getMenusByUserId = (userId) => request.get(`/menu/user/${userId}`)
+export const getMenuTree = () => request.get('/menu/tree')
+export const saveMenu = (data) => request.post('/menu', data)
+export const updateMenu = (data) => request.put('/menu', data)
+export const deleteMenu = (id) => request.delete(`/menu/${id}`)

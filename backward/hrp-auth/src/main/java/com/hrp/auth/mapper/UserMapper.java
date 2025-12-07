@@ -3,6 +3,8 @@ package com.hrp.auth.mapper;
 import com.hrp.common.entity.User;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * 用户数据访问接口
  */
@@ -31,5 +33,10 @@ public interface UserMapper {
      * 删除用户
      */
     int deleteById(@Param("id") String id);
+
+    /**
+     * 查询所有用户
+     */
+    List<User> selectAll();
 }
 

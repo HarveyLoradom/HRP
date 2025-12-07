@@ -26,6 +26,15 @@ public class MenuController {
     }
 
     /**
+     * 获取菜单树
+     */
+    @GetMapping("/tree")
+    public Result<List<Menu>> getMenuTree() {
+        List<Menu> menus = menuService.getAllMenus();
+        return Result.success(menus);
+    }
+
+    /**
      * 根据用户ID获取菜单列表
      */
     @GetMapping("/user/{userId}")

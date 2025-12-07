@@ -55,6 +55,7 @@
             <if test="deptCode != null">dept_code = #{deptCode},</if>
             <if test="isStop != null">is_stop = #{isStop},</if>
             <if test="empTypeId != null">emp_type_id = #{empTypeId},</if>
+            update_time = NOW()
         </set>
         WHERE emp_id = #{empId}
     </update>

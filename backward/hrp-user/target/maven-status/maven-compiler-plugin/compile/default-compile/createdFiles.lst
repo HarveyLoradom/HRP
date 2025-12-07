@@ -1,1 +1,10 @@
+com\hrp\user\service\UserMenuService.class
+com\hrp\user\service\impl\UserServiceImpl.class
+com\hrp\user\service\impl\UserMenuServiceImpl.class
+com\hrp\user\mapper\UserMenuMapper.class
+com\hrp\user\service\UserService.class
+com\hrp\user\controller\UserMenuController.class
+com\hrp\user\controller\UserMenuController$AssignUserMenuRequest.class
+com\hrp\user\controller\UserController.class
+com\hrp\user\mapper\impl\UserMenuMapperImpl.class
 com\hrp\user\UserApplication.class

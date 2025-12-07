@@ -121,7 +121,7 @@ export default {
   },
   mounted() {
     if (this.$store.state.user.token) {
-      this.$router.push('/dashboard')
+      this.$router.push('/hrp')
     }
   },
   methods: {
@@ -173,10 +173,10 @@ export default {
               if (response && response.data) {
                 const userId = response.data.userId
                 this.$store.dispatch('menu/getMenus', userId).then(() => {
-                  this.$router.push('/dashboard')
+                  this.$router.push('/hrp')
                   this.$message.success('登录成功')
                 }).catch(() => {
-                  this.$router.push('/dashboard')
+                  this.$router.push('/hrp')
                   this.$message.success('登录成功')
                 })
               }

@@ -19,26 +19,39 @@ USE hrp_db;
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) VALUES
 ('SYSTEM', '系统平台', 0, 1, '/system', 'Layout', 'el-icon-setting', 1, 1);
 
--- 插入子菜单
-INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-SELECT 'SYSTEM_DEPT', '部门管理', id, 2, 'dept', 'system/DeptManagement', 'el-icon-office-building', 1, 1
-FROM sys_menu WHERE menu_code = 'SYSTEM';
+-- 获取系统平台菜单ID
+SET @system_menu_id = (SELECT id FROM sys_menu WHERE menu_code = 'SYSTEM');
 
+-- ==================== 管理平台 ====================
+-- 用户管理
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-SELECT 'SYSTEM_EMPLOYEE', '职工管理', id, 2, 'employee', 'system/EmployeeManagement', 'el-icon-user', 2, 1
-FROM sys_menu WHERE menu_code = 'SYSTEM';
+VALUES ('SYSTEM_USER', '用户管理', @system_menu_id, 2, 'system/user', 'system/UserManagement', 'el-icon-user', 1, 1);
 
+-- 权限管理
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-SELECT 'SYSTEM_CLINIC', '科室管理', id, 2, 'clinic', 'system/ClinicManagement', 'el-icon-s-home', 3, 1
-FROM sys_menu WHERE menu_code = 'SYSTEM';
+VALUES ('SYSTEM_PERMISSION', '权限管理', @system_menu_id, 2, 'system/permission', 'system/PermissionManagement', 'el-icon-lock', 2, 1);
 
+-- 部门管理
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-SELECT 'SYSTEM_CODE', '系统字典', id, 2, 'code', 'system/CodeManagement', 'el-icon-document', 4, 1
-FROM sys_menu WHERE menu_code = 'SYSTEM';
+VALUES ('SYSTEM_DEPT', '部门管理', @system_menu_id, 2, 'system/dept', 'system/DeptManagement', 'el-icon-office-building', 3, 1);
 
+-- 岗位管理
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-SELECT 'SYSTEM_ROLE', '角色管理', id, 2, 'role', 'system/RoleManagement', 'el-icon-user-solid', 5, 1
-FROM sys_menu WHERE menu_code = 'SYSTEM';
+VALUES ('SYSTEM_POSITION', '岗位管理', @system_menu_id, 2, 'system/position', 'system/PositionManagement', 'el-icon-s-custom', 4, 1);
+
+-- 职工管理
+INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
+VALUES ('SYSTEM_EMPLOYEE', '职工管理', @system_menu_id, 2, 'system/employee', 'system/EmployeeManagement', 'el-icon-user-solid', 5, 1);
+
+-- ==================== 系统设置 ====================
+-- 系统参数（关联sys_code表）
+INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
+VALUES ('SYSTEM_PARAMS', '系统参数', @system_menu_id, 2, 'system/params', 'system/SystemParams', 'el-icon-setting', 6, 1);
+
+-- ==================== 业务平台 ====================
+-- 业务平台（占位，菜单后续再改）
+INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
+VALUES ('SYSTEM_BUSINESS', '业务平台', @system_menu_id, 2, 'system/business', 'system/BusinessPlatform', 'el-icon-s-operation', 7, 1);
 
 -- 智能报账模块菜单
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) VALUES
@@ -144,8 +157,11 @@ INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `pat
 SELECT 'EFFICIENCY_INVESTMENT', '投资收益分析', id, 2, 'investment', 'efficiency/InvestmentReturnAnalysis', 'el-icon-trophy', 5, 1
 FROM sys_menu WHERE menu_code = 'EFFICIENCY';
 
+-- 插入系统参数（原始密码）
+INSERT INTO `sys_code` (`id`, `code_type`, `code_type_name`, `code_value`, `code_name`, `is_stop`, `create_user`) VALUES
+('RESET_PASSWORD', 'SYSTEM_PARAM', '系统参数', '123456', '原始密码', 0, 'SYSTEM');
+
 -- 为管理员分配所有菜单权限
 -- 注意：需要将'ADMIN001'替换为实际生成的UUID
 -- INSERT INTO `sys_user_menu` (`user_id`, `menu_id`) 
 -- SELECT '生成的UUID', id FROM sys_menu WHERE status = 1;
-

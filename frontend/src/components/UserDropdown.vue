@@ -7,15 +7,18 @@
       <span class="username">{{ userName }}</span>
       <i class="el-icon-arrow-down"></i>
     </div>
-    <el-dropdown-menu slot="dropdown">
+    <el-dropdown-menu slot="dropdown" class="user-dropdown-menu">
       <el-dropdown-item command="profile">
-        <i class="el-icon-user"></i> 个人中心
+        <i class="el-icon-user"></i>
+        <span>个人中心</span>
       </el-dropdown-item>
       <el-dropdown-item command="password">
-        <i class="el-icon-lock"></i> 修改密码
+        <i class="el-icon-lock"></i>
+        <span>修改密码</span>
       </el-dropdown-item>
       <el-dropdown-item divided command="logout">
-        <i class="el-icon-switch-button"></i> 退出登录
+        <i class="el-icon-switch-button"></i>
+        <span>退出登录</span>
       </el-dropdown-item>
     </el-dropdown-menu>
   </el-dropdown>
@@ -38,7 +41,7 @@ export default {
     handleCommand(command) {
       switch (command) {
         case 'profile':
-          this.$message.info('个人中心功能开发中')
+          this.$emit('show-profile')
           break
         case 'password':
           this.$emit('change-password')
@@ -89,13 +92,30 @@ export default {
   font-size: 12px;
 }
 
-.el-dropdown-menu__item {
-  display: flex;
-  align-items: center;
+/* 下拉菜单样式 */
+.user-dropdown-menu {
+  min-width: 150px;
 }
 
-.el-dropdown-menu__item i {
+.user-dropdown-menu .el-dropdown-menu__item {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  height: 40px;
+  line-height: 40px;
+  justify-content: flex-start;
+}
+
+.user-dropdown-menu .el-dropdown-menu__item i {
   margin-right: 8px;
+  width: 16px;
+  text-align: left;
+  font-size: 16px;
+}
+
+.user-dropdown-menu .el-dropdown-menu__item span {
+  flex: 1;
+  text-align: left;
 }
 </style>
 

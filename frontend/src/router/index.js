@@ -13,143 +13,161 @@ const routes = [
   },
   {
     path: '/',
-    redirect: '/dashboard'
+    redirect: '/hrp'
   },
   {
-    path: '/dashboard',
-    name: 'Dashboard',
-    component: () => import('../views/Dashboard.vue'),
+    path: '/hrp',
+    name: 'HRP',
+    component: () => import('../views/HRP.vue'),
     meta: { requiresAuth: true },
     children: [
-      // 系统平台
+      // 系统平台 - 管理平台
       {
-        path: '/dashboard/clinic',
-        name: 'ClinicManagement',
-        component: () => import('../views/system/ClinicManagement.vue')
+        path: '/hrp/system/user',
+        name: 'UserManagement',
+        component: () => import('../views/system/UserManagement.vue')
       },
       {
-        path: '/dashboard/role',
-        name: 'RoleManagement',
-        component: () => import('../views/system/RoleManagement.vue')
+        path: '/hrp/system/permission',
+        name: 'PermissionManagement',
+        component: () => import('../views/system/PermissionManagement.vue')
       },
       {
-        path: '/dashboard/dept',
+        path: '/hrp/system/dept',
         name: 'DeptManagement',
         component: () => import('../views/system/DeptManagement.vue')
       },
       {
-        path: '/dashboard/employee',
+        path: '/hrp/system/position',
+        name: 'PositionManagement',
+        component: () => import('../views/system/PositionManagement.vue')
+      },
+      {
+        path: '/hrp/system/employee',
         name: 'EmployeeManagement',
         component: () => import('../views/system/EmployeeManagement.vue')
       },
+      // 系统平台 - 系统设置
       {
-        path: '/dashboard/code',
-        name: 'CodeManagement',
-        component: () => import('../views/system/CodeManagement.vue')
+        path: '/hrp/system/params',
+        name: 'SystemParams',
+        component: () => import('../views/system/SystemParams.vue')
+      },
+      // 系统平台 - 业务平台（占位）
+      {
+        path: '/hrp/system/business',
+        name: 'BusinessPlatform',
+        component: () => import('../views/system/BusinessPlatform.vue')
+      },
+      // 旧路由（保留兼容）
+      {
+        path: '/hrp/role',
+        name: 'RoleManagement',
+        component: () => import('../views/system/RoleManagement.vue')
       },
       // 智能报账
       {
-        path: '/dashboard/reimb/my-apply',
+        path: '/hrp/reimb/my-apply',
         name: 'MyReimbApply',
         component: () => import('../views/reimb/MyReimbApply.vue')
       },
       {
-        path: '/dashboard/reimb/approval',
+        path: '/hrp/reimb/approval',
         name: 'ReimbApproval',
         component: () => import('../views/reimb/ReimbApproval.vue')
       },
       {
-        path: '/dashboard/reimb/query',
+        path: '/hrp/reimb/query',
         name: 'ReimbQuery',
         component: () => import('../views/reimb/ReimbQuery.vue')
       },
       // 合同管理
       {
-        path: '/dashboard/contract/workbench',
+        path: '/hrp/contract/workbench',
         name: 'ContractWorkbench',
         component: () => import('../views/contract/ContractWorkbench.vue')
       },
       {
-        path: '/dashboard/contract/draft',
+        path: '/hrp/contract/draft',
         name: 'ContractDraft',
         component: () => import('../views/contract/ContractDraft.vue')
       },
       {
-        path: '/dashboard/contract/approval',
+        path: '/hrp/contract/approval',
         name: 'ContractApproval',
         component: () => import('../views/contract/ContractApproval.vue')
       },
       {
-        path: '/dashboard/contract/execution',
+        path: '/hrp/contract/execution',
         name: 'ContractExecution',
         component: () => import('../views/contract/ContractExecution.vue')
       },
       // 固定资产
       {
-        path: '/dashboard/asset/approval',
+        path: '/hrp/asset/approval',
         name: 'AssetApproval',
         component: () => import('../views/asset/AssetApproval.vue')
       },
       {
-        path: '/dashboard/asset/procurement',
+        path: '/hrp/asset/procurement',
         name: 'ProcurementRequirement',
         component: () => import('../views/asset/ProcurementRequirement.vue')
       },
       {
-        path: '/dashboard/asset/query',
+        path: '/hrp/asset/query',
         name: 'AssetQuery',
         component: () => import('../views/asset/AssetQuery.vue')
       },
       // 全景人力
       {
-        path: '/dashboard/hr/salary',
+        path: '/hrp/hr/salary',
         name: 'SalaryManagement',
         component: () => import('../views/hr/SalaryManagement.vue')
       },
       {
-        path: '/dashboard/hr/salary-calc',
+        path: '/hrp/hr/salary-calc',
         name: 'SalaryCalculation',
         component: () => import('../views/hr/SalaryCalculation.vue')
       },
       // DIP成本
       {
-        path: '/dashboard/cost/report',
+        path: '/hrp/cost/report',
         name: 'CostReport',
         component: () => import('../views/cost/CostReport.vue')
       },
       {
-        path: '/dashboard/cost/analysis',
+        path: '/hrp/cost/analysis',
         name: 'CostAnalysis',
         component: () => import('../views/cost/CostAnalysis.vue')
       },
       {
-        path: '/dashboard/cost/accounting',
+        path: '/hrp/cost/accounting',
         name: 'CostAccounting',
         component: () => import('../views/cost/CostAccounting.vue')
       },
       // 单机效能
       {
-        path: '/dashboard/efficiency/collection',
+        path: '/hrp/efficiency/collection',
         name: 'DataCollection',
         component: () => import('../views/efficiency/DataCollection.vue')
       },
       {
-        path: '/dashboard/efficiency/income',
+        path: '/hrp/efficiency/income',
         name: 'IncomeData',
         component: () => import('../views/efficiency/IncomeData.vue')
       },
       {
-        path: '/dashboard/efficiency/cost',
+        path: '/hrp/efficiency/cost',
         name: 'CostData',
         component: () => import('../views/efficiency/CostData.vue')
       },
       {
-        path: '/dashboard/efficiency/equipment-report',
+        path: '/hrp/efficiency/equipment-report',
         name: 'EquipmentAnalysisReport',
         component: () => import('../views/efficiency/EquipmentAnalysisReport.vue')
       },
       {
-        path: '/dashboard/efficiency/investment',
+        path: '/hrp/efficiency/investment',
         name: 'InvestmentReturnAnalysis',
         component: () => import('../views/efficiency/InvestmentReturnAnalysis.vue')
       }
@@ -169,7 +187,7 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !token) {
     next('/login')
   } else if (to.path === '/login' && token) {
-    next('/dashboard')
+    next('/hrp')
   } else {
     next()
   }

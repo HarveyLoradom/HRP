@@ -30,8 +30,8 @@ export default {
   methods: {
     getMenuPath(menu) {
       if (menu.path) {
-        // 如果path以/开头，直接使用；否则拼接/dashboard/
-        return menu.path.startsWith('/') ? menu.path : `/dashboard/${menu.path}`
+        // 如果path以/开头，直接使用；否则拼接/hrp/
+        return menu.path.startsWith('/') ? menu.path : `/hrp/${menu.path}`
       }
       return String(menu.id)
     }

@@ -26,3 +26,4 @@ mybatis:
   type-aliases-package: com.hrp.common.entity
   configuration:
     map-underscore-to-camel-case: true
+

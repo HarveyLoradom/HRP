@@ -27,8 +27,8 @@
     </select>
 
     <insert id="insert" parameterType="com.hrp.common.entity.Code">
-        INSERT INTO sys_code (id, code_value, code_name, code_type, code_type_name, is_stop, create_user)
-        VALUES (#{id}, #{codeValue}, #{codeName}, #{codeType}, #{codeTypeName}, #{isStop}, #{createUser})
+        INSERT INTO sys_code (id, code_value, code_name, code_type, code_type_name, is_stop, create_user, create_time)
+        VALUES (#{id}, #{codeValue}, #{codeName}, #{codeType}, #{codeTypeName}, #{isStop}, #{createUser}, NOW())
     </insert>
 
     <update id="updateById" parameterType="com.hrp.common.entity.Code">
@@ -39,6 +39,7 @@
             <if test="codeType != null">code_type = #{codeType},</if>
             <if test="codeTypeName != null">code_type_name = #{codeTypeName},</if>
             <if test="isStop != null">is_stop = #{isStop},</if>
+            update_time = NOW()
         </set>
         WHERE id = #{id}
     </update>

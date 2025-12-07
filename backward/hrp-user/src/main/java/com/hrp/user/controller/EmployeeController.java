@@ -32,6 +32,18 @@ public class EmployeeController {
     }
 
     /**
+     * 根据工号查询职工（用于个人中心）
+     */
+    @GetMapping("/code/{empCode}")
+    public Result<Employee> getByCode(@PathVariable String empCode) {
+        Employee employee = employeeService.getByCode(empCode);
+        if (employee != null) {
+            return Result.success(employee);
+        }
+        return Result.error("职工不存在");
+    }
+
+    /**
      * 查询所有职工
      */
     @GetMapping("/list")

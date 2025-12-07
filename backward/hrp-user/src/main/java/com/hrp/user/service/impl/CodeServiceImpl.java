@@ -3,6 +3,7 @@ package com.hrp.user.service.impl;
 import com.hrp.user.mapper.CodeMapper;
 import com.hrp.user.service.CodeService;
 import com.hrp.common.entity.Code;
+import com.hrp.common.util.UuidUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +38,10 @@ public class CodeServiceImpl implements CodeService {
     @Override
     @Transactional
     public boolean save(Code code) {
+        // 如果ID为空，自动生成UUID
+        if (code.getId() == null || code.getId().isEmpty()) {
+            code.setId(UuidUtil.generateUuid());
+        }
         if (code.getIsStop() == null) {
             code.setIsStop(0L);
         }

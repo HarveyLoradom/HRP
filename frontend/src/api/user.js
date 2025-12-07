@@ -13,14 +13,6 @@ export function changePassword(data) {
   })
 }
 
-// 科室管理
-export const getClinicList = () => request.get('/user/clinic/list')
-export const getClinicById = (clinicId) => request.get(`/user/clinic/${clinicId}`)
-export const getClinicByDeptId = (deptId) => request.get(`/user/clinic/dept/${deptId}`)
-export const saveClinic = (data) => request.post('/user/clinic/save', data)
-export const updateClinic = (data) => request.put('/user/clinic/update', data)
-export const deleteClinic = (clinicId) => request.delete(`/user/clinic/${clinicId}`)
-
 // 角色管理
 export const getRoleList = () => request.get('/user/role/list')
 export const getRoleById = (roleId) => request.get(`/user/role/${roleId}`)
@@ -52,10 +44,25 @@ export const saveDept = (data) => request.post('/user/dept/save', data)
 export const updateDept = (data) => request.put('/user/dept/update', data)
 export const deleteDept = (deptId) => request.delete(`/user/dept/${deptId}`)
 
+// 用户管理
+export const getUserList = () => request.get('/user/user/list')
+export const getUserById = (id) => request.get(`/user/user/${id}`)
+export const getUserByAccount = (account) => request.get(`/user/user/account/${account}`)
+export const saveUser = (data) => request.post('/user/user/save', data)
+export const updateUser = (data) => request.put('/user/user/update', data)
+export const deleteUser = (id) => request.delete(`/user/user/${id}`)
+export const toggleUserStatus = (id) => request.put(`/user/user/toggle-status/${id}`)
+export const resetUserPassword = (id) => request.put(`/user/user/reset-password/${id}`)
+
 // 职工管理
 export const getEmployeeList = () => request.get('/user/employee/list')
 export const getEmployeeById = (empId) => request.get(`/user/employee/${empId}`)
+export const getEmployeeByCode = (empCode) => request.get(`/user/employee/code/${empCode}`)
 export const getEmployeeByDeptId = (deptId) => request.get(`/user/employee/dept/${deptId}`)
 export const saveEmployee = (data) => request.post('/user/employee/save', data)
 export const updateEmployee = (data) => request.put('/user/employee/update', data)
 export const deleteEmployee = (empId) => request.delete(`/user/employee/${empId}`)
+
+// 用户菜单权限管理
+export const getUserMenuIds = (userId) => request.get(`/user/user-menu/${userId}`)
+export const assignUserMenus = (userId, menuIds) => request.post('/user/user-menu/assign', { userId, menuIds })

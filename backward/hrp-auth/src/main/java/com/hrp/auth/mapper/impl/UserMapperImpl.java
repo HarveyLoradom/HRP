@@ -6,6 +6,8 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * 用户数据访问实现类
  */
@@ -40,6 +42,11 @@ public class UserMapperImpl implements UserMapper {
     @Override
     public int deleteById(String id) {
         return sqlSessionTemplate.delete(NAMESPACE + ".deleteById", id);
+    }
+
+    @Override
+    public List<User> selectAll() {
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectAll");
     }
 }
 

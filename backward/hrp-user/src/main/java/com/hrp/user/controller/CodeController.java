@@ -12,7 +12,7 @@ import java.util.List;
  * 系统字典管理控制器
  */
 @RestController
-@RequestMapping("/code")
+@RequestMapping("/user/code")
 @CrossOrigin
 public class CodeController {
 
@@ -54,9 +54,7 @@ public class CodeController {
      */
     @PostMapping("/save")
     public Result<String> save(@RequestBody Code code) {
-        if (code.getId() == null || code.getId().isEmpty()) {
-            return Result.error("字典ID不能为空");
-        }
+        // ID为空时，服务层会自动生成UUID
         boolean success = codeService.save(code);
         if (success) {
             return Result.success("新增成功");

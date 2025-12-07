@@ -54,6 +54,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     @Transactional
     public boolean update(Employee employee) {
+        if (employee.getEmpId() == null) {
+            return false;
+        }
         employee.setUpdateTime(LocalDateTime.now());
         return employeeMapper.updateById(employee) > 0;
     }

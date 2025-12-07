@@ -20,7 +20,7 @@ spring:
           predicates:
             - Path=/api/user/**
           filters:
-            - StripPrefix=2
+            - StripPrefix=1
         - id: hrp-menu
           uri: lb://hrp-menu
           predicates:
@@ -75,3 +75,13 @@ spring:
         server-addr: localhost:8848
         namespace: public
         group: DEFAULT_GROUP
+      # 添加超时配置
+      config:
+        server-addr: localhost:8848
+        timeout: 10000
+
+# 日志配置
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.hrp: DEBUG

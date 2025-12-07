@@ -27,6 +27,12 @@
         WHERE account = #{account} AND is_stop = 0
     </select>
 
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT id, account, name, type, phone, TRIM(password) as password, create_user, create_time, update_time, is_stop 
+        FROM sys_user 
+        ORDER BY create_time DESC
+    </select>
+
     <insert id="insert" parameterType="com.hrp.common.entity.User">
         INSERT INTO sys_user (id, account, name, type, phone, password, create_user, is_stop)
         VALUES (#{id}, #{account}, #{name}, #{type}, #{phone}, #{password}, #{createUser}, #{isStop})
