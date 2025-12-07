@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.auth.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.User">
+        <id column="id" property="id"/>
+        <result column="account" property="account"/>
+        <result column="name" property="name"/>
+        <result column="type" property="type"/>
+        <result column="phone" property="phone"/>
+        <result column="password" property="password"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="is_stop" property="isStop"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT id, account, name, type, phone, TRIM(password) as password, create_user, create_time, update_time, is_stop 
+        FROM sys_user 
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByAccount" resultMap="BaseResultMap">
+        SELECT id, account, name, type, phone, TRIM(password) as password, create_user, create_time, update_time, is_stop 
+        FROM sys_user 
+        WHERE account = #{account} AND is_stop = 0
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.User">
+        INSERT INTO sys_user (id, account, name, type, phone, password, create_user, is_stop)
+        VALUES (#{id}, #{account}, #{name}, #{type}, #{phone}, #{password}, #{createUser}, #{isStop})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.User">
+        UPDATE sys_user
+        <set>
+            <if test="account != null">account = #{account},</if>
+            <if test="name != null">name = #{name},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="isStop != null">is_stop = #{isStop},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM sys_user WHERE id = #{id}
+    </delete>
+
+</mapper>
+

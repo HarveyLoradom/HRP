@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.cost.mapper.CostAnalysisMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.CostAnalysis">
+        <id column="analysis_id" property="analysisId"/>
+        <result column="analysis_no" property="analysisNo"/>
+        <result column="analysis_name" property="analysisName"/>
+        <result column="analysis_type" property="analysisType"/>
+        <result column="analysis_period" property="analysisPeriod"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="analysis_result" property="analysisResult"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM cost_analysis WHERE analysis_id = #{id}
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM cost_analysis ORDER BY create_time DESC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.CostAnalysis">
+        INSERT INTO cost_analysis (analysis_no, analysis_name, analysis_type, analysis_period, dept_id, analysis_result, create_user)
+        VALUES (#{analysisNo}, #{analysisName}, #{analysisType}, #{analysisPeriod}, #{deptId}, #{analysisResult}, #{createUser})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.CostAnalysis">
+        UPDATE cost_analysis
+        <set>
+            <if test="analysisName != null">analysis_name = #{analysisName},</if>
+            <if test="analysisResult != null">analysis_result = #{analysisResult},</if>
+        </set>
+        WHERE analysis_id = #{analysisId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM cost_analysis WHERE analysis_id = #{id}
+    </delete>
+
+</mapper>

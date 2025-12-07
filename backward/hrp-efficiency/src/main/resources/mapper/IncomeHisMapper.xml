@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.efficiency.mapper.IncomeHisMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.IncomeHis">
+        <id column="income_id" property="incomeId"/>
+        <result column="income_no" property="incomeNo"/>
+        <result column="income_date" property="incomeDate"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="clinic_id" property="clinicId"/>
+        <result column="income_type" property="incomeType"/>
+        <result column="income_amount" property="incomeAmount"/>
+        <result column="his_system_no" property="hisSystemNo"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM income_his WHERE income_id = #{id}
+    </select>
+
+    <select id="selectByDateRange" resultMap="BaseResultMap">
+        SELECT * FROM income_his 
+        WHERE income_date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY income_date DESC
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM income_his ORDER BY income_date DESC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.IncomeHis">
+        INSERT INTO income_his (income_no, income_date, dept_id, clinic_id, income_type, income_amount, his_system_no)
+        VALUES (#{incomeNo}, #{incomeDate}, #{deptId}, #{clinicId}, #{incomeType}, #{incomeAmount}, #{hisSystemNo})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.IncomeHis">
+        UPDATE income_his
+        <set>
+            <if test="incomeType != null">income_type = #{incomeType},</if>
+            <if test="incomeAmount != null">income_amount = #{incomeAmount},</if>
+        </set>
+        WHERE income_id = #{incomeId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM income_his WHERE income_id = #{id}
+    </delete>
+
+</mapper>
+

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile default="true" name="Default" enabled="true" />
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="hrp-gateway" />
+        <module name="hrp-user" />
+        <module name="hrp-hr" />
+        <module name="hrp-auth" />
+        <module name="hrp-common" />
+        <module name="hrp-contract" />
+        <module name="hrp-efficiency" />
+        <module name="hrp-reimb" />
+        <module name="hrp-menu" />
+        <module name="hrp-asset" />
+        <module name="hrp-cost" />
+      </profile>
+    </annotationProcessing>
+  </component>
+</project>

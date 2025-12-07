@@ -1,0 +1,15 @@
+com\hrp\auth\service\AuthService.class
+com\hrp\auth\mapper\UserMapper.class
+com\hrp\auth\mapper\impl\LoginLogMapperImpl.class
+com\hrp\auth\service\impl\CaptchaServiceImpl.class
+com\hrp\auth\service\impl\AuthServiceImpl.class
+com\hrp\auth\mapper\UserLoginMapper.class
+com\hrp\auth\service\CaptchaService.class
+com\hrp\auth\mapper\impl\UserLoginMapperImpl.class
+com\hrp\auth\mapper\impl\UserMapperImpl.class
+com\hrp\auth\service\impl\UserServiceImpl.class
+com\hrp\auth\service\UserService.class
+com\hrp\auth\AuthApplication.class
+com\hrp\auth\mapper\LoginLogMapper.class
+com\hrp\auth\controller\AuthController.class
+com\hrp\auth\util\PasswordGenerator.class

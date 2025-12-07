@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.efficiency.mapper.IncomeEquipmentMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.IncomeEquipment">
+        <id column="income_id" property="incomeId"/>
+        <result column="income_no" property="incomeNo"/>
+        <result column="income_date" property="incomeDate"/>
+        <result column="equipment_id" property="equipmentId"/>
+        <result column="equipment_code" property="equipmentCode"/>
+        <result column="income_type" property="incomeType"/>
+        <result column="income_amount" property="incomeAmount"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM income_equipment WHERE income_id = #{id}
+    </select>
+
+    <select id="selectByEquipmentId" resultMap="BaseResultMap">
+        SELECT * FROM income_equipment WHERE equipment_id = #{equipmentId} ORDER BY income_date DESC
+    </select>
+
+    <select id="selectByDateRange" resultMap="BaseResultMap">
+        SELECT * FROM income_equipment 
+        WHERE income_date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY income_date DESC
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM income_equipment ORDER BY income_date DESC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.IncomeEquipment">
+        INSERT INTO income_equipment (income_no, income_date, equipment_id, equipment_code, income_type, income_amount)
+        VALUES (#{incomeNo}, #{incomeDate}, #{equipmentId}, #{equipmentCode}, #{incomeType}, #{incomeAmount})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.IncomeEquipment">
+        UPDATE income_equipment
+        <set>
+            <if test="incomeType != null">income_type = #{incomeType},</if>
+            <if test="incomeAmount != null">income_amount = #{incomeAmount},</if>
+        </set>
+        WHERE income_id = #{incomeId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM income_equipment WHERE income_id = #{id}
+    </delete>
+
+</mapper>

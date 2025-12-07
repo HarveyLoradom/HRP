@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.reimb.mapper.CtrlPayoutDetailMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.CtrlPayoutDetail">
+        <id column="id" property="id"/>
+        <result column="payout_id" property="payoutId"/>
+        <result column="item_name" property="itemName"/>
+        <result column="item_type" property="itemType"/>
+        <result column="amount" property="amount"/>
+        <result column="invoice_no" property="invoiceNo"/>
+        <result column="invoice_date" property="invoiceDate"/>
+        <result column="remark" property="remark"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM ctrl_payout_detail WHERE id = #{id}
+    </select>
+
+    <select id="selectByPayoutId" resultMap="BaseResultMap">
+        SELECT * FROM ctrl_payout_detail WHERE payout_id = #{payoutId}
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.CtrlPayoutDetail">
+        INSERT INTO ctrl_payout_detail (payout_id, item_name, item_type, amount, invoice_no, invoice_date, remark)
+        VALUES (#{payoutId}, #{itemName}, #{itemType}, #{amount}, #{invoiceNo}, #{invoiceDate}, #{remark})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.CtrlPayoutDetail">
+        UPDATE ctrl_payout_detail
+        <set>
+            <if test="itemName != null">item_name = #{itemName},</if>
+            <if test="itemType != null">item_type = #{itemType},</if>
+            <if test="amount != null">amount = #{amount},</if>
+            <if test="invoiceNo != null">invoice_no = #{invoiceNo},</if>
+            <if test="invoiceDate != null">invoice_date = #{invoiceDate},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM ctrl_payout_detail WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByPayoutId">
+        DELETE FROM ctrl_payout_detail WHERE payout_id = #{payoutId}
+    </delete>
+
+</mapper>
+

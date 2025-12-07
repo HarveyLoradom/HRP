@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.efficiency.mapper.CostDataMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.CostData">
+        <id column="cost_id" property="costId"/>
+        <result column="cost_no" property="costNo"/>
+        <result column="cost_date" property="costDate"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="cost_type" property="costType"/>
+        <result column="cost_item" property="costItem"/>
+        <result column="cost_amount" property="costAmount"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM cost_data WHERE cost_id = #{id}
+    </select>
+
+    <select id="selectByDateRange" resultMap="BaseResultMap">
+        SELECT * FROM cost_data 
+        WHERE cost_date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY cost_date DESC
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM cost_data ORDER BY cost_date DESC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.CostData">
+        INSERT INTO cost_data (cost_no, cost_date, dept_id, cost_type, cost_item, cost_amount)
+        VALUES (#{costNo}, #{costDate}, #{deptId}, #{costType}, #{costItem}, #{costAmount})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.CostData">
+        UPDATE cost_data
+        <set>
+            <if test="costType != null">cost_type = #{costType},</if>
+            <if test="costItem != null">cost_item = #{costItem},</if>
+            <if test="costAmount != null">cost_amount = #{costAmount},</if>
+        </set>
+        WHERE cost_id = #{costId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM cost_data WHERE cost_id = #{id}
+    </delete>
+
+</mapper>
+

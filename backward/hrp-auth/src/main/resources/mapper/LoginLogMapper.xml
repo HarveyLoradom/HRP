@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.auth.mapper.LoginLogMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.LoginLog">
+        <id column="id" property="id"/>
+        <result column="account" property="account"/>
+        <result column="ip" property="ip"/>
+        <result column="status" property="status"/>
+        <result column="message" property="message"/>
+        <result column="login_time" property="loginTime"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.LoginLog">
+        INSERT INTO sys_login_log (account, ip, status, message, login_time)
+        VALUES (#{account}, #{ip}, #{status}, #{message}, #{loginTime})
+    </insert>
+
+</mapper>
+

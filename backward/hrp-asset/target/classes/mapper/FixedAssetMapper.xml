@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.asset.mapper.FixedAssetMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.FixedAsset">
+        <id column="asset_id" property="assetId"/>
+        <result column="asset_no" property="assetNo"/>
+        <result column="asset_name" property="assetName"/>
+        <result column="asset_type" property="assetType"/>
+        <result column="asset_category" property="assetCategory"/>
+        <result column="purchase_date" property="purchaseDate"/>
+        <result column="purchase_amount" property="purchaseAmount"/>
+        <result column="current_value" property="currentValue"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="manager_id" property="managerId"/>
+        <result column="location" property="location"/>
+        <result column="status" property="status"/>
+        <result column="remark" property="remark"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM fixed_asset WHERE asset_id = #{id}
+    </select>
+
+    <select id="selectByAssetNo" resultMap="BaseResultMap">
+        SELECT * FROM fixed_asset WHERE asset_no = #{assetNo}
+    </select>
+
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT * FROM fixed_asset WHERE status = #{status} ORDER BY create_time DESC
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM fixed_asset ORDER BY create_time DESC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.FixedAsset">
+        INSERT INTO fixed_asset (asset_no, asset_name, asset_type, asset_category, purchase_date,
+                                purchase_amount, current_value, dept_id, manager_id, location, status, remark, create_user)
+        VALUES (#{assetNo}, #{assetName}, #{assetType}, #{assetCategory}, #{purchaseDate},
+                #{purchaseAmount}, #{currentValue}, #{deptId}, #{managerId}, #{location}, #{status}, #{remark}, #{createUser})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.FixedAsset">
+        UPDATE fixed_asset
+        <set>
+            <if test="assetName != null">asset_name = #{assetName},</if>
+            <if test="assetType != null">asset_type = #{assetType},</if>
+            <if test="currentValue != null">current_value = #{currentValue},</if>
+            <if test="location != null">location = #{location},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE asset_id = #{assetId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM fixed_asset WHERE asset_id = #{id}
+    </delete>
+
+</mapper>

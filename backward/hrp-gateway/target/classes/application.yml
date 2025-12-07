@@ -1,0 +1,77 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: hrp-gateway
+  main:
+    web-application-type: reactive
+  cloud:
+    gateway:
+      routes:
+        - id: hrp-auth
+          uri: lb://hrp-auth
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=1
+        - id: hrp-user
+          uri: lb://hrp-user
+          predicates:
+            - Path=/api/user/**
+          filters:
+            - StripPrefix=2
+        - id: hrp-menu
+          uri: lb://hrp-menu
+          predicates:
+            - Path=/api/menu/**
+          filters:
+            - StripPrefix=1
+        - id: hrp-reimb
+          uri: lb://hrp-reimb
+          predicates:
+            - Path=/api/reimb/**
+          filters:
+            - StripPrefix=1
+        - id: hrp-contract
+          uri: lb://hrp-contract
+          predicates:
+            - Path=/api/contract/**
+          filters:
+            - StripPrefix=1
+        - id: hrp-asset
+          uri: lb://hrp-asset
+          predicates:
+            - Path=/api/asset/**
+          filters:
+            - StripPrefix=1
+        - id: hrp-hr
+          uri: lb://hrp-hr
+          predicates:
+            - Path=/api/hr/**
+          filters:
+            - StripPrefix=1
+        - id: hrp-cost
+          uri: lb://hrp-cost
+          predicates:
+            - Path=/api/cost/**
+          filters:
+            - StripPrefix=1
+        - id: hrp-efficiency
+          uri: lb://hrp-efficiency
+          predicates:
+            - Path=/api/efficiency/**
+          filters:
+            - StripPrefix=1
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        namespace: public
+        group: DEFAULT_GROUP

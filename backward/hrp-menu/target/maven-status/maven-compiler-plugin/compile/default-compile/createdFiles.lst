@@ -1,0 +1,6 @@
+com\hrp\menu\mapper\MenuMapper.class
+com\hrp\menu\controller\MenuController.class
+com\hrp\menu\service\impl\MenuServiceImpl.class
+com\hrp\menu\service\MenuService.class
+com\hrp\menu\MenuApplication.class
+com\hrp\menu\mapper\impl\MenuMapperImpl.class

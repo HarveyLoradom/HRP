@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.cost.mapper.CostAccountingMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.CostAccounting">
+        <id column="accounting_id" property="accountingId"/>
+        <result column="accounting_no" property="accountingNo"/>
+        <result column="accounting_name" property="accountingName"/>
+        <result column="accounting_period" property="accountingPeriod"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="cost_item" property="costItem"/>
+        <result column="cost_amount" property="costAmount"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM cost_accounting WHERE accounting_id = #{id}
+    </select>
+
+    <select id="selectByPeriod" resultMap="BaseResultMap">
+        SELECT * FROM cost_accounting WHERE accounting_period = #{accountingPeriod} ORDER BY create_time DESC
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM cost_accounting ORDER BY accounting_period DESC, create_time DESC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.CostAccounting">
+        INSERT INTO cost_accounting (accounting_no, accounting_name, accounting_period, dept_id, cost_item, cost_amount)
+        VALUES (#{accountingNo}, #{accountingName}, #{accountingPeriod}, #{deptId}, #{costItem}, #{costAmount})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.CostAccounting">
+        UPDATE cost_accounting
+        <set>
+            <if test="accountingName != null">accounting_name = #{accountingName},</if>
+            <if test="costItem != null">cost_item = #{costItem},</if>
+            <if test="costAmount != null">cost_amount = #{costAmount},</if>
+        </set>
+        WHERE accounting_id = #{accountingId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM cost_accounting WHERE accounting_id = #{id}
+    </delete>
+
+</mapper>
+

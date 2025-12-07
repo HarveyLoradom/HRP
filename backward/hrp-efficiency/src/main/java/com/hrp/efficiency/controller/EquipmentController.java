@@ -1,0 +1,55 @@
+package com.hrp.efficiency.controller;
+
+import com.hrp.common.entity.Equipment;
+import com.hrp.common.entity.Result;
+import com.hrp.efficiency.service.EquipmentService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/efficiency/equipment")
+@CrossOrigin
+public class EquipmentController {
+
+    @Autowired
+    private EquipmentService equipmentService;
+
+    @GetMapping("/list")
+    public Result<List<Equipment>> getAll() {
+        List<Equipment> equipments = equipmentService.getAll();
+        return Result.success(equipments);
+    }
+
+    @GetMapping("/status/{status}")
+    public Result<List<Equipment>> getByStatus(@PathVariable String status) {
+        List<Equipment> equipments = equipmentService.getByStatus(status);
+        return Result.success(equipments);
+    }
+
+    @GetMapping("/{id}")
+    public Result<Equipment> getById(@PathVariable Long id) {
+        Equipment equipment = equipmentService.getById(id);
+        return Result.success(equipment);
+    }
+
+    @PostMapping
+    public Result<Void> save(@RequestBody Equipment equipment) {
+        boolean success = equipmentService.save(equipment);
+        return success ? Result.success() : Result.error("保存失败");
+    }
+
+    @PutMapping
+    public Result<Void> update(@RequestBody Equipment equipment) {
+        boolean success = equipmentService.update(equipment);
+        return success ? Result.success() : Result.error("更新失败");
+    }
+
+    @DeleteMapping("/{id}")
+    public Result<Void> delete(@PathVariable Long id) {
+        boolean success = equipmentService.delete(id);
+        return success ? Result.success() : Result.error("删除失败");
+    }
+}
+

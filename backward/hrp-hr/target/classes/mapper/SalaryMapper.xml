@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.hr.mapper.SalaryMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.Salary">
+        <id column="salary_id" property="salaryId"/>
+        <result column="emp_id" property="empId"/>
+        <result column="emp_code" property="empCode"/>
+        <result column="emp_name" property="empName"/>
+        <result column="salary_month" property="salaryMonth"/>
+        <result column="base_salary" property="baseSalary"/>
+        <result column="performance_salary" property="performanceSalary"/>
+        <result column="allowance" property="allowance"/>
+        <result column="bonus" property="bonus"/>
+        <result column="deduction" property="deduction"/>
+        <result column="total_salary" property="totalSalary"/>
+        <result column="tax" property="tax"/>
+        <result column="actual_salary" property="actualSalary"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM salary WHERE salary_id = #{id}
+    </select>
+
+    <select id="selectByEmpIdAndMonth" resultMap="BaseResultMap">
+        SELECT * FROM salary WHERE emp_id = #{empId} AND salary_month = #{salaryMonth}
+    </select>
+
+    <select id="selectByEmpId" resultMap="BaseResultMap">
+        SELECT * FROM salary WHERE emp_id = #{empId} ORDER BY salary_month DESC
+    </select>
+
+    <select id="selectByMonth" resultMap="BaseResultMap">
+        SELECT * FROM salary WHERE salary_month = #{salaryMonth} ORDER BY emp_code ASC
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM salary ORDER BY salary_month DESC, emp_code ASC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.Salary">
+        INSERT INTO salary (emp_id, emp_code, emp_name, salary_month, base_salary, performance_salary,
+                           allowance, bonus, deduction, total_salary, tax, actual_salary, status)
+        VALUES (#{empId}, #{empCode}, #{empName}, #{salaryMonth}, #{baseSalary}, #{performanceSalary},
+                #{allowance}, #{bonus}, #{deduction}, #{totalSalary}, #{tax}, #{actualSalary}, #{status})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.Salary">
+        UPDATE salary
+        <set>
+            <if test="baseSalary != null">base_salary = #{baseSalary},</if>
+            <if test="performanceSalary != null">performance_salary = #{performanceSalary},</if>
+            <if test="allowance != null">allowance = #{allowance},</if>
+            <if test="bonus != null">bonus = #{bonus},</if>
+            <if test="deduction != null">deduction = #{deduction},</if>
+            <if test="totalSalary != null">total_salary = #{totalSalary},</if>
+            <if test="tax != null">tax = #{tax},</if>
+            <if test="actualSalary != null">actual_salary = #{actualSalary},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE salary_id = #{salaryId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM salary WHERE salary_id = #{id}
+    </delete>
+
+</mapper>
