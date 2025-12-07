@@ -7,8 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -56,7 +54,7 @@ public class AuthController {
             }
         }
 
-        // 获取客户端IP
+
         String ip = getClientIp(request);
 
         // 执行登录
