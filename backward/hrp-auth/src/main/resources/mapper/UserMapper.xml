@@ -13,12 +13,16 @@
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
         <result column="is_stop" property="isStop"/>
+        <result column="locked" property="locked"/>
     </resultMap>
 
     <select id="selectById" resultMap="BaseResultMap">
-        SELECT id, account, name, type, phone, TRIM(password) as password, create_user, create_time, update_time, is_stop 
-        FROM sys_user 
-        WHERE id = #{id}
+        SELECT u.id, u.account, u.name, u.type, u.phone, TRIM(u.password) as password, 
+               u.create_user, u.create_time, u.update_time, u.is_stop,
+               COALESCE(ul.locked, 0) as locked
+        FROM sys_user u
+        LEFT JOIN sys_user_login ul ON u.id = ul.user_id
+        WHERE u.id = #{id}
     </select>
 
     <select id="selectByAccount" resultMap="BaseResultMap">
@@ -28,9 +32,12 @@
     </select>
 
     <select id="selectAll" resultMap="BaseResultMap">
-        SELECT id, account, name, type, phone, TRIM(password) as password, create_user, create_time, update_time, is_stop 
-        FROM sys_user 
-        ORDER BY create_time DESC
+        SELECT u.id, u.account, u.name, u.type, u.phone, TRIM(u.password) as password, 
+               u.create_user, u.create_time, u.update_time, u.is_stop,
+               COALESCE(ul.locked, 0) as locked
+        FROM sys_user u
+        LEFT JOIN sys_user_login ul ON u.id = ul.user_id
+        ORDER BY u.create_time DESC
     </select>
 
     <insert id="insert" parameterType="com.hrp.common.entity.User">

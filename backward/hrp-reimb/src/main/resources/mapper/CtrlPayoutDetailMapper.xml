@@ -8,8 +8,6 @@
         <result column="item_name" property="itemName"/>
         <result column="item_type" property="itemType"/>
         <result column="amount" property="amount"/>
-        <result column="invoice_no" property="invoiceNo"/>
-        <result column="invoice_date" property="invoiceDate"/>
         <result column="remark" property="remark"/>
     </resultMap>
 
@@ -22,8 +20,8 @@
     </select>
 
     <insert id="insert" parameterType="com.hrp.common.entity.CtrlPayoutDetail">
-        INSERT INTO ctrl_payout_detail (payout_id, item_name, item_type, amount, invoice_no, invoice_date, remark)
-        VALUES (#{payoutId}, #{itemName}, #{itemType}, #{amount}, #{invoiceNo}, #{invoiceDate}, #{remark})
+        INSERT INTO ctrl_payout_detail (payout_id, item_name, item_type, amount, remark)
+        VALUES (#{payoutId}, #{itemName}, #{itemType}, #{amount}, #{remark})
     </insert>
 
     <update id="updateById" parameterType="com.hrp.common.entity.CtrlPayoutDetail">
@@ -32,8 +30,6 @@
             <if test="itemName != null">item_name = #{itemName},</if>
             <if test="itemType != null">item_type = #{itemType},</if>
             <if test="amount != null">amount = #{amount},</if>
-            <if test="invoiceNo != null">invoice_no = #{invoiceNo},</if>
-            <if test="invoiceDate != null">invoice_date = #{invoiceDate},</if>
             <if test="remark != null">remark = #{remark},</if>
         </set>
         WHERE id = #{id}

@@ -8,6 +8,8 @@ import java.util.List;
 public interface ProcurementRequirementMapper {
     ProcurementRequirement selectById(@Param("id") Long id);
     List<ProcurementRequirement> selectByStatus(@Param("status") String status);
+    List<ProcurementRequirement> selectByApplicant(@Param("applicantId") Long applicantId);
+    List<ProcurementRequirement> selectByApprover(@Param("approverId") String approverId);
     List<ProcurementRequirement> selectAll();
     int insert(ProcurementRequirement requirement);
     int updateById(ProcurementRequirement requirement);

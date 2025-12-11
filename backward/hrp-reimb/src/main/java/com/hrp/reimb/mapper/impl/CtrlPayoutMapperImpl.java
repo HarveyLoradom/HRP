@@ -40,6 +40,11 @@ public class CtrlPayoutMapperImpl implements CtrlPayoutMapper {
     }
 
     @Override
+    public List<CtrlPayout> selectByApprover(String userId) {
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectByApprover", userId);
+    }
+
+    @Override
     public int insert(CtrlPayout ctrlPayout) {
         return sqlSessionTemplate.insert(NAMESPACE + ".insert", ctrlPayout);
     }

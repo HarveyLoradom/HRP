@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.asset.mapper.AssetApprovalMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.AssetApproval">
+        <id column="approval_id" property="approvalId"/>
+        <result column="approval_no" property="approvalNo"/>
+        <result column="approval_type" property="approvalType"/>
+        <result column="approval_title" property="approvalTitle"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_code" property="deptCode"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="applicant_id" property="applicantId"/>
+        <result column="applicant_code" property="applicantCode"/>
+        <result column="applicant_name" property="applicantName"/>
+        <result column="apply_reason" property="applyReason"/>
+        <result column="status" property="status"/>
+        <result column="process_definition_id" property="processDefinitionId"/>
+        <result column="process_instance_id" property="processInstanceId"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM asset_approval WHERE approval_id = #{id}
+    </select>
+
+    <select id="selectByApprovalNo" resultMap="BaseResultMap">
+        SELECT * FROM asset_approval WHERE approval_no = #{approvalNo}
+    </select>
+
+    <select id="selectByType" resultMap="BaseResultMap">
+        SELECT * FROM asset_approval WHERE approval_type = #{approvalType} ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByApplicant" resultMap="BaseResultMap">
+        SELECT * FROM asset_approval WHERE applicant_id = #{applicantId} ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByApprover" resultMap="BaseResultMap">
+        SELECT DISTINCT a.* FROM asset_approval a
+        INNER JOIN wf_process_instance pi ON a.process_instance_id = pi.instance_id
+        INNER JOIN wf_process_task pt ON pi.instance_id = pt.instance_id
+        WHERE pt.assignee_user_id = #{approverId}
+        AND pt.task_status = 'PENDING'
+        AND a.status = 'PENDING'
+        ORDER BY a.create_time DESC
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM asset_approval ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT * FROM asset_approval WHERE status = #{status} ORDER BY create_time DESC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.AssetApproval" useGeneratedKeys="true" keyProperty="approvalId">
+        INSERT INTO asset_approval (approval_no, approval_type, approval_title, dept_id, dept_code, dept_name,
+                                   applicant_id, applicant_code, applicant_name, apply_reason, status,
+                                   process_definition_id, process_instance_id, create_user)
+        VALUES (#{approvalNo}, #{approvalType}, #{approvalTitle}, #{deptId}, #{deptCode}, #{deptName},
+                #{applicantId}, #{applicantCode}, #{applicantName}, #{applyReason}, #{status},
+                #{processDefinitionId}, #{processInstanceId}, #{createUser})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.AssetApproval">
+        UPDATE asset_approval
+        <set>
+            <if test="approvalType != null">approval_type = #{approvalType},</if>
+            <if test="approvalTitle != null">approval_title = #{approvalTitle},</if>
+            <if test="deptId != null">dept_id = #{deptId},</if>
+            <if test="deptCode != null">dept_code = #{deptCode},</if>
+            <if test="deptName != null">dept_name = #{deptName},</if>
+            <if test="applicantId != null">applicant_id = #{applicantId},</if>
+            <if test="applicantCode != null">applicant_code = #{applicantCode},</if>
+            <if test="applicantName != null">applicant_name = #{applicantName},</if>
+            <if test="applyReason != null">apply_reason = #{applyReason},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="processDefinitionId != null">process_definition_id = #{processDefinitionId},</if>
+            <if test="processInstanceId != null">process_instance_id = #{processInstanceId},</if>
+        </set>
+        WHERE approval_id = #{approvalId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM asset_approval WHERE approval_id = #{id}
+    </delete>
+
+</mapper>
+
+
+

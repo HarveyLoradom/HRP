@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.auth.mapper.CodeMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.Code">
+        <id column="id" property="id"/>
+        <result column="code_value" property="codeValue"/>
+        <result column="code_name" property="codeName"/>
+        <result column="code_type" property="codeType"/>
+        <result column="code_type_name" property="codeTypeName"/>
+        <result column="is_stop" property="isStop"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM sys_code WHERE id = #{id} AND is_stop = 0
+    </select>
+
+</mapper>
+
+
+
+

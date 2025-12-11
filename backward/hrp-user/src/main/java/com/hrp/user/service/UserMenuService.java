@@ -16,3 +16,6 @@ public interface UserMenuService {
      */
     boolean saveUserMenus(String userId, List<Long> menuIds);
 }
+
+
+

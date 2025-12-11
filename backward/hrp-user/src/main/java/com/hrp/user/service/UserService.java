@@ -47,4 +47,12 @@ public interface UserService {
      * 重置用户密码（使用系统配置的原始密码）
      */
     boolean resetPassword(String id);
+
+    /**
+     * 解锁用户（解除账户锁定）
+     */
+    boolean unlockUser(String id);
 }
+
+
+

@@ -21,4 +21,6 @@ public class User implements Serializable {
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     private Long isStop;
+    // 锁定状态（从sys_user_login表关联查询）
+    private Integer locked;
 }

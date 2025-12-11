@@ -10,6 +10,8 @@
         <result column="dept_level" property="deptLevel"/>
         <result column="dept_phone" property="deptPhone"/>
         <result column="dept_manager_id" property="deptManagerId"/>
+        <result column="dept_manager_name" property="deptManagerName"/>
+        <result column="dept_manager_code" property="deptManagerCode"/>
         <result column="is_stop" property="isStop"/>
         <result column="create_user" property="createUser"/>
         <result column="create_time" property="createTime"/>
@@ -25,7 +27,11 @@
     </select>
 
     <select id="selectAll" resultMap="BaseResultMap">
-        SELECT * FROM sys_dept WHERE is_stop = 0 ORDER BY dept_code ASC
+        SELECT d.*, e.emp_name as dept_manager_name, e.emp_code as dept_manager_code
+        FROM sys_dept d
+        LEFT JOIN sys_emp e ON d.dept_manager_id = e.emp_id
+        WHERE d.is_stop = 0 
+        ORDER BY d.dept_code ASC
     </select>
 
     <select id="selectBySuperDeptCode" resultMap="BaseResultMap">

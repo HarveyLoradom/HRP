@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.auth.mapper.ProcessTaskMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.ProcessTask">
+        <id column="task_id" property="taskId"/>
+        <result column="process_instance_id" property="processInstanceId"/>
+        <result column="task_key" property="taskKey"/>
+        <result column="task_name" property="taskName"/>
+        <result column="assignee_user_id" property="assigneeUserId"/>
+        <result column="assignee_user_name" property="assigneeUserName"/>
+        <result column="assignee_emp_code" property="assigneeEmpCode"/>
+        <result column="candidate_users" property="candidateUsers"/>
+        <result column="task_status" property="taskStatus"/>
+        <result column="task_type" property="taskType"/>
+        <result column="priority" property="priority"/>
+        <result column="due_date" property="dueDate"/>
+        <result column="claim_time" property="claimTime"/>
+        <result column="complete_time" property="completeTime"/>
+        <result column="comment" property="comment"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM wf_process_task WHERE task_id = #{taskId}
+    </select>
+
+    <select id="selectByInstanceId" resultMap="BaseResultMap">
+        SELECT * FROM wf_process_task WHERE process_instance_id = #{processInstanceId}
+        ORDER BY create_time ASC
+    </select>
+
+    <select id="selectByAssignee" resultMap="BaseResultMap">
+        SELECT t.*, i.business_key, i.business_type, d.definition_name as process_definition_name
+        FROM wf_process_task t
+        LEFT JOIN wf_process_instance i ON t.process_instance_id = i.instance_id
+        LEFT JOIN wf_process_definition d ON i.process_definition_id = d.definition_id
+        WHERE t.assignee_user_id = #{assigneeUserId} AND t.task_status = 'PENDING'
+        ORDER BY t.create_time DESC
+    </select>
+
+    <select id="selectByBusinessKey" resultMap="BaseResultMap">
+        SELECT t.*, i.business_key, i.business_type, d.definition_name as process_definition_name
+        FROM wf_process_task t
+        LEFT JOIN wf_process_instance i ON t.process_instance_id = i.instance_id
+        LEFT JOIN wf_process_definition d ON i.process_definition_id = d.definition_id
+        WHERE i.business_key = #{businessKey}
+        ORDER BY t.create_time DESC
+    </select>
+
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT t.*, i.business_key, i.business_type, d.definition_name as process_definition_name
+        FROM wf_process_task t
+        LEFT JOIN wf_process_instance i ON t.process_instance_id = i.instance_id
+        LEFT JOIN wf_process_definition d ON i.process_definition_id = d.definition_id
+        WHERE t.task_status = #{taskStatus}
+        ORDER BY t.create_time DESC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.ProcessTask">
+        INSERT INTO wf_process_task (process_instance_id, task_key, task_name, assignee_user_id, assignee_user_name, assignee_emp_code, candidate_users, task_status, task_type, priority, due_date, comment, create_time)
+        VALUES (#{processInstanceId}, #{taskKey}, #{taskName}, #{assigneeUserId}, #{assigneeUserName}, #{assigneeEmpCode}, #{candidateUsers}, #{taskStatus}, #{taskType}, #{priority}, #{dueDate}, #{comment}, NOW())
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.ProcessTask">
+        UPDATE wf_process_task
+        <set>
+            <if test="assigneeUserId != null">assignee_user_id = #{assigneeUserId},</if>
+            <if test="assigneeUserName != null">assignee_user_name = #{assigneeUserName},</if>
+            <if test="assigneeEmpCode != null">assignee_emp_code = #{assigneeEmpCode},</if>
+            <if test="taskStatus != null">task_status = #{taskStatus},</if>
+            <if test="claimTime != null">claim_time = #{claimTime},</if>
+            <if test="completeTime != null">complete_time = #{completeTime},</if>
+            <if test="comment != null">comment = #{comment},</if>
+            update_time = NOW()
+        </set>
+        WHERE task_id = #{taskId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM wf_process_task WHERE task_id = #{taskId}
+    </delete>
+
+</mapper>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.asset.mapper.AssetApprovalDetailMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.AssetApprovalDetail">
+        <id column="detail_id" property="detailId"/>
+        <result column="approval_id" property="approvalId"/>
+        <result column="asset_id" property="assetId"/>
+        <result column="asset_no" property="assetNo"/>
+        <result column="asset_name" property="assetName"/>
+        <result column="asset_type" property="assetType"/>
+        <result column="original_dept_id" property="originalDeptId"/>
+        <result column="original_dept_name" property="originalDeptName"/>
+        <result column="target_dept_id" property="targetDeptId"/>
+        <result column="target_dept_name" property="targetDeptName"/>
+        <result column="original_location" property="originalLocation"/>
+        <result column="target_location" property="targetLocation"/>
+        <result column="original_value" property="originalValue"/>
+        <result column="new_value" property="newValue"/>
+        <result column="disposal_method" property="disposalMethod"/>
+        <result column="disposal_amount" property="disposalAmount"/>
+        <result column="inventory_diff" property="inventoryDiff"/>
+        <result column="change_content" property="changeContent"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM asset_approval_detail WHERE detail_id = #{id}
+    </select>
+
+    <select id="selectByApprovalId" resultMap="BaseResultMap">
+        SELECT * FROM asset_approval_detail WHERE approval_id = #{approvalId} ORDER BY detail_id
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.AssetApprovalDetail" useGeneratedKeys="true" keyProperty="detailId">
+        INSERT INTO asset_approval_detail (approval_id, asset_id, asset_no, asset_name, asset_type,
+                                          original_dept_id, original_dept_name, target_dept_id, target_dept_name,
+                                          original_location, target_location, original_value, new_value,
+                                          disposal_method, disposal_amount, inventory_diff, change_content, remark)
+        VALUES (#{approvalId}, #{assetId}, #{assetNo}, #{assetName}, #{assetType},
+                #{originalDeptId}, #{originalDeptName}, #{targetDeptId}, #{targetDeptName},
+                #{originalLocation}, #{targetLocation}, #{originalValue}, #{newValue},
+                #{disposalMethod}, #{disposalAmount}, #{inventoryDiff}, #{changeContent}, #{remark})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.AssetApprovalDetail">
+        UPDATE asset_approval_detail
+        <set>
+            <if test="assetId != null">asset_id = #{assetId},</if>
+            <if test="assetNo != null">asset_no = #{assetNo},</if>
+            <if test="assetName != null">asset_name = #{assetName},</if>
+            <if test="assetType != null">asset_type = #{assetType},</if>
+            <if test="originalDeptId != null">original_dept_id = #{originalDeptId},</if>
+            <if test="originalDeptName != null">original_dept_name = #{originalDeptName},</if>
+            <if test="targetDeptId != null">target_dept_id = #{targetDeptId},</if>
+            <if test="targetDeptName != null">target_dept_name = #{targetDeptName},</if>
+            <if test="originalLocation != null">original_location = #{originalLocation},</if>
+            <if test="targetLocation != null">target_location = #{targetLocation},</if>
+            <if test="originalValue != null">original_value = #{originalValue},</if>
+            <if test="newValue != null">new_value = #{newValue},</if>
+            <if test="disposalMethod != null">disposal_method = #{disposalMethod},</if>
+            <if test="disposalAmount != null">disposal_amount = #{disposalAmount},</if>
+            <if test="inventoryDiff != null">inventory_diff = #{inventoryDiff},</if>
+            <if test="changeContent != null">change_content = #{changeContent},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE detail_id = #{detailId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM asset_approval_detail WHERE detail_id = #{id}
+    </delete>
+
+    <delete id="deleteByApprovalId">
+        DELETE FROM asset_approval_detail WHERE approval_id = #{approvalId}
+    </delete>
+
+</mapper>
+
+
+

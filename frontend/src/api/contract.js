@@ -1,47 +1,17 @@
 import request from './request'
 
-export function getAllContracts() {
-  return request({
-    url: '/contract/list',
-    method: 'get'
-  })
-}
-
-export function getContractsByStatus(status) {
-  return request({
-    url: `/contract/status/${status}`,
-    method: 'get'
-  })
-}
-
-export function getContractById(id) {
-  return request({
-    url: `/contract/${id}`,
-    method: 'get'
-  })
-}
-
-export function saveContract(data) {
-  return request({
-    url: '/contract',
-    method: 'post',
-    data
-  })
-}
-
-export function updateContract(data) {
-  return request({
-    url: '/contract',
-    method: 'put',
-    data
-  })
-}
-
-export function deleteContract(id) {
-  return request({
-    url: `/contract/${id}`,
-    method: 'delete'
-  })
-}
-
-
+// 合同管理
+export const getAllContracts = () => request.get('/contract/list')
+export const getContractsByStatus = (status) => request.get(`/contract/status/${status}`)
+export const getContractById = (id) => request.get(`/contract/${id}`)
+export const getContractByNo = (contractNo) => request.get(`/contract/no/${contractNo}`)
+export const saveContract = (data) => request.post('/contract', data)
+export const updateContract = (data) => request.put('/contract', data)
+export const deleteContract = (id) => request.delete(`/contract/${id}`)
+export const submitContract = (id) => request.post(`/contract/${id}/submit`)
+export const withdrawContract = (id) => request.post(`/contract/${id}/withdraw`)
+export const getMyApprovalContracts = (userId) => request.get(`/contract/my-approval/${userId}`)
+export const approveContract = (id, userId, opinion) => request.post(`/contract/${id}/approve?userId=${userId}&opinion=${opinion || ''}`)
+export const rejectContract = (id, userId, opinion) => request.post(`/contract/${id}/reject?userId=${userId}&opinion=${opinion || ''}`)
+export const archiveContract = (id) => request.post(`/contract/${id}/archive`)
+export const getNextApprover = (id) => request.get(`/contract/${id}/next-approver`)

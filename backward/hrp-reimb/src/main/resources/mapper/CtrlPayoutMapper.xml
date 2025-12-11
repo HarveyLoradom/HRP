@@ -5,6 +5,7 @@
     <resultMap id="BaseResultMap" type="com.hrp.common.entity.CtrlPayout">
         <id column="payout_id" property="payoutId"/>
         <result column="payout_billcode" property="payoutBillcode"/>
+        <result column="bill_type" property="billType"/>
         <result column="emp_id" property="empId"/>
         <result column="emp_code" property="empCode"/>
         <result column="emp_name" property="empName"/>
@@ -14,6 +15,10 @@
         <result column="apply_reason" property="applyReason"/>
         <result column="apply_date" property="applyDate"/>
         <result column="status" property="status"/>
+        <result column="process_definition_id" property="processDefinitionId"/>
+        <result column="process_instance_id" property="processInstanceId"/>
+        <result column="budget_id" property="budgetId"/>
+        <result column="budget_item_id" property="budgetItemId"/>
         <result column="remark" property="remark"/>
         <result column="create_user" property="createUser"/>
         <result column="create_time" property="createTime"/>
@@ -21,30 +26,60 @@
     </resultMap>
 
     <select id="selectById" resultMap="BaseResultMap">
-        SELECT * FROM ctrl_payout WHERE payout_id = #{id}
+        SELECT payout_id, payout_billcode, bill_type, emp_id, emp_code, emp_name, dept_id, payout_type_id,
+               apply_amount, apply_reason, apply_date, status, process_definition_id, process_instance_id,
+               budget_id, budget_item_id, remark, create_user, create_time, update_time
+        FROM ctrl_payout WHERE payout_id = #{id}
     </select>
 
     <select id="selectByBillcode" resultMap="BaseResultMap">
-        SELECT * FROM ctrl_payout WHERE payout_billcode = #{billcode}
+        SELECT payout_id, payout_billcode, bill_type, emp_id, emp_code, emp_name, dept_id, payout_type_id,
+               apply_amount, apply_reason, apply_date, status, process_definition_id, process_instance_id,
+               budget_id, budget_item_id, remark, create_user, create_time, update_time
+        FROM ctrl_payout WHERE payout_billcode = #{billcode}
     </select>
 
     <select id="selectByEmpId" resultMap="BaseResultMap">
-        SELECT * FROM ctrl_payout WHERE emp_id = #{empId} ORDER BY create_time DESC
+        SELECT payout_id, payout_billcode, bill_type, emp_id, emp_code, emp_name, dept_id, payout_type_id,
+               apply_amount, apply_reason, apply_date, status, process_definition_id, process_instance_id,
+               budget_id, budget_item_id, remark, create_user, create_time, update_time
+        FROM ctrl_payout WHERE emp_id = #{empId} ORDER BY create_time DESC
     </select>
 
     <select id="selectByStatus" resultMap="BaseResultMap">
-        SELECT * FROM ctrl_payout WHERE status = #{status} ORDER BY create_time DESC
+        SELECT payout_id, payout_billcode, bill_type, emp_id, emp_code, emp_name, dept_id, payout_type_id,
+               apply_amount, apply_reason, apply_date, status, process_definition_id, process_instance_id,
+               budget_id, budget_item_id, remark, create_user, create_time, update_time
+        FROM ctrl_payout WHERE status = #{status} ORDER BY create_time DESC
     </select>
 
     <select id="selectAll" resultMap="BaseResultMap">
-        SELECT * FROM ctrl_payout ORDER BY create_time DESC
+        SELECT payout_id, payout_billcode, bill_type, emp_id, emp_code, emp_name, dept_id, payout_type_id,
+               apply_amount, apply_reason, apply_date, status, process_definition_id, process_instance_id,
+               budget_id, budget_item_id, remark, create_user, create_time, update_time
+        FROM ctrl_payout ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByApprover" resultMap="BaseResultMap">
+        SELECT DISTINCT p.payout_id, p.payout_billcode, p.bill_type, p.emp_id, p.emp_code, p.emp_name, p.dept_id, p.payout_type_id,
+               p.apply_amount, p.apply_reason, p.apply_date, p.status, p.process_definition_id, p.process_instance_id,
+               p.budget_id, p.budget_item_id, p.remark, p.create_user, p.create_time, p.update_time
+        FROM ctrl_payout p
+        INNER JOIN wf_process_instance pi ON p.process_instance_id = pi.instance_id
+        INNER JOIN wf_process_task pt ON pi.instance_id = pt.instance_id
+        WHERE pt.assignee_user_id = #{userId}
+        AND pt.task_status = 'PENDING'
+        AND p.status = 'PENDING'
+        ORDER BY p.create_time DESC
     </select>
 
     <insert id="insert" parameterType="com.hrp.common.entity.CtrlPayout">
-        INSERT INTO ctrl_payout (payout_billcode, emp_id, emp_code, emp_name, dept_id, payout_type_id, 
-                                 apply_amount, apply_reason, apply_date, status, remark, create_user)
-        VALUES (#{payoutBillcode}, #{empId}, #{empCode}, #{empName}, #{deptId}, #{payoutTypeId},
-                #{applyAmount}, #{applyReason}, #{applyDate}, #{status}, #{remark}, #{createUser})
+        INSERT INTO ctrl_payout (payout_billcode, bill_type, emp_id, emp_code, emp_name, dept_id, payout_type_id, 
+                                 apply_amount, apply_reason, apply_date, status, process_definition_id, process_instance_id, 
+                                 budget_id, budget_item_id, remark, create_user)
+        VALUES (#{payoutBillcode}, #{billType}, #{empId}, #{empCode}, #{empName}, #{deptId}, #{payoutTypeId},
+                #{applyAmount}, #{applyReason}, #{applyDate}, #{status}, #{processDefinitionId}, #{processInstanceId}, 
+                #{budgetId}, #{budgetItemId}, #{remark}, #{createUser})
     </insert>
 
     <update id="updateById" parameterType="com.hrp.common.entity.CtrlPayout">
@@ -54,6 +89,10 @@
             <if test="applyAmount != null">apply_amount = #{applyAmount},</if>
             <if test="applyReason != null">apply_reason = #{applyReason},</if>
             <if test="status != null">status = #{status},</if>
+            <if test="processDefinitionId != null">process_definition_id = #{processDefinitionId},</if>
+            <if test="processInstanceId != null">process_instance_id = #{processInstanceId},</if>
+            <if test="budgetId != null">budget_id = #{budgetId},</if>
+            <if test="budgetItemId != null">budget_item_id = #{budgetItemId},</if>
             <if test="remark != null">remark = #{remark},</if>
         </set>
         WHERE payout_id = #{payoutId}

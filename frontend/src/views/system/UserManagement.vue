@@ -6,15 +6,49 @@
         <el-button style="float: right; padding: 3px 0" type="text" @click="handleAdd">新增用户</el-button>
       </div>
       
+      <!-- 搜索条件 -->
+      <el-form :inline="true" :model="searchForm" class="search-form">
+        <el-form-item label="工号/姓名">
+          <el-input v-model="searchForm.keyword" placeholder="请输入工号或姓名" clearable @keyup.enter.native="handleSearch"></el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">查询</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </el-form-item>
+      </el-form>
+      
       <el-table :data="tableData" border style="width: 100%" v-loading="loading">
-        <el-table-column prop="account" label="账号" width="120"></el-table-column>
-        <el-table-column prop="name" label="用户名" width="120"></el-table-column>
-        <el-table-column prop="type" label="用户类型" width="100">
+        <el-table-column prop="empCode" label="工号" width="120"></el-table-column>
+        <el-table-column prop="empName" label="姓名" width="120"></el-table-column>
+        <el-table-column prop="account" label="账号" width="120">
           <template slot-scope="scope">
-            {{ scope.row.type === 1 ? '管理员' : scope.row.type === 2 ? '普通用户' : '其他' }}
+            <span v-if="scope.row.account">{{ scope.row.account }}</span>
+            <span v-else style="color: #999;">未创建账号</span>
           </template>
         </el-table-column>
-        <el-table-column prop="phone" label="手机号" width="120"></el-table-column>
+        <el-table-column prop="userName" label="用户名" width="120">
+          <template slot-scope="scope">
+            <span v-if="scope.row.userName">{{ scope.row.userName }}</span>
+            <span v-else style="color: #999;">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="deptName" label="部门" width="150">
+          <template slot-scope="scope">
+            <span v-if="scope.row.deptName">{{ scope.row.deptName }}</span>
+            <span v-else style="color: #999;">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="userType" label="用户类型" width="100">
+          <template slot-scope="scope">
+            <span v-if="scope.row.userType">{{ scope.row.userType === 1 ? '管理员' : scope.row.userType === 2 ? '普通用户' : '其他' }}</span>
+            <span v-else style="color: #999;">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="empPhone" label="手机号" width="120">
+          <template slot-scope="scope">
+            {{ scope.row.empPhone || scope.row.phone || '-' }}
+          </template>
+        </el-table-column>
         <el-table-column label="状态" width="80">
           <template slot-scope="scope">
             <el-tag :type="scope.row.isStop === 0 ? 'success' : 'danger'">
@@ -22,11 +56,18 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column label="锁定状态" width="100">
+          <template slot-scope="scope">
+            <el-tag v-if="scope.row.locked === 1" type="danger">已锁定</el-tag>
+            <el-tag v-else type="success">正常</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="160"></el-table-column>
-        <el-table-column label="操作" width="320">
+        <el-table-column label="操作" width="380">
           <template slot-scope="scope">
             <el-button size="mini" @click="handleEdit(scope.row)">编辑</el-button>
             <el-button size="mini" type="info" @click="handleResetPassword(scope.row)">重置密码</el-button>
+            <el-button v-if="scope.row.locked === 1" size="mini" type="success" @click="handleUnlock(scope.row)">解锁</el-button>
             <el-button size="mini" :type="scope.row.isStop === 0 ? 'warning' : 'success'" @click="handleToggleStatus(scope.row)">
               {{ scope.row.isStop === 0 ? '停用' : '启用' }}
             </el-button>
@@ -70,7 +111,7 @@
 </template>
 
 <script>
-import { getUserList, getUserById, saveUser, updateUser, deleteUser, toggleUserStatus, resetUserPassword } from '@/api/user'
+import { getUserList, getUserById, saveUser, updateUser, deleteUser, toggleUserStatus, resetUserPassword, unlockUser, getAllEmployeesWithUser, searchEmployees } from '@/api/user'
 
 export default {
   name: 'UserManagement',
@@ -78,6 +119,10 @@ export default {
     return {
       loading: false,
       tableData: [],
+      allEmployees: [],
+      searchForm: {
+        keyword: ''
+      },
       dialogVisible: false,
       dialogTitle: '新增用户',
       isEdit: false,
@@ -102,14 +147,45 @@ export default {
   methods: {
     loadData() {
       this.loading = true
-      getUserList().then(response => {
+      getAllEmployeesWithUser().then(response => {
         if (response.code === 200) {
-          this.tableData = response.data || []
+          this.allEmployees = response.data || []
+          this.handleSearch()
         }
         this.loading = false
       }).catch(() => {
         this.loading = false
       })
+    },
+    handleSearch() {
+      if (!this.searchForm.keyword || this.searchForm.keyword.trim() === '') {
+        this.tableData = this.allEmployees
+        return
+      }
+      const keyword = this.searchForm.keyword.trim()
+      searchEmployees(keyword).then(response => {
+        if (response.code === 200) {
+          this.tableData = response.data || []
+        }
+      })
+    },
+    handleReset() {
+      this.searchForm.keyword = ''
+      this.tableData = this.allEmployees
+    },
+    handleCreateUser(row) {
+      // 为员工创建用户账号
+      this.dialogTitle = '创建用户账号'
+      this.isEdit = false
+      this.form = {
+        id: null,
+        account: row.empCode,
+        name: row.empName,
+        type: 2,
+        phone: row.empPhone || '',
+        password: '123456'
+      }
+      this.dialogVisible = true
     },
     handleAdd() {
       this.dialogTitle = '新增用户'
@@ -125,14 +201,18 @@ export default {
       this.dialogVisible = true
     },
     handleEdit(row) {
+      if (!row.userId) {
+        this.$message.warning('该员工尚未创建用户账号')
+        return
+      }
       this.dialogTitle = '编辑用户'
       this.isEdit = true
       this.form = {
-        id: row.id,
+        id: row.userId,
         account: row.account,
-        name: row.name,
-        type: row.type,
-        phone: row.phone || '',
+        name: row.userName,
+        type: row.userType,
+        phone: row.phone || row.empPhone || '',
         password: ''
       }
       this.dialogVisible = true
@@ -159,12 +239,16 @@ export default {
       })
     },
     handleDelete(row) {
+      if (!row.userId) {
+        this.$message.warning('该员工尚未创建用户账号')
+        return
+      }
       this.$confirm('确定要删除该用户吗？', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        deleteUser(row.id).then(response => {
+        deleteUser(row.userId).then(response => {
           if (response.code === 200) {
             this.$message.success('删除成功')
             this.loadData()
@@ -175,13 +259,17 @@ export default {
       }).catch(() => {})
     },
     handleToggleStatus(row) {
+      if (!row.userId) {
+        this.$message.warning('该员工尚未创建用户账号')
+        return
+      }
       const action = row.isStop === 0 ? '停用' : '启用'
       this.$confirm(`确定要${action}该用户吗？`, '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        toggleUserStatus(row.id).then(response => {
+        toggleUserStatus(row.userId).then(response => {
           if (response.code === 200) {
             this.$message.success(`${action}成功`)
             this.loadData()
@@ -192,17 +280,41 @@ export default {
       }).catch(() => {})
     },
     handleResetPassword(row) {
-      this.$confirm(`确定要重置用户"${row.name}"的密码吗？密码将重置为系统配置的原始密码。`, '重置密码', {
+      if (!row.userId) {
+        this.$message.warning('该员工尚未创建用户账号')
+        return
+      }
+      this.$confirm(`确定要重置用户"${row.empName}"的密码吗？密码将重置为系统配置的原始密码。`, '重置密码', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        resetUserPassword(row.id).then(response => {
+        resetUserPassword(row.userId).then(response => {
           if (response.code === 200) {
             this.$message.success('密码重置成功，密码已重置为系统配置的原始密码')
             this.loadData()
           } else {
             this.$message.error(response.message || '密码重置失败')
+          }
+        })
+      }).catch(() => {})
+    },
+    handleUnlock(row) {
+      if (!row.userId) {
+        this.$message.warning('该员工尚未创建用户账号')
+        return
+      }
+      this.$confirm(`确定要解锁用户"${row.empName}"吗？`, '解锁用户', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        unlockUser(row.userId).then(response => {
+          if (response.code === 200) {
+            this.$message.success('解锁成功')
+            this.loadData()
+          } else {
+            this.$message.error(response.message || '解锁失败')
           }
         })
       }).catch(() => {})
@@ -216,3 +328,6 @@ export default {
   padding: 20px;
 }
 </style>
+
+
+

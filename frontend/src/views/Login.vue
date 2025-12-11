@@ -93,15 +93,66 @@
         <p>© 2024 HRP系统. All rights reserved.</p>
       </div>
     </div>
+
+    <!-- 强制修改密码对话框 -->
+    <el-dialog
+      title="修改密码"
+      :visible.sync="changePasswordDialogVisible"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+      :show-close="false"
+      width="450px"
+      center
+    >
+      <el-form
+        ref="changePasswordForm"
+        :model="changePasswordForm"
+        :rules="changePasswordRules"
+        label-width="100px"
+      >
+        <el-form-item label="新密码" prop="newPassword">
+          <el-input
+            v-model="changePasswordForm.newPassword"
+            type="password"
+            placeholder="请输入新密码（6-20位）"
+            show-password
+          />
+        </el-form-item>
+        <el-form-item label="确认密码" prop="confirmPassword">
+          <el-input
+            v-model="changePasswordForm.confirmPassword"
+            type="password"
+            placeholder="请再次输入新密码"
+            show-password
+          />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button
+          :loading="changePasswordLoading"
+          type="primary"
+          @click="handleChangePassword"
+        >
+          确定
+        </el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { login, getCaptcha } from '@/api/auth'
+import { login, getCaptcha, forceChangePassword } from '@/api/auth'
 
 export default {
   name: 'Login',
   data() {
+    const validateConfirmPassword = (rule, value, callback) => {
+      if (value !== this.changePasswordForm.newPassword) {
+        callback(new Error('两次输入的密码不一致'))
+      } else {
+        callback()
+      }
+    }
     return {
       loginForm: {
         account: '',
@@ -116,7 +167,25 @@ export default {
       loading: false,
       passwordType: 'password',
       needCaptcha: false,
-      captchaImage: ''
+      captchaImage: '',
+      changePasswordDialogVisible: false,
+      changePasswordLoading: false,
+      changePasswordForm: {
+        userId: '',
+        newPassword: '',
+        confirmPassword: ''
+      },
+      changePasswordRules: {
+        newPassword: [
+          { required: true, message: '请输入新密码', trigger: 'blur' },
+          { min: 6, max: 20, message: '密码长度必须在6-20位之间', trigger: 'blur' }
+        ],
+        confirmPassword: [
+          { required: true, message: '请再次输入新密码', trigger: 'blur' },
+          { validator: validateConfirmPassword, trigger: 'blur' }
+        ]
+      },
+      pendingLoginData: null // 保存待登录的数据
     }
   },
   mounted() {
@@ -170,6 +239,16 @@ export default {
                 return
               }
 
+              // 检查是否需要强制修改密码
+              if (response && response.data && response.data.needChangePassword) {
+                this.changePasswordForm.userId = response.data.userId
+                this.changePasswordDialogVisible = true
+                this.pendingLoginData = loginData // 保存登录数据，修改密码后重新登录
+                this.loading = false
+                this.$message.warning(response.data.message || '请先修改密码')
+                return
+              }
+
               if (response && response.data) {
                 const userId = response.data.userId
                 this.$store.dispatch('menu/getMenus', userId).then(() => {
@@ -191,6 +270,44 @@ export default {
                 this.$message.error(error.message || errorData?.message || '登录失败')
               }
               this.loading = false
+            })
+        } else {
+          return false
+        }
+      })
+    },
+    handleChangePassword() {
+      this.$refs.changePasswordForm.validate(valid => {
+        if (valid) {
+          this.changePasswordLoading = true
+          const data = {
+            userId: this.changePasswordForm.userId,
+            newPassword: this.changePasswordForm.newPassword
+          }
+
+          forceChangePassword(data)
+            .then(response => {
+              if (response.code === 200) {
+                this.$message.success('密码修改成功，请重新登录')
+                this.changePasswordDialogVisible = false
+                this.changePasswordForm.newPassword = ''
+                this.changePasswordForm.confirmPassword = ''
+                // 清空登录表单
+                this.loginForm.password = ''
+                // 如果有待登录数据，重新登录
+                if (this.pendingLoginData) {
+                  this.pendingLoginData = null
+                  this.$message.info('请使用新密码重新登录')
+                }
+              } else {
+                this.$message.error(response.message || '修改密码失败')
+              }
+              this.changePasswordLoading = false
+            })
+            .catch(error => {
+              const errorData = error.response && error.response.data
+              this.$message.error(error.message || errorData?.message || '修改密码失败')
+              this.changePasswordLoading = false
             })
         } else {
           return false
@@ -456,5 +573,9 @@ export default {
   color: #909399;
   font-size: 12px;
   margin: 0;
+}
+
+.dialog-footer {
+  text-align: center;
 }
 </style>

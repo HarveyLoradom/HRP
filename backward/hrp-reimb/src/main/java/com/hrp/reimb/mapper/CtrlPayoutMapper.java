@@ -14,6 +14,7 @@ public interface CtrlPayoutMapper {
     List<CtrlPayout> selectByEmpId(@Param("empId") Long empId);
     List<CtrlPayout> selectByStatus(@Param("status") String status);
     List<CtrlPayout> selectAll();
+    List<CtrlPayout> selectByApprover(@Param("userId") String userId);
     int insert(CtrlPayout ctrlPayout);
     int updateById(CtrlPayout ctrlPayout);
     int deleteById(@Param("id") Long id);

@@ -48,5 +48,10 @@ public class PactMainMapperImpl implements PactMainMapper {
     public int deleteById(Long id) {
         return sqlSessionTemplate.delete(NAMESPACE + ".deleteById", id);
     }
+
+    @Override
+    public List<PactMain> selectByApprover(String userId) {
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectByApprover", userId);
+    }
 }
 

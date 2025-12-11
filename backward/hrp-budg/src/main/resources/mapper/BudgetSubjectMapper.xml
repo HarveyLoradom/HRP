@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.budg.mapper.BudgetSubjectMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.BudgetSubject">
+        <id column="subject_id" property="subjectId"/>
+        <result column="subject_code" property="subjectCode"/>
+        <result column="subject_name" property="subjectName"/>
+        <result column="subject_type" property="subjectType"/>
+        <result column="parent_subject_id" property="parentSubjectId"/>
+        <result column="parent_subject_code" property="parentSubjectCode"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_code" property="deptCode"/>
+        <result column="manager_id" property="managerId"/>
+        <result column="manager_code" property="managerCode"/>
+        <result column="manager_name" property="managerName"/>
+        <result column="subject_level" property="subjectLevel"/>
+        <result column="is_stop" property="isStop"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM budget_subject WHERE subject_id = #{id}
+    </select>
+
+    <select id="selectByCode" resultMap="BaseResultMap">
+        SELECT * FROM budget_subject WHERE subject_code = #{code}
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM budget_subject WHERE is_stop = 0 ORDER BY subject_code
+    </select>
+
+    <select id="selectByParentId" resultMap="BaseResultMap">
+        SELECT * FROM budget_subject WHERE parent_subject_id = #{parentId} AND is_stop = 0 ORDER BY subject_code
+    </select>
+
+    <select id="selectByDeptId" resultMap="BaseResultMap">
+        SELECT * FROM budget_subject WHERE dept_id = #{deptId} AND is_stop = 0 ORDER BY subject_code
+    </select>
+
+    <select id="selectTree" resultMap="BaseResultMap">
+        SELECT * FROM budget_subject WHERE is_stop = 0 ORDER BY subject_level, subject_code
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.BudgetSubject">
+        INSERT INTO budget_subject (subject_code, subject_name, subject_type, parent_subject_id, parent_subject_code,
+                                   dept_id, dept_code, manager_id, manager_code, manager_name, subject_level, is_stop, create_user)
+        VALUES (#{subjectCode}, #{subjectName}, #{subjectType}, #{parentSubjectId}, #{parentSubjectCode},
+                #{deptId}, #{deptCode}, #{managerId}, #{managerCode}, #{managerName}, #{subjectLevel}, #{isStop}, #{createUser})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.BudgetSubject">
+        UPDATE budget_subject
+        <set>
+            <if test="subjectName != null">subject_name = #{subjectName},</if>
+            <if test="subjectType != null">subject_type = #{subjectType},</if>
+            <if test="parentSubjectId != null">parent_subject_id = #{parentSubjectId},</if>
+            <if test="parentSubjectCode != null">parent_subject_code = #{parentSubjectCode},</if>
+            <if test="deptId != null">dept_id = #{deptId},</if>
+            <if test="deptCode != null">dept_code = #{deptCode},</if>
+            <if test="managerId != null">manager_id = #{managerId},</if>
+            <if test="managerCode != null">manager_code = #{managerCode},</if>
+            <if test="managerName != null">manager_name = #{managerName},</if>
+            <if test="subjectLevel != null">subject_level = #{subjectLevel},</if>
+            <if test="isStop != null">is_stop = #{isStop},</if>
+        </set>
+        WHERE subject_id = #{subjectId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM budget_subject WHERE subject_id = #{id}
+    </delete>
+
+</mapper>
+
+
+
+

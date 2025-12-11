@@ -25,6 +25,8 @@ public class PactMain implements Serializable {
     private String status;
     private Long deptId;
     private Long managerId;
+    private Long processDefinitionId;
+    private Long processInstanceId;
     private String remark;
     private String createUser;
     private LocalDateTime createTime;

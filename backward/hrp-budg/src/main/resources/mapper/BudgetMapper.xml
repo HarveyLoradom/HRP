@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.budg.mapper.BudgetMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.Budget">
+        <id column="budget_id" property="budgetId"/>
+        <result column="budget_no" property="budgetNo"/>
+        <result column="budget_name" property="budgetName"/>
+        <result column="budget_year" property="budgetYear"/>
+        <result column="budget_period" property="budgetPeriod"/>
+        <result column="subject_id" property="subjectId"/>
+        <result column="subject_code" property="subjectCode"/>
+        <result column="item_id" property="itemId"/>
+        <result column="item_code" property="itemCode"/>
+        <result column="budget_amount" property="budgetAmount"/>
+        <result column="occupied_amount" property="occupiedAmount"/>
+        <result column="executed_amount" property="executedAmount"/>
+        <result column="remaining_amount" property="remainingAmount"/>
+        <result column="execution_rate" property="executionRate"/>
+        <result column="status" property="status"/>
+        <result column="process_definition_id" property="processDefinitionId"/>
+        <result column="process_instance_id" property="processInstanceId"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <resultMap id="DetailResultMap" type="com.hrp.common.entity.Budget" extends="BaseResultMap">
+        <result column="subject_name" property="subjectName"/>
+        <result column="item_name" property="itemName"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="DetailResultMap">
+        SELECT b.*, s.subject_name, i.item_name
+        FROM budget b
+        LEFT JOIN budget_subject s ON b.subject_id = s.subject_id
+        LEFT JOIN budget_item i ON b.item_id = i.item_id
+        WHERE b.budget_id = #{id}
+    </select>
+
+    <select id="selectByNo" resultMap="DetailResultMap">
+        SELECT b.*, s.subject_name, i.item_name
+        FROM budget b
+        LEFT JOIN budget_subject s ON b.subject_id = s.subject_id
+        LEFT JOIN budget_item i ON b.item_id = i.item_id
+        WHERE b.budget_no = #{no}
+    </select>
+
+    <select id="selectAll" resultMap="DetailResultMap">
+        SELECT b.*, s.subject_name, i.item_name
+        FROM budget b
+        LEFT JOIN budget_subject s ON b.subject_id = s.subject_id
+        LEFT JOIN budget_item i ON b.item_id = i.item_id
+        ORDER BY b.budget_year DESC, b.budget_no
+    </select>
+
+    <select id="selectByYear" resultMap="DetailResultMap">
+        SELECT b.*, s.subject_name, i.item_name
+        FROM budget b
+        LEFT JOIN budget_subject s ON b.subject_id = s.subject_id
+        LEFT JOIN budget_item i ON b.item_id = i.item_id
+        WHERE b.budget_year = #{year}
+        ORDER BY b.budget_no
+    </select>
+
+    <select id="selectBySubjectId" resultMap="DetailResultMap">
+        SELECT b.*, s.subject_name, i.item_name
+        FROM budget b
+        LEFT JOIN budget_subject s ON b.subject_id = s.subject_id
+        LEFT JOIN budget_item i ON b.item_id = i.item_id
+        WHERE b.subject_id = #{subjectId}
+        ORDER BY b.budget_year DESC, b.budget_no
+    </select>
+
+    <select id="selectByItemId" resultMap="DetailResultMap">
+        SELECT b.*, s.subject_name, i.item_name
+        FROM budget b
+        LEFT JOIN budget_subject s ON b.subject_id = s.subject_id
+        LEFT JOIN budget_item i ON b.item_id = i.item_id
+        WHERE b.item_id = #{itemId}
+        ORDER BY b.budget_year DESC, b.budget_no
+    </select>
+
+    <select id="selectBySubjectAndItem" resultMap="DetailResultMap">
+        SELECT b.*, s.subject_name, i.item_name
+        FROM budget b
+        LEFT JOIN budget_subject s ON b.subject_id = s.subject_id
+        LEFT JOIN budget_item i ON b.item_id = i.item_id
+        WHERE b.subject_id = #{subjectId} AND b.item_id = #{itemId}
+        ORDER BY b.budget_year DESC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.Budget">
+        INSERT INTO budget (budget_no, budget_name, budget_year, budget_period, subject_id, subject_code,
+                           item_id, item_code, budget_amount, occupied_amount, executed_amount, remaining_amount,
+                           execution_rate, status, process_definition_id, process_instance_id, create_user)
+        VALUES (#{budgetNo}, #{budgetName}, #{budgetYear}, #{budgetPeriod}, #{subjectId}, #{subjectCode},
+                #{itemId}, #{itemCode}, #{budgetAmount}, #{occupiedAmount}, #{executedAmount}, #{remainingAmount},
+                #{executionRate}, #{status}, #{processDefinitionId}, #{processInstanceId}, #{createUser})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.Budget">
+        UPDATE budget
+        <set>
+            <if test="budgetName != null">budget_name = #{budgetName},</if>
+            <if test="budgetAmount != null">budget_amount = #{budgetAmount},</if>
+            <if test="occupiedAmount != null">occupied_amount = #{occupiedAmount},</if>
+            <if test="executedAmount != null">executed_amount = #{executedAmount},</if>
+            <if test="remainingAmount != null">remaining_amount = #{remainingAmount},</if>
+            <if test="executionRate != null">execution_rate = #{executionRate},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="processDefinitionId != null">process_definition_id = #{processDefinitionId},</if>
+            <if test="processInstanceId != null">process_instance_id = #{processInstanceId},</if>
+        </set>
+        WHERE budget_id = #{budgetId}
+    </update>
+
+    <update id="updateExecutionAmount">
+        UPDATE budget
+        SET executed_amount = executed_amount + #{amount},
+            remaining_amount = budget_amount - occupied_amount - (executed_amount + #{amount}),
+            execution_rate = ((executed_amount + #{amount}) / budget_amount) * 100
+        WHERE budget_id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM budget WHERE budget_id = #{id}
+    </delete>
+
+</mapper>
+
+
+
+

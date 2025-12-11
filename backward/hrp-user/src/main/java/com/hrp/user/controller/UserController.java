@@ -2,7 +2,9 @@ package com.hrp.user.controller;
 
 import com.hrp.common.entity.Result;
 import com.hrp.common.entity.User;
+import com.hrp.common.entity.UserWithEmployee;
 import com.hrp.user.service.UserService;
+import com.hrp.user.service.UserEmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,6 +20,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserEmployeeService userEmployeeService;
 
     /**
      * 根据ID查询用户
@@ -49,6 +54,24 @@ public class UserController {
     @GetMapping("/list")
     public Result<List<User>> getAll() {
         List<User> list = userService.getAll();
+        return Result.success(list);
+    }
+
+    /**
+     * 查询所有员工（关联用户信息）- 用于用户管理页面
+     */
+    @GetMapping("/employees")
+    public Result<List<UserWithEmployee>> getAllEmployeesWithUser() {
+        List<UserWithEmployee> list = userEmployeeService.getAllEmployeesWithUser();
+        return Result.success(list);
+    }
+
+    /**
+     * 根据工号或姓名查询员工（关联用户信息）
+     */
+    @GetMapping("/employees/search")
+    public Result<List<UserWithEmployee>> searchEmployees(@RequestParam String keyword) {
+        List<UserWithEmployee> list = userEmployeeService.getEmployeesByKeyword(keyword);
         return Result.success(list);
     }
 
@@ -119,4 +142,19 @@ public class UserController {
         }
         return Result.error("密码重置失败");
     }
+
+    /**
+     * 解锁用户（解除账户锁定）
+     */
+    @PutMapping("/unlock/{id}")
+    public Result<String> unlockUser(@PathVariable String id) {
+        boolean success = userService.unlockUser(id);
+        if (success) {
+            return Result.success("解锁成功");
+        }
+        return Result.error("解锁失败");
+    }
 }
+
+
+

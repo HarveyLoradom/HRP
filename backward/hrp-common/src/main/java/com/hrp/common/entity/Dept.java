@@ -18,6 +18,8 @@ public class Dept implements Serializable {
     private Long deptLevel;
     private String deptPhone;
     private Long deptManagerId;
+    private String deptManagerName; // 部门负责人姓名（关联查询）
+    private String deptManagerCode; // 部门负责人工号（关联查询）
     private Long isStop;
     private String createUser;
     private LocalDateTime createTime;

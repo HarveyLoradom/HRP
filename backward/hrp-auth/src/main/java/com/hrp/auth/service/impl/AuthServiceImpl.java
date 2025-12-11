@@ -1,8 +1,10 @@
 package com.hrp.auth.service.impl;
 
+import com.hrp.auth.mapper.CodeMapper;
 import com.hrp.auth.mapper.LoginLogMapper;
 import com.hrp.auth.service.AuthService;
 import com.hrp.auth.service.UserService;
+import com.hrp.common.entity.Code;
 import com.hrp.common.entity.LoginLog;
 import com.hrp.common.entity.User;
 import com.hrp.common.entity.UserLogin;
@@ -24,6 +26,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private LoginLogMapper loginLogMapper;
+
+    @Autowired
+    private CodeMapper codeMapper;
 
     private static final int MAX_LOGIN_FAIL_COUNT = 5; // 最大登录失败次数
     private static final int CAPTCHA_TRIGGER_COUNT = 3; // 触发验证码的失败次数
@@ -108,6 +113,27 @@ public class AuthServiceImpl implements AuthService {
         // 登录成功
         userService.updateLastLoginTime(user.getId());
 
+        // 检查是否需要强制修改密码
+        Code forceChangePasswordCode = codeMapper.selectById("FORCE_CHANGE_PASSWORD");
+        boolean forceChangePasswordEnabled = forceChangePasswordCode != null && 
+                                            "是".equals(forceChangePasswordCode.getCodeValue());
+        
+        // 检查密码是否为初始密码
+        Code resetPasswordCode = codeMapper.selectById("RESET_PASSWORD");
+        String defaultPassword = resetPasswordCode != null ? resetPasswordCode.getCodeValue() : "123456";
+        boolean isDefaultPassword = userService.validatePassword(defaultPassword, user.getPassword());
+
+        // 如果开启了强制修改密码且密码是初始密码，返回需要修改密码的标识
+        if (forceChangePasswordEnabled && isDefaultPassword) {
+            Map<String, Object> result = new HashMap<>();
+            result.put("needChangePassword", true);
+            result.put("message", "检测到您使用的是初始密码，为了账户安全，请先修改密码");
+            result.put("userId", user.getId());
+            result.put("account", user.getAccount());
+            // 不返回token，需要修改密码后才能登录
+            return result;
+        }
+
         // 生成token
         String token = JwtUtil.generateToken(user.getId(), user.getAccount());
 
@@ -122,6 +148,7 @@ public class AuthServiceImpl implements AuthService {
         result.put("username", user.getName());
         result.put("realName", user.getName());
         result.put("needCaptcha", false);
+        result.put("needChangePassword", false);
 
         return result;
     }

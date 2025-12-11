@@ -17,10 +17,16 @@ public class ProcurementRequirement implements Serializable {
     private String requirementName;
     private String requirementType;
     private Long deptId;
+    private String deptCode;
+    private String deptName;
     private Long applicantId;
+    private String applicantCode;
+    private String applicantName;
     private BigDecimal estimatedAmount;
     private String requirementDesc;
-    private String status;
+    private String status; // 状态：DRAFT-草稿，PENDING-待审批，APPROVED-已审批，REJECTED-已拒绝
+    private Long processDefinitionId;
+    private Long processInstanceId;
     private String createUser;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;

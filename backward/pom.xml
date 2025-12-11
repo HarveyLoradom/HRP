@@ -18,6 +18,7 @@
         <module>hrp-menu</module>
         <module>hrp-reimb</module>
         <module>hrp-contract</module>
+        <module>hrp-budg</module>
         <module>hrp-asset</module>
         <module>hrp-hr</module>
         <module>hrp-cost</module>

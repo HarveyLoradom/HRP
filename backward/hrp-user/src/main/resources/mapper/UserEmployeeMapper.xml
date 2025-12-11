@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.user.mapper.UserEmployeeMapper">
+
+    <resultMap id="UserEmployeeResultMap" type="com.hrp.common.entity.UserWithEmployee">
+        <!-- 用户信息 -->
+        <result column="user_id" property="userId"/>
+        <result column="account" property="account"/>
+        <result column="user_name" property="userName"/>
+        <result column="user_type" property="userType"/>
+        <result column="phone" property="phone"/>
+        <result column="is_stop" property="isStop"/>
+        <result column="locked" property="locked"/>
+        <result column="user_create_time" property="createTime"/>
+        <result column="user_update_time" property="updateTime"/>
+        <!-- 员工信息 -->
+        <result column="emp_id" property="empId"/>
+        <result column="emp_code" property="empCode"/>
+        <result column="emp_name" property="empName"/>
+        <result column="emp_sex" property="empSex"/>
+        <result column="emp_phone" property="empPhone"/>
+        <result column="emp_email" property="empEmail"/>
+        <result column="dept_code" property="deptCode"/>
+        <result column="dept_name" property="deptName"/>
+    </resultMap>
+
+    <select id="selectAllEmployeesWithUser" resultMap="UserEmployeeResultMap">
+        SELECT 
+            e.emp_id,
+            e.emp_code,
+            e.emp_name,
+            e.emp_sex,
+            e.emp_phone,
+            e.emp_email,
+            e.dept_code,
+            d.dept_name,
+            u.id as user_id,
+            u.account,
+            u.name as user_name,
+            u.type as user_type,
+            u.phone,
+            u.is_stop,
+            COALESCE(ul.locked, 0) as locked,
+            u.create_time as user_create_time,
+            u.update_time as user_update_time
+        FROM sys_emp e
+        LEFT JOIN sys_dept d ON e.dept_code = d.dept_code
+        LEFT JOIN sys_user u ON e.emp_code = u.account
+        LEFT JOIN sys_user_login ul ON u.id = ul.user_id
+        WHERE e.is_stop = 0
+        ORDER BY e.emp_code ASC
+    </select>
+
+    <select id="selectEmployeesByKeyword" resultMap="UserEmployeeResultMap">
+        SELECT 
+            e.emp_id,
+            e.emp_code,
+            e.emp_name,
+            e.emp_sex,
+            e.emp_phone,
+            e.emp_email,
+            e.dept_code,
+            d.dept_name,
+            u.id as user_id,
+            u.account,
+            u.name as user_name,
+            u.type as user_type,
+            u.phone,
+            u.is_stop,
+            COALESCE(ul.locked, 0) as locked,
+            u.create_time as user_create_time,
+            u.update_time as user_update_time
+        FROM sys_emp e
+        LEFT JOIN sys_dept d ON e.dept_code = d.dept_code
+        LEFT JOIN sys_user u ON e.emp_code = u.account
+        LEFT JOIN sys_user_login ul ON u.id = ul.user_id
+        WHERE e.is_stop = 0
+        AND (e.emp_code LIKE CONCAT('%', #{keyword}, '%') 
+             OR e.emp_name LIKE CONCAT('%', #{keyword}, '%'))
+        ORDER BY e.emp_code ASC
+    </select>
+
+</mapper>
+

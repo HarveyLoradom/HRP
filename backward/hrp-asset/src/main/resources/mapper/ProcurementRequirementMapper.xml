@@ -8,10 +8,16 @@
         <result column="requirement_name" property="requirementName"/>
         <result column="requirement_type" property="requirementType"/>
         <result column="dept_id" property="deptId"/>
+        <result column="dept_code" property="deptCode"/>
+        <result column="dept_name" property="deptName"/>
         <result column="applicant_id" property="applicantId"/>
+        <result column="applicant_code" property="applicantCode"/>
+        <result column="applicant_name" property="applicantName"/>
         <result column="estimated_amount" property="estimatedAmount"/>
         <result column="requirement_desc" property="requirementDesc"/>
         <result column="status" property="status"/>
+        <result column="process_definition_id" property="processDefinitionId"/>
+        <result column="process_instance_id" property="processInstanceId"/>
         <result column="create_user" property="createUser"/>
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
@@ -25,24 +31,49 @@
         SELECT * FROM procurement_requirement WHERE status = #{status} ORDER BY create_time DESC
     </select>
 
+    <select id="selectByApplicant" resultMap="BaseResultMap">
+        SELECT * FROM procurement_requirement WHERE applicant_id = #{applicantId} ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByApprover" resultMap="BaseResultMap">
+        SELECT DISTINCT r.* FROM procurement_requirement r
+        INNER JOIN wf_process_instance pi ON r.process_instance_id = pi.instance_id
+        INNER JOIN wf_process_task pt ON pi.instance_id = pt.instance_id
+        WHERE pt.assignee_user_id = #{approverId}
+        AND pt.task_status = 'PENDING'
+        AND r.status = 'PENDING'
+        ORDER BY r.create_time DESC
+    </select>
+
     <select id="selectAll" resultMap="BaseResultMap">
         SELECT * FROM procurement_requirement ORDER BY create_time DESC
     </select>
 
-    <insert id="insert" parameterType="com.hrp.common.entity.ProcurementRequirement">
-        INSERT INTO procurement_requirement (requirement_no, requirement_name, requirement_type, dept_id,
-                                            applicant_id, estimated_amount, requirement_desc, status, create_user)
-        VALUES (#{requirementNo}, #{requirementName}, #{requirementType}, #{deptId},
-                #{applicantId}, #{estimatedAmount}, #{requirementDesc}, #{status}, #{createUser})
+    <insert id="insert" parameterType="com.hrp.common.entity.ProcurementRequirement" useGeneratedKeys="true" keyProperty="requirementId">
+        INSERT INTO procurement_requirement (requirement_no, requirement_name, requirement_type, dept_id, dept_code, dept_name,
+                                            applicant_id, applicant_code, applicant_name, estimated_amount, requirement_desc, 
+                                            status, process_definition_id, process_instance_id, create_user)
+        VALUES (#{requirementNo}, #{requirementName}, #{requirementType}, #{deptId}, #{deptCode}, #{deptName},
+                #{applicantId}, #{applicantCode}, #{applicantName}, #{estimatedAmount}, #{requirementDesc}, 
+                #{status}, #{processDefinitionId}, #{processInstanceId}, #{createUser})
     </insert>
 
     <update id="updateById" parameterType="com.hrp.common.entity.ProcurementRequirement">
         UPDATE procurement_requirement
         <set>
             <if test="requirementName != null">requirement_name = #{requirementName},</if>
+            <if test="requirementType != null">requirement_type = #{requirementType},</if>
+            <if test="deptId != null">dept_id = #{deptId},</if>
+            <if test="deptCode != null">dept_code = #{deptCode},</if>
+            <if test="deptName != null">dept_name = #{deptName},</if>
+            <if test="applicantId != null">applicant_id = #{applicantId},</if>
+            <if test="applicantCode != null">applicant_code = #{applicantCode},</if>
+            <if test="applicantName != null">applicant_name = #{applicantName},</if>
             <if test="estimatedAmount != null">estimated_amount = #{estimatedAmount},</if>
             <if test="requirementDesc != null">requirement_desc = #{requirementDesc},</if>
             <if test="status != null">status = #{status},</if>
+            <if test="processDefinitionId != null">process_definition_id = #{processDefinitionId},</if>
+            <if test="processInstanceId != null">process_instance_id = #{processInstanceId},</if>
         </set>
         WHERE requirement_id = #{requirementId}
     </update>

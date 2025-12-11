@@ -16,6 +16,8 @@
         <result column="status" property="status"/>
         <result column="dept_id" property="deptId"/>
         <result column="manager_id" property="managerId"/>
+        <result column="process_definition_id" property="processDefinitionId"/>
+        <result column="process_instance_id" property="processInstanceId"/>
         <result column="remark" property="remark"/>
         <result column="create_user" property="createUser"/>
         <result column="create_time" property="createTime"/>
@@ -23,28 +25,54 @@
     </resultMap>
 
     <select id="selectById" resultMap="BaseResultMap">
-        SELECT * FROM pact_main WHERE pact_id = #{id}
+        SELECT pact_id, contract_no, contract_name, contract_type, party_a, party_b,
+               contract_amount, sign_date, start_date, end_date, status,
+               dept_id, manager_id, process_definition_id, process_instance_id,
+               remark, create_user, create_time, update_time
+        FROM pact_main WHERE pact_id = #{id}
     </select>
 
     <select id="selectByContractNo" resultMap="BaseResultMap">
-        SELECT * FROM pact_main WHERE contract_no = #{contractNo}
+        SELECT pact_id, contract_no, contract_name, contract_type, party_a, party_b,
+               contract_amount, sign_date, start_date, end_date, status,
+               dept_id, manager_id, process_definition_id, process_instance_id,
+               remark, create_user, create_time, update_time
+        FROM pact_main WHERE contract_no = #{contractNo}
     </select>
 
     <select id="selectByStatus" resultMap="BaseResultMap">
-        SELECT * FROM pact_main WHERE status = #{status} ORDER BY create_time DESC
+        SELECT pact_id, contract_no, contract_name, contract_type, party_a, party_b,
+               contract_amount, sign_date, start_date, end_date, status,
+               dept_id, manager_id, process_definition_id, process_instance_id,
+               remark, create_user, create_time, update_time
+        FROM pact_main WHERE status = #{status} ORDER BY create_time DESC
     </select>
 
     <select id="selectAll" resultMap="BaseResultMap">
-        SELECT * FROM pact_main ORDER BY create_time DESC
+        SELECT pact_id, contract_no, contract_name, contract_type, party_a, party_b,
+               contract_amount, sign_date, start_date, end_date, status,
+               dept_id, manager_id, process_definition_id, process_instance_id,
+               remark, create_user, create_time, update_time
+        FROM pact_main ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByApprover" resultMap="BaseResultMap">
+        SELECT DISTINCT p.* FROM pact_main p
+        INNER JOIN wf_process_instance pi ON p.process_instance_id = pi.instance_id
+        INNER JOIN wf_process_task pt ON pi.instance_id = pt.instance_id
+        WHERE pt.assignee_user_id = #{userId}
+        AND pt.task_status = 'PENDING'
+        AND p.status = 'PENDING'
+        ORDER BY p.create_time DESC
     </select>
 
     <insert id="insert" parameterType="com.hrp.common.entity.PactMain">
         INSERT INTO pact_main (contract_no, contract_name, contract_type, party_a, party_b,
                              contract_amount, sign_date, start_date, end_date, status,
-                             dept_id, manager_id, remark, create_user)
+                             dept_id, manager_id, process_definition_id, process_instance_id, remark, create_user)
         VALUES (#{contractNo}, #{contractName}, #{contractType}, #{partyA}, #{partyB},
                 #{contractAmount}, #{signDate}, #{startDate}, #{endDate}, #{status},
-                #{deptId}, #{managerId}, #{remark}, #{createUser})
+                #{deptId}, #{managerId}, #{processDefinitionId}, #{processInstanceId}, #{remark}, #{createUser})
     </insert>
 
     <update id="updateById" parameterType="com.hrp.common.entity.PactMain">
@@ -59,6 +87,8 @@
             <if test="startDate != null">start_date = #{startDate},</if>
             <if test="endDate != null">end_date = #{endDate},</if>
             <if test="status != null">status = #{status},</if>
+            <if test="processDefinitionId != null">process_definition_id = #{processDefinitionId},</if>
+            <if test="processInstanceId != null">process_instance_id = #{processInstanceId},</if>
             <if test="remark != null">remark = #{remark},</if>
         </set>
         WHERE pact_id = #{pactId}

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.reimb.mapper.CtrlPayoutApprovalMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.CtrlPayoutApproval">
+        <id column="approval_id" property="approvalId"/>
+        <result column="payout_id" property="payoutId"/>
+        <result column="approver_id" property="approverId"/>
+        <result column="approver_code" property="approverCode"/>
+        <result column="approver_name" property="approverName"/>
+        <result column="approval_type" property="approvalType"/>
+        <result column="approval_opinion" property="approvalOpinion"/>
+        <result column="approval_time" property="approvalTime"/>
+        <result column="task_id" property="taskId"/>
+        <result column="task_name" property="taskName"/>
+        <result column="sort_order" property="sortOrder"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM ctrl_payout_approval WHERE approval_id = #{id}
+    </select>
+
+    <select id="selectByPayoutId" resultMap="BaseResultMap">
+        SELECT * FROM ctrl_payout_approval WHERE payout_id = #{payoutId} ORDER BY sort_order, approval_time
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.CtrlPayoutApproval">
+        INSERT INTO ctrl_payout_approval (payout_id, approver_id, approver_code, approver_name, approval_type,
+                                         approval_opinion, approval_time, task_id, task_name, sort_order)
+        VALUES (#{payoutId}, #{approverId}, #{approverCode}, #{approverName}, #{approvalType},
+                #{approvalOpinion}, #{approvalTime}, #{taskId}, #{taskName}, #{sortOrder})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.CtrlPayoutApproval">
+        UPDATE ctrl_payout_approval
+        <set>
+            <if test="approvalOpinion != null">approval_opinion = #{approvalOpinion},</if>
+            <if test="approvalTime != null">approval_time = #{approvalTime},</if>
+        </set>
+        WHERE approval_id = #{approvalId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM ctrl_payout_approval WHERE approval_id = #{id}
+    </delete>
+
+</mapper>
+
+
+
+

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.asset.mapper.ProcurementRequirementApprovalMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.ProcurementRequirementApproval">
+        <id column="approval_id" property="approvalId"/>
+        <result column="requirement_id" property="requirementId"/>
+        <result column="approver_id" property="approverId"/>
+        <result column="approver_code" property="approverCode"/>
+        <result column="approver_name" property="approverName"/>
+        <result column="approval_type" property="approvalType"/>
+        <result column="approval_opinion" property="approvalOpinion"/>
+        <result column="approval_time" property="approvalTime"/>
+        <result column="task_id" property="taskId"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM procurement_requirement_approval WHERE approval_id = #{id}
+    </select>
+
+    <select id="selectByRequirementId" resultMap="BaseResultMap">
+        SELECT * FROM procurement_requirement_approval WHERE requirement_id = #{requirementId} ORDER BY approval_time
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.ProcurementRequirementApproval" useGeneratedKeys="true" keyProperty="approvalId">
+        INSERT INTO procurement_requirement_approval (requirement_id, approver_id, approver_code, approver_name,
+                                                      approval_type, approval_opinion, approval_time, task_id)
+        VALUES (#{requirementId}, #{approverId}, #{approverCode}, #{approverName},
+                #{approvalType}, #{approvalOpinion}, #{approvalTime}, #{taskId})
+    </insert>
+
+</mapper>

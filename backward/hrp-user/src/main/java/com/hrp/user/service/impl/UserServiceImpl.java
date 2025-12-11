@@ -1,8 +1,10 @@
 package com.hrp.user.service.impl;
 
 import com.hrp.auth.mapper.UserMapper;
+import com.hrp.auth.mapper.UserLoginMapper;
 import com.hrp.common.entity.Code;
 import com.hrp.common.entity.User;
+import com.hrp.common.entity.UserLogin;
 import com.hrp.common.util.PasswordUtil;
 import com.hrp.common.util.UuidUtil;
 import com.hrp.user.service.CodeService;
@@ -112,4 +114,20 @@ public class UserServiceImpl implements UserService {
         
         return userMapper.updateById(user) > 0;
     }
+
+    @Override
+    @Transactional
+    public boolean unlockUser(String id) {
+        UserLogin userLogin = userLoginMapper.selectByUserId(id);
+        if (userLogin == null) {
+            return false;
+        }
+        userLogin.setLocked(0);
+        userLogin.setLoginFailCount(0);
+        userLogin.setLockTime(null);
+        return userLoginMapper.updateById(userLogin) > 0;
+    }
 }
+
+
+

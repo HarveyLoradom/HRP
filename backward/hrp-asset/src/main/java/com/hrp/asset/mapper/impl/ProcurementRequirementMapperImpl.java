@@ -25,6 +25,16 @@ public class ProcurementRequirementMapperImpl implements ProcurementRequirementM
     }
 
     @Override
+    public List<ProcurementRequirement> selectByApplicant(Long applicantId) {
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectByApplicant", applicantId);
+    }
+
+    @Override
+    public List<ProcurementRequirement> selectByApprover(String approverId) {
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectByApprover", approverId);
+    }
+
+    @Override
     public List<ProcurementRequirement> selectAll() {
         return sqlSessionTemplate.selectList(NAMESPACE + ".selectAll");
     }

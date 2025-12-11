@@ -23,3 +23,6 @@ public interface UserMenuMapper {
      */
     int batchInsert(@Param("userId") String userId, @Param("menuIds") List<Long> menuIds);
 }
+
+
+

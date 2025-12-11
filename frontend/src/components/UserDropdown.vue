@@ -109,8 +109,9 @@ export default {
 .user-dropdown-menu .el-dropdown-menu__item i {
   margin-right: 8px;
   width: 16px;
-  text-align: left;
+  text-align: center;
   font-size: 16px;
+  flex-shrink: 0;
 }
 
 .user-dropdown-menu .el-dropdown-menu__item span {

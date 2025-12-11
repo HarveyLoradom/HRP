@@ -53,11 +53,21 @@ const routes = [
         name: 'SystemParams',
         component: () => import('../views/system/SystemParams.vue')
       },
-      // 系统平台 - 业务平台（占位）
+      // 系统平台 - 业务平台
       {
-        path: '/hrp/system/business',
-        name: 'BusinessPlatform',
-        component: () => import('../views/system/BusinessPlatform.vue')
+        path: '/hrp/business/process-definition',
+        name: 'ProcessDefinition',
+        component: () => import('../views/business/ProcessDefinition.vue')
+      },
+      {
+        path: '/hrp/business/process-task',
+        name: 'ProcessTask',
+        component: () => import('../views/business/ProcessTask.vue')
+      },
+      {
+        path: '/hrp/business/process-instance',
+        name: 'ProcessInstance',
+        component: () => import('../views/business/ProcessInstance.vue')
       },
       // 旧路由（保留兼容）
       {
@@ -65,19 +75,36 @@ const routes = [
         name: 'RoleManagement',
         component: () => import('../views/system/RoleManagement.vue')
       },
-      // 智能报账
+      // 智能报账 - 业务办理
       {
         path: '/hrp/reimb/my-apply',
         name: 'MyReimbApply',
         component: () => import('../views/reimb/MyReimbApply.vue')
       },
       {
-        path: '/hrp/reimb/approval',
+        path: '/hrp/reimb/my-payout',
+        name: 'MyReimbPayout',
+        component: () => import('../views/reimb/MyReimbPayout.vue')
+      },
+      // 智能报账 - 业务审批
+      {
+        path: '/hrp/reimb/apply-approval',
+        name: 'ApplyApproval',
+        component: () => import('../views/reimb/ApplyApproval.vue')
+      },
+      {
+        path: '/hrp/reimb/payout-approval',
         name: 'ReimbApproval',
         component: () => import('../views/reimb/ReimbApproval.vue')
       },
+      // 智能报账 - 财务处理
       {
-        path: '/hrp/reimb/query',
+        path: '/hrp/reimb/apply-query',
+        name: 'ApplyQuery',
+        component: () => import('../views/reimb/ApplyQuery.vue')
+      },
+      {
+        path: '/hrp/reimb/payout-query',
         name: 'ReimbQuery',
         component: () => import('../views/reimb/ReimbQuery.vue')
       },
@@ -101,6 +128,17 @@ const routes = [
         path: '/hrp/contract/execution',
         name: 'ContractExecution',
         component: () => import('../views/contract/ContractExecution.vue')
+      },
+      // 预算管理 - 预算基础设置
+      {
+        path: '/hrp/budg/subject',
+        name: 'BudgetSubject',
+        component: () => import('../views/budg/BudgetSubject.vue')
+      },
+      {
+        path: '/hrp/budg/item',
+        name: 'BudgetItem',
+        component: () => import('../views/budg/BudgetItem.vue')
       },
       // 固定资产
       {
@@ -170,6 +208,49 @@ const routes = [
         path: '/hrp/efficiency/investment',
         name: 'InvestmentReturnAnalysis',
         component: () => import('../views/efficiency/InvestmentReturnAnalysis.vue')
+      },
+      // 固定资产 - 业务审批
+      {
+        path: '/hrp/asset/approval/transfer',
+        name: 'AssetApprovalTransfer',
+        component: () => import('../views/asset/AssetApproval.vue')
+      },
+      {
+        path: '/hrp/asset/approval/disposal',
+        name: 'AssetApprovalDisposal',
+        component: () => import('../views/asset/AssetApproval.vue')
+      },
+      {
+        path: '/hrp/asset/approval/inventory',
+        name: 'AssetApprovalInventory',
+        component: () => import('../views/asset/AssetApproval.vue')
+      },
+      {
+        path: '/hrp/asset/approval/change',
+        name: 'AssetApprovalChange',
+        component: () => import('../views/asset/AssetApproval.vue')
+      },
+      // 固定资产 - 采购需求
+      {
+        path: '/hrp/asset/procurement/apply',
+        name: 'ProcurementApply',
+        component: () => import('../views/asset/ProcurementApply.vue')
+      },
+      {
+        path: '/hrp/asset/procurement/approval',
+        name: 'ProcurementApproval',
+        component: () => import('../views/asset/ProcurementApproval.vue')
+      },
+      // 固定资产 - 综合查询
+      {
+        path: '/hrp/asset/query/asset',
+        name: 'AssetQuery',
+        component: () => import('../views/asset/AssetQuery.vue')
+      },
+      {
+        path: '/hrp/asset/query/procurement',
+        name: 'ProcurementQuery',
+        component: () => import('../views/asset/ProcurementQuery.vue')
       }
     ]
   }

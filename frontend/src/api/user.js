@@ -53,6 +53,11 @@ export const updateUser = (data) => request.put('/user/user/update', data)
 export const deleteUser = (id) => request.delete(`/user/user/${id}`)
 export const toggleUserStatus = (id) => request.put(`/user/user/toggle-status/${id}`)
 export const resetUserPassword = (id) => request.put(`/user/user/reset-password/${id}`)
+export const unlockUser = (id) => request.put(`/user/user/unlock/${id}`)
+
+// 用户管理（显示所有员工）
+export const getAllEmployeesWithUser = () => request.get('/user/user/employees')
+export const searchEmployees = (keyword) => request.get(`/user/user/employees/search?keyword=${keyword}`)
 
 // 职工管理
 export const getEmployeeList = () => request.get('/user/employee/list')

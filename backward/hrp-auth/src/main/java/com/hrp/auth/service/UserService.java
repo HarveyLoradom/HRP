@@ -51,5 +51,10 @@ public interface UserService {
      * 修改密码
      */
     boolean changePassword(String userId, String oldPassword, String newPassword);
+
+    /**
+     * 强制修改密码（不需要原密码）
+     */
+    boolean forceChangePassword(String userId, String newPassword);
 }
 

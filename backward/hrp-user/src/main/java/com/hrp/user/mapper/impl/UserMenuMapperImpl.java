@@ -40,3 +40,6 @@ public class UserMenuMapperImpl implements UserMenuMapper {
         return sqlSessionTemplate.insert(NAMESPACE + ".batchInsert", params);
     }
 }
+
+
+

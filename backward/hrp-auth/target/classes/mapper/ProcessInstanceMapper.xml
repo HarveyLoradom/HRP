@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.auth.mapper.ProcessInstanceMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.ProcessInstance">
+        <id column="instance_id" property="instanceId"/>
+        <result column="process_definition_id" property="processDefinitionId"/>
+        <result column="business_key" property="businessKey"/>
+        <result column="business_type" property="businessType"/>
+        <result column="business_id" property="businessId"/>
+        <result column="process_status" property="processStatus"/>
+        <result column="start_user_id" property="startUserId"/>
+        <result column="start_user_name" property="startUserName"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="duration" property="duration"/>
+        <result column="remark" property="remark"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM wf_process_instance WHERE instance_id = #{instanceId}
+    </select>
+
+    <select id="selectByBusinessKey" resultMap="BaseResultMap">
+        SELECT * FROM wf_process_instance WHERE business_key = #{businessKey}
+        ORDER BY start_time DESC LIMIT 1
+    </select>
+
+    <select id="selectByBusiness" resultMap="BaseResultMap">
+        SELECT * FROM wf_process_instance 
+        WHERE business_type = #{businessType} AND business_id = #{businessId}
+        ORDER BY start_time DESC LIMIT 1
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM wf_process_instance
+        ORDER BY start_time DESC
+    </select>
+
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT * FROM wf_process_instance WHERE process_status = #{processStatus}
+        ORDER BY start_time DESC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.ProcessInstance">
+        INSERT INTO wf_process_instance (process_definition_id, business_key, business_type, business_id, process_status, start_user_id, start_user_name, start_time, remark)
+        VALUES (#{processDefinitionId}, #{businessKey}, #{businessType}, #{businessId}, #{processStatus}, #{startUserId}, #{startUserName}, NOW(), #{remark})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.ProcessInstance">
+        UPDATE wf_process_instance
+        <set>
+            <if test="processStatus != null">process_status = #{processStatus},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="duration != null">duration = #{duration},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE instance_id = #{instanceId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM wf_process_instance WHERE instance_id = #{instanceId}
+    </delete>
+
+</mapper>

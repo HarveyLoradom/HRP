@@ -11,7 +11,7 @@
         :menu="child"
       />
     </el-submenu>
-    <el-menu-item v-else :index="getMenuPath(menu)">
+    <el-menu-item v-else :index="getMenuPath(menu)" @click="handleMenuClick(menu)">
       <i :class="menu.icon || 'el-icon-menu'"></i>
       <span slot="title">{{ menu.menuName }}</span>
     </el-menu-item>
@@ -34,6 +34,14 @@ export default {
         return menu.path.startsWith('/') ? menu.path : `/hrp/${menu.path}`
       }
       return String(menu.id)
+    },
+    handleMenuClick(menu) {
+      // 如果是目录类型（menu_type=1）且没有实际组件，不进行路由跳转
+      if (menu.menuType === 1 && (!menu.component || menu.component === 'Layout' || menu.component === '')) {
+        // 目录类型的菜单不跳转，只是分组
+        return
+      }
+      // 其他情况由el-menu的router属性自动处理
     }
   }
 }

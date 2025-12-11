@@ -166,5 +166,24 @@ public class UserServiceImpl implements UserService {
         // 更新密码
         return userMapper.updateById(user) > 0;
     }
+
+    /**
+     * 强制修改密码（不需要原密码）
+     */
+    @Override
+    @Transactional
+    public boolean forceChangePassword(String userId, String newPassword) {
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            return false;
+        }
+
+        // 加密新密码
+        String encodedNewPassword = PasswordUtil.encode(newPassword);
+        user.setPassword(encodedNewPassword);
+        
+        // 更新密码
+        return userMapper.updateById(user) > 0;
+    }
 }
 

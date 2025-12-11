@@ -21,3 +21,11 @@ export function getCaptcha() {
     method: 'get'
   })
 }
+
+export function forceChangePassword(data) {
+  return request({
+    url: '/auth/password/force-change',
+    method: 'post',
+    data
+  })
+}

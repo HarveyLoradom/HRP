@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.budg.mapper.BudgetItemMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.BudgetItem">
+        <id column="item_id" property="itemId"/>
+        <result column="item_code" property="itemCode"/>
+        <result column="item_name" property="itemName"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="category_code" property="categoryCode"/>
+        <result column="account_subject" property="accountSubject"/>
+        <result column="is_centralized" property="isCentralized"/>
+        <result column="allow_adjust" property="allowAdjust"/>
+        <result column="item_desc" property="itemDesc"/>
+        <result column="is_stop" property="isStop"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM budget_item WHERE item_id = #{id}
+    </select>
+
+    <select id="selectByCode" resultMap="BaseResultMap">
+        SELECT * FROM budget_item WHERE item_code = #{code}
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM budget_item WHERE is_stop = 0 ORDER BY item_code
+    </select>
+
+    <select id="selectByCategoryId" resultMap="BaseResultMap">
+        SELECT * FROM budget_item WHERE category_id = #{categoryId} AND is_stop = 0 ORDER BY item_code
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.BudgetItem">
+        INSERT INTO budget_item (item_code, item_name, category_id, category_code, account_subject,
+                               is_centralized, allow_adjust, item_desc, is_stop, create_user)
+        VALUES (#{itemCode}, #{itemName}, #{categoryId}, #{categoryCode}, #{accountSubject},
+                #{isCentralized}, #{allowAdjust}, #{itemDesc}, #{isStop}, #{createUser})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.BudgetItem">
+        UPDATE budget_item
+        <set>
+            <if test="itemName != null">item_name = #{itemName},</if>
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="categoryCode != null">category_code = #{categoryCode},</if>
+            <if test="accountSubject != null">account_subject = #{accountSubject},</if>
+            <if test="isCentralized != null">is_centralized = #{isCentralized},</if>
+            <if test="allowAdjust != null">allow_adjust = #{allowAdjust},</if>
+            <if test="itemDesc != null">item_desc = #{itemDesc},</if>
+            <if test="isStop != null">is_stop = #{isStop},</if>
+        </set>
+        WHERE item_id = #{itemId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM budget_item WHERE item_id = #{id}
+    </delete>
+
+</mapper>
+
+
+
+

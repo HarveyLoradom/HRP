@@ -103,6 +103,30 @@ public class AuthController {
     }
 
     /**
+     * 强制修改密码（不需要原密码，用于初始密码修改）
+     */
+    @PostMapping("/password/force-change")
+    public Result<Void> forceChangePassword(@RequestBody Map<String, String> params) {
+        String userId = params.get("userId");
+        String newPassword = params.get("newPassword");
+
+        if (userId == null || newPassword == null) {
+            return Result.error("参数不完整");
+        }
+
+        if (newPassword.length() < 6 || newPassword.length() > 20) {
+            return Result.error("新密码长度必须在6-20位之间");
+        }
+
+        boolean success = userService.forceChangePassword(userId, newPassword);
+        if (success) {
+            return Result.success();
+        } else {
+            return Result.error("修改密码失败");
+        }
+    }
+
+    /**
      * 获取客户端IP
      */
     private String getClientIp(HttpServletRequest request) {

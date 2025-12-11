@@ -12,6 +12,12 @@
         <el-table-column prop="superDeptCode" label="上级部门编码" width="120"></el-table-column>
         <el-table-column prop="deptLevel" label="部门级别" width="100"></el-table-column>
         <el-table-column prop="deptPhone" label="部门电话" width="120"></el-table-column>
+        <el-table-column label="部门负责人" width="150">
+          <template slot-scope="scope">
+            <span v-if="scope.row.deptManagerName">{{ scope.row.deptManagerName }}({{ scope.row.deptManagerCode }})</span>
+            <span v-else style="color: #999;">未设置</span>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="200">
           <template slot-scope="scope">
             <el-button size="mini" @click="handleEdit(scope.row)">编辑</el-button>
@@ -39,6 +45,20 @@
         <el-form-item label="部门电话" prop="deptPhone">
           <el-input v-model="form.deptPhone"></el-input>
         </el-form-item>
+        <el-form-item label="部门负责人" prop="deptManagerId">
+          <el-autocomplete
+            v-model="form.deptManagerCode"
+            :fetch-suggestions="searchEmployee"
+            placeholder="请输入工号或姓名搜索"
+            value-key="empCode"
+            @select="handleEmployeeSelect"
+            style="width: 100%"
+          >
+            <template slot-scope="{ item }">
+              <div>{{ item.empCode }} - {{ item.empName }}</div>
+            </template>
+          </el-autocomplete>
+        </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -49,13 +69,14 @@
 </template>
 
 <script>
-import { getDeptList, saveDept, updateDept, deleteDept } from '@/api/user'
+import { getDeptList, saveDept, updateDept, deleteDept, getEmployeeList, getEmployeeByCode } from '@/api/user'
 
 export default {
   name: 'DeptManagement',
   data() {
     return {
       tableData: [],
+      employeeList: [],
       dialogVisible: false,
       dialogTitle: '新增部门',
       isEdit: false,
@@ -65,7 +86,9 @@ export default {
         deptName: '',
         superDeptCode: '',
         deptLevel: 1,
-        deptPhone: ''
+        deptPhone: '',
+        deptManagerId: null,
+        deptManagerCode: ''
       },
       rules: {
         deptCode: [{ required: true, message: '请输入部门编码', trigger: 'blur' }],
@@ -75,8 +98,31 @@ export default {
   },
   mounted() {
     this.loadData()
+    this.loadEmployeeList()
   },
   methods: {
+    loadEmployeeList() {
+      getEmployeeList().then(response => {
+        if (response.code === 200) {
+          this.employeeList = response.data || []
+        }
+      })
+    },
+    searchEmployee(queryString, cb) {
+      const results = this.employeeList.filter(emp => {
+        return (emp.empCode && emp.empCode.includes(queryString)) ||
+               (emp.empName && emp.empName.includes(queryString))
+      }).map(emp => ({
+        empCode: emp.empCode,
+        empName: emp.empName,
+        empId: emp.empId
+      }))
+      cb(results)
+    },
+    handleEmployeeSelect(item) {
+      this.form.deptManagerId = item.empId
+      this.form.deptManagerCode = item.empCode
+    },
     loadData() {
       getDeptList().then(response => {
         if (response.code === 200) {
@@ -93,14 +139,25 @@ export default {
         deptName: '',
         superDeptCode: '',
         deptLevel: 1,
-        deptPhone: ''
+        deptPhone: '',
+        deptManagerId: null,
+        deptManagerCode: ''
       }
       this.dialogVisible = true
     },
     handleEdit(row) {
       this.dialogTitle = '编辑部门'
       this.isEdit = true
-      this.form = { ...row }
+      this.form = {
+        deptId: row.deptId,
+        deptCode: row.deptCode,
+        deptName: row.deptName,
+        superDeptCode: row.superDeptCode,
+        deptLevel: row.deptLevel,
+        deptPhone: row.deptPhone,
+        deptManagerId: row.deptManagerId,
+        deptManagerCode: row.deptManagerCode || ''
+      }
       this.dialogVisible = true
     },
     handleDelete(row) {

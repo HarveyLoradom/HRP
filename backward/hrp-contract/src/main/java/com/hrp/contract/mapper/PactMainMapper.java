@@ -10,6 +10,7 @@ public interface PactMainMapper {
     PactMain selectByContractNo(@Param("contractNo") String contractNo);
     List<PactMain> selectByStatus(@Param("status") String status);
     List<PactMain> selectAll();
+    List<PactMain> selectByApprover(@Param("userId") String userId);
     int insert(PactMain pactMain);
     int updateById(PactMain pactMain);
     int deleteById(@Param("id") Long id);
