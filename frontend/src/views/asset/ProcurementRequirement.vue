@@ -5,7 +5,7 @@
         <span>采购需求</span>
         <el-button style="float: right" type="primary" @click="handleAdd">新增需求</el-button>
       </div>
-      <el-table :data="tableData" border>
+      <el-table :data="paginatedData" border v-loading="loading">
         <el-table-column prop="requirementNo" label="需求单号" width="150"></el-table-column>
         <el-table-column prop="requirementName" label="需求名称" width="200"></el-table-column>
         <el-table-column prop="estimatedAmount" label="预估金额" width="120">
@@ -18,28 +18,67 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination-container" style="margin-top: 20px; text-align: right;">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="pagination.page"
+          :page-sizes="[10, 20, 50, 100]"
+          :page-size="pagination.size"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="pagination.total">
+        </el-pagination>
+      </div>
     </el-card>
   </div>
 </template>
 
 <script>
 import { getAllProcurements, saveProcurement } from '@/api/asset'
+import { paginationMixin } from '@/mixins/pagination'
 
 export default {
   name: 'ProcurementRequirement',
+  mixins: [paginationMixin],
   data() {
-    return { tableData: [] }
+    return {
+      loading: false,
+      tableData: [],
+      allData: []
+    }
+  },
+  computed: {
+    paginatedData() {
+      const start = (this.pagination.page - 1) * this.pagination.size
+      const end = start + this.pagination.size
+      return this.tableData.slice(start, end)
+    }
   },
   mounted() {
     this.loadData()
   },
   methods: {
     loadData() {
+      this.loading = true
       getAllProcurements().then(response => {
         if (response.code === 200) {
-          this.tableData = response.data
+          this.allData = response.data || []
+          this.tableData = this.allData
+          this.pagination.total = this.tableData.length
+          this.pagination.page = 1
         }
+        this.loading = false
+      }).catch(() => {
+        this.loading = false
       })
+    },
+    handleSizeChange(val) {
+      this.pagination.size = val
+      this.pagination.page = 1
+    },
+    handleCurrentChange(val) {
+      this.pagination.page = val
     },
     handleAdd() {
       this.$message.info('新增需求功能待实现')

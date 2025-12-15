@@ -48,10 +48,17 @@ const actions = {
         commit('REMOVE_TOKEN')
         commit('REMOVE_USER_INFO')
         resolve()
-      }).catch(() => {
+      }).catch((error) => {
+        // 即使后端服务不可用，也要清除本地状态
         commit('REMOVE_TOKEN')
         commit('REMOVE_USER_INFO')
-        resolve()
+        // 如果是连接错误，静默处理（不显示错误）
+        if (error.message && error.message.includes('无法连接到服务器')) {
+          resolve()
+        } else {
+          // 其他错误也静默处理，确保能退出登录
+          resolve()
+        }
       })
     })
   }

@@ -6,7 +6,8 @@ USE hrp_db;
 -- 插入系统参数（原始密码）
 INSERT INTO `sys_code` (`id`, `code_type`, `code_type_name`, `code_value`, `code_name`, `is_stop`, `create_user`) VALUES
 ('RESET_PASSWORD', 'SYSTEM_PARAM', '系统参数', '123456', '原始密码', 0, 'SYSTEM'),
-('FORCE_CHANGE_PASSWORD', 'SYSTEM_PARAM', '系统参数', '否', '强制修改密码', 0, 'SYSTEM')
+('FORCE_CHANGE_PASSWORD', 'SYSTEM_PARAM', '系统参数', '否', '强制修改密码', 0, 'SYSTEM'),
+('LOGIN_LOG_RETAIN_DAYS', 'SYSTEM_PARAM', '系统参数', '90', '登录日志保留天数', 0, 'SYSTEM')
 ON DUPLICATE KEY UPDATE 
     code_type_name = VALUES(code_type_name),
     code_name = VALUES(code_name),
@@ -18,6 +19,15 @@ INSERT INTO `sys_code` (`id`, `code_type`, `code_type_name`, `code_value`, `code
 (UUID(), 'PROCESS_TYPE', '流程类型', 'PAYOUT', '报账审批', 0, 'SYSTEM'),
 (UUID(), 'PROCESS_TYPE', '流程类型', 'CONTRACT', '合同审批', 0, 'SYSTEM'),
 (UUID(), 'PROCESS_TYPE', '流程类型', 'BUDGET', '预算审批', 0, 'SYSTEM'),
+(UUID(), 'PROCESS_TYPE', '流程类型', 'ASSET', '资产审批', 0, 'SYSTEM'),
+(UUID(), 'PROCESS_TYPE', '流程类型', 'PROCUREMENT', '采购审批', 0, 'SYSTEM'),
+-- 打印模板类型
+(UUID(), 'PRINT_TEMPLATE_TYPE', '打印模板类型', 'APPLY', '申请单', 0, 'SYSTEM'),
+(UUID(), 'PRINT_TEMPLATE_TYPE', '打印模板类型', 'PAYOUT', '报账单', 0, 'SYSTEM'),
+(UUID(), 'PRINT_TEMPLATE_TYPE', '打印模板类型', 'CONTRACT', '合同', 0, 'SYSTEM'),
+(UUID(), 'PRINT_TEMPLATE_TYPE', '打印模板类型', 'ASSET', '资产审批', 0, 'SYSTEM'),
+(UUID(), 'PRINT_TEMPLATE_TYPE', '打印模板类型', 'PROCUREMENT', '采购审批', 0, 'SYSTEM'),
+(UUID(), 'PRINT_TEMPLATE_TYPE', '打印模板类型', 'CUSTOM', '自定义', 0, 'SYSTEM'),
 -- 业务类型
 (UUID(), 'BUSINESS_TYPE', '业务类型', 'PAYOUT', '报账', 0, 'SYSTEM'),
 (UUID(), 'BUSINESS_TYPE', '业务类型', 'CONTRACT', '合同', 0, 'SYSTEM'),
@@ -48,7 +58,12 @@ INSERT INTO `sys_code` (`id`, `code_type`, `code_type_name`, `code_value`, `code
 (UUID(), 'APPLY_STATUS', '申请状态', 'PENDING', '待审批', 0, 'SYSTEM'),
 (UUID(), 'APPLY_STATUS', '申请状态', 'APPROVED', '已审批', 0, 'SYSTEM'),
 (UUID(), 'APPLY_STATUS', '申请状态', 'REJECTED', '已拒绝', 0, 'SYSTEM'),
-(UUID(), 'APPLY_STATUS', '申请状态', 'WITHDRAWN', '已撤回', 0, 'SYSTEM')
+(UUID(), 'APPLY_STATUS', '申请状态', 'WITHDRAWN', '已撤回', 0, 'SYSTEM'),
+-- 用户类型
+(UUID(), 'USER_TYPE', '用户类型', '1', '系统管理员', 0, 'SYSTEM'),
+(UUID(), 'USER_TYPE', '用户类型', '2', '财务', 0, 'SYSTEM'),
+(UUID(), 'USER_TYPE', '用户类型', '3', '部门负责人', 0, 'SYSTEM'),
+(UUID(), 'USER_TYPE', '用户类型', '4', '普通员工', 0, 'SYSTEM')
 ON DUPLICATE KEY UPDATE 
     code_type_name = VALUES(code_type_name),
     code_name = VALUES(code_name),
@@ -148,11 +163,6 @@ INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `pat
 VALUES ('SYSTEM_POSITION', '岗位管理', @manage_menu_id, 2, 'system/position', 'system/PositionManagement', 'el-icon-s-custom', 4, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
--- 职工管理
-INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('SYSTEM_EMPLOYEE', '职工管理', @manage_menu_id, 2, 'system/employee', 'system/EmployeeManagement', 'el-icon-user-solid', 5, 1)
-ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
-
 -- 系统设置（二级菜单）
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
 VALUES ('SYSTEM_SETTINGS', '系统设置', @system_menu_id, 1, 'settings', 'Layout', 'el-icon-setting', 2, 1)
@@ -163,6 +173,16 @@ SET @settings_menu_id = (SELECT id FROM sys_menu WHERE menu_code = 'SYSTEM_SETTI
 -- 系统参数
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
 VALUES ('SYSTEM_PARAMS', '系统参数', @settings_menu_id, 2, 'system/params', 'system/SystemParams', 'el-icon-setting', 1, 1)
+ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
+
+-- 打印设置
+INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
+VALUES ('SYSTEM_PRINT_SETTINGS', '打印设置', @settings_menu_id, 2, 'system/print-settings', 'system/PrintSettings', 'el-icon-printer', 2, 1)
+ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
+
+-- 模板设置
+INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
+VALUES ('SYSTEM_TEMPLATE_CONFIG', '模板设置', @settings_menu_id, 2, 'system/template-config', 'system/TemplateConfig', 'el-icon-document', 3, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 -- 业务平台（二级菜单）
@@ -444,22 +464,22 @@ SET @asset_approval_menu_id = (SELECT id FROM sys_menu WHERE menu_code = 'ASSET_
 
 -- 资产调拨审批
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('ASSET_APPROVAL_TRANSFER', '资产调拨审批', @asset_approval_menu_id, 2, 'transfer', 'asset/AssetApproval', 'el-icon-sort', 1, 1)
+VALUES ('ASSET_APPROVAL_TRANSFER', '资产调拨审批', @asset_approval_menu_id, 2, '/hrp/asset/approval/transfer', 'asset/AssetApproval', 'el-icon-sort', 1, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 -- 资产处置审批
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('ASSET_APPROVAL_DISPOSAL', '资产处置审批', @asset_approval_menu_id, 2, 'disposal', 'asset/AssetApproval', 'el-icon-delete', 2, 1)
+VALUES ('ASSET_APPROVAL_DISPOSAL', '资产处置审批', @asset_approval_menu_id, 2, '/hrp/asset/approval/disposal', 'asset/AssetApproval', 'el-icon-delete', 2, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 -- 盘点差异审批
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('ASSET_APPROVAL_INVENTORY', '盘点差异审批', @asset_approval_menu_id, 2, 'inventory', 'asset/AssetApproval', 'el-icon-warning', 3, 1)
+VALUES ('ASSET_APPROVAL_INVENTORY', '盘点差异审批', @asset_approval_menu_id, 2, '/hrp/asset/approval/inventory', 'asset/AssetApproval', 'el-icon-warning', 3, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 -- 资产变动审批
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('ASSET_APPROVAL_CHANGE', '资产变动审批', @asset_approval_menu_id, 2, 'change', 'asset/AssetApproval', 'el-icon-edit', 4, 1)
+VALUES ('ASSET_APPROVAL_CHANGE', '资产变动审批', @asset_approval_menu_id, 2, '/hrp/asset/approval/change', 'asset/AssetApproval', 'el-icon-edit', 4, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 -- 采购需求（目录）
@@ -471,12 +491,12 @@ SET @asset_procurement_menu_id = (SELECT id FROM sys_menu WHERE menu_code = 'ASS
 
 -- 需求发起
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('ASSET_PROCUREMENT_APPLY', '需求发起', @asset_procurement_menu_id, 2, 'apply', 'asset/ProcurementApply', 'el-icon-plus', 1, 1)
+VALUES ('ASSET_PROCUREMENT_APPLY', '需求发起', @asset_procurement_menu_id, 2, '/hrp/asset/procurement/apply', 'asset/ProcurementApply', 'el-icon-plus', 1, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 -- 需求审核
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('ASSET_PROCUREMENT_APPROVAL', '需求审核', @asset_procurement_menu_id, 2, 'approval', 'asset/ProcurementApproval', 'el-icon-check', 2, 1)
+VALUES ('ASSET_PROCUREMENT_APPROVAL', '需求审核', @asset_procurement_menu_id, 2, '/hrp/asset/procurement/approval', 'asset/ProcurementApproval', 'el-icon-check', 2, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 -- 综合查询（目录）
@@ -488,12 +508,12 @@ SET @asset_query_menu_id = (SELECT id FROM sys_menu WHERE menu_code = 'ASSET_QUE
 
 -- 资产查询
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('ASSET_QUERY_ASSET', '资产查询', @asset_query_menu_id, 2, 'asset', 'asset/AssetQuery', 'el-icon-box', 1, 1)
+VALUES ('ASSET_QUERY_ASSET', '资产查询', @asset_query_menu_id, 2, '/hrp/asset/query/asset', 'asset/AssetQuery', 'el-icon-box', 1, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 -- 采购查询
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('ASSET_QUERY_PROCUREMENT', '采购查询', @asset_query_menu_id, 2, 'procurement-query', 'asset/ProcurementQuery', 'el-icon-shopping-cart-2', 2, 1)
+VALUES ('ASSET_QUERY_PROCUREMENT', '采购查询', @asset_query_menu_id, 2, '/hrp/asset/query/procurement', 'asset/ProcurementQuery', 'el-icon-shopping-cart-2', 2, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 -- ==================== 全景人力模块菜单 ====================
@@ -504,12 +524,41 @@ ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 SET @hr_menu_id = (SELECT id FROM sys_menu WHERE menu_code = 'HR');
 
+-- 业务申请
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('HR_SALARY', '人员薪酬', @hr_menu_id, 2, 'salary', 'hr/SalaryManagement', 'el-icon-coin', 1, 1)
+VALUES ('HR_BUSINESS_APPLY', '业务申请', @hr_menu_id, 2, '/hrp/hr/business-apply', 'hr/BusinessApply', 'el-icon-edit-outline', 1, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
+-- 考勤与请假管理（目录）
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('HR_SALARY_CALC', '薪酬计算', @hr_menu_id, 2, 'salary-calc', 'hr/SalaryCalculation', 'el-icon-cpu', 2, 1)
+VALUES ('HR_ATTENDANCE', '考勤与请假管理', @hr_menu_id, 1, 'attendance', 'Layout', 'el-icon-date', 2, 1)
+ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
+
+SET @hr_attendance_menu_id = (SELECT id FROM sys_menu WHERE menu_code = 'HR_ATTENDANCE');
+
+-- 考勤管理
+INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
+VALUES ('HR_ATTENDANCE_MANAGE', '考勤管理', @hr_attendance_menu_id, 2, '/hrp/hr/attendance/manage', 'hr/AttendanceManage', 'el-icon-time', 1, 1)
+ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
+
+-- 请假管理
+INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
+VALUES ('HR_ATTENDANCE_LEAVE', '请假管理', @hr_attendance_menu_id, 2, '/hrp/hr/attendance/leave', 'hr/LeaveManage', 'el-icon-calendar', 2, 1)
+ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
+
+-- 薪酬管理
+INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
+VALUES ('HR_SALARY', '薪酬管理', @hr_menu_id, 2, '/hrp/hr/salary', 'hr/SalaryManagement', 'el-icon-coin', 3, 1)
+ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
+
+-- 绩效管理
+INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
+VALUES ('HR_PERFORMANCE', '绩效管理', @hr_menu_id, 2, '/hrp/hr/performance', 'hr/PerformanceManagement', 'el-icon-trophy', 4, 1)
+ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
+
+-- 入转调离管理
+INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
+VALUES ('HR_TRANSFER', '入转调离管理', @hr_menu_id, 2, '/hrp/hr/transfer', 'hr/TransferManagement', 'el-icon-refresh', 5, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 -- ==================== DIP成本模块菜单 ====================
@@ -521,15 +570,15 @@ ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 SET @cost_menu_id = (SELECT id FROM sys_menu WHERE menu_code = 'COST');
 
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('COST_REPORT', '成本报表', @cost_menu_id, 2, 'report', 'cost/CostReport', 'el-icon-document', 1, 1)
+VALUES ('COST_REPORT', '成本报表', @cost_menu_id, 2, '/hrp/cost/report', 'cost/CostReport', 'el-icon-document', 1, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('COST_ANALYSIS', '成本分析', @cost_menu_id, 2, 'analysis', 'cost/CostAnalysis', 'el-icon-data-analysis', 2, 1)
+VALUES ('COST_ANALYSIS', '成本分析', @cost_menu_id, 2, '/hrp/cost/analysis', 'cost/CostAnalysis', 'el-icon-data-analysis', 2, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('COST_ACCOUNTING', '成本核算', @cost_menu_id, 2, 'accounting', 'cost/CostAccounting', 'el-icon-s-data', 3, 1)
+VALUES ('COST_ACCOUNTING', '成本核算', @cost_menu_id, 2, '/hrp/cost/accounting', 'cost/CostAccounting', 'el-icon-s-data', 3, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 -- ==================== 单机效能模块菜单 ====================
@@ -541,23 +590,23 @@ ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 SET @efficiency_menu_id = (SELECT id FROM sys_menu WHERE menu_code = 'EFFICIENCY');
 
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('EFFICIENCY_COLLECTION', '数据采集', @efficiency_menu_id, 2, 'collection', 'efficiency/DataCollection', 'el-icon-upload', 1, 1)
+VALUES ('EFFICIENCY_COLLECTION', '数据采集', @efficiency_menu_id, 2, '/hrp/efficiency/collection', 'efficiency/DataCollection', 'el-icon-upload', 1, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('EFFICIENCY_INCOME', '收入数据', @efficiency_menu_id, 2, 'income', 'efficiency/IncomeData', 'el-icon-coin', 2, 1)
+VALUES ('EFFICIENCY_INCOME', '收入数据', @efficiency_menu_id, 2, '/hrp/efficiency/income', 'efficiency/IncomeData', 'el-icon-coin', 2, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('EFFICIENCY_COST', '成本数据', @efficiency_menu_id, 2, 'cost', 'efficiency/CostData', 'el-icon-wallet', 3, 1)
+VALUES ('EFFICIENCY_COST', '成本数据', @efficiency_menu_id, 2, '/hrp/efficiency/cost', 'efficiency/CostData', 'el-icon-wallet', 3, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('EFFICIENCY_EQUIPMENT_REPORT', '设备分析报告', @efficiency_menu_id, 2, 'equipment-report', 'efficiency/EquipmentAnalysisReport', 'el-icon-document', 4, 1)
+VALUES ('EFFICIENCY_EQUIPMENT_REPORT', '设备分析报告', @efficiency_menu_id, 2, '/hrp/efficiency/equipment-report', 'efficiency/EquipmentAnalysisReport', 'el-icon-document', 4, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('EFFICIENCY_INVESTMENT', '投资收益分析', @efficiency_menu_id, 2, 'investment', 'efficiency/InvestmentReturnAnalysis', 'el-icon-trophy', 5, 1)
+VALUES ('EFFICIENCY_INVESTMENT', '投资收益分析', @efficiency_menu_id, 2, '/hrp/efficiency/investment', 'efficiency/InvestmentReturnAnalysis', 'el-icon-trophy', 5, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 -- ==================== 预算管理初始数据 ====================

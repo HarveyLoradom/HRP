@@ -45,6 +45,22 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
     }
 
     @Override
+    public com.hrp.common.entity.PageResult<ProcessTask> getByStatusPage(String taskStatus, Long page, Long size) {
+        Long offset = (page - 1) * size;
+        List<ProcessTask> records = processTaskMapper.selectByStatusPage(taskStatus, offset, size);
+        Long total = processTaskMapper.countByStatus(taskStatus);
+        return com.hrp.common.entity.PageResult.of(records, total, size, page);
+    }
+
+    @Override
+    public com.hrp.common.entity.PageResult<ProcessTask> getByBusinessKeyPage(String businessKey, Long page, Long size) {
+        Long offset = (page - 1) * size;
+        List<ProcessTask> records = processTaskMapper.selectByBusinessKeyPage(businessKey, offset, size);
+        Long total = processTaskMapper.countByBusinessKey(businessKey);
+        return com.hrp.common.entity.PageResult.of(records, total, size, page);
+    }
+
+    @Override
     @Transactional
     public boolean transferTask(Long taskId, String newAssigneeUserId, String newAssigneeUserName, String newAssigneeEmpCode) {
         ProcessTask task = processTaskMapper.selectById(taskId);

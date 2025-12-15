@@ -31,5 +31,10 @@ public class UserLoginMapperImpl implements UserLoginMapper {
     public int updateById(UserLogin userLogin) {
         return sqlSessionTemplate.update(NAMESPACE + ".updateById", userLogin);
     }
+
+    @Override
+    public int deleteByUserId(String userId) {
+        return sqlSessionTemplate.delete(NAMESPACE + ".deleteByUserId", userId);
+    }
 }
 

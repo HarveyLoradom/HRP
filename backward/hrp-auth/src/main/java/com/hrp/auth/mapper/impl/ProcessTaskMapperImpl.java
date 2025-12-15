@@ -45,6 +45,34 @@ public class ProcessTaskMapperImpl implements ProcessTaskMapper {
     }
 
     @Override
+    public List<ProcessTask> selectByStatusPage(String taskStatus, Long offset, Long size) {
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("taskStatus", taskStatus);
+        params.put("offset", offset);
+        params.put("size", size);
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectByStatusPage", params);
+    }
+
+    @Override
+    public Long countByStatus(String taskStatus) {
+        return sqlSessionTemplate.selectOne(NAMESPACE + ".countByStatus", taskStatus);
+    }
+
+    @Override
+    public List<ProcessTask> selectByBusinessKeyPage(String businessKey, Long offset, Long size) {
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("businessKey", businessKey);
+        params.put("offset", offset);
+        params.put("size", size);
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectByBusinessKeyPage", params);
+    }
+
+    @Override
+    public Long countByBusinessKey(String businessKey) {
+        return sqlSessionTemplate.selectOne(NAMESPACE + ".countByBusinessKey", businessKey);
+    }
+
+    @Override
     public int insert(ProcessTask task) {
         return sqlSessionTemplate.insert(NAMESPACE + ".insert", task);
     }

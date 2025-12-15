@@ -1,0 +1,15 @@
+com\hrp\asset\mapper\impl\AssetApprovalRecordMapperImpl.class
+com\hrp\asset\mapper\ProcurementRequirementApprovalMapper.class
+com\hrp\asset\mapper\UserMapper.class
+com\hrp\asset\mapper\impl\ProcurementRequirementApprovalMapperImpl.class
+com\hrp\asset\service\impl\AssetApprovalServiceImpl.class
+com\hrp\asset\mapper\impl\AssetApprovalDetailMapperImpl.class
+com\hrp\asset\mapper\AssetApprovalMapper.class
+com\hrp\asset\controller\AssetApprovalController.class
+com\hrp\asset\mapper\impl\ProcurementRequirementDetailMapperImpl.class
+com\hrp\asset\mapper\ProcurementRequirementDetailMapper.class
+com\hrp\asset\mapper\AssetApprovalRecordMapper.class
+com\hrp\asset\mapper\AssetApprovalDetailMapper.class
+com\hrp\asset\mapper\impl\AssetApprovalMapperImpl.class
+com\hrp\asset\service\AssetApprovalService.class
+com\hrp\asset\mapper\impl\UserMapperImpl.class

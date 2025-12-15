@@ -2,6 +2,7 @@ package com.hrp.efficiency.controller;
 
 import com.hrp.common.entity.Equipment;
 import com.hrp.common.entity.Result;
+import com.hrp.common.exception.BusinessException;
 import com.hrp.efficiency.service.EquipmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -37,19 +38,28 @@ public class EquipmentController {
     @PostMapping
     public Result<Void> save(@RequestBody Equipment equipment) {
         boolean success = equipmentService.save(equipment);
-        return success ? Result.success() : Result.error("保存失败");
+        if (!success) {
+            throw new BusinessException("保存失败");
+        }
+        return Result.success();
     }
 
     @PutMapping
     public Result<Void> update(@RequestBody Equipment equipment) {
         boolean success = equipmentService.update(equipment);
-        return success ? Result.success() : Result.error("更新失败");
+        if (!success) {
+            throw new BusinessException("更新失败");
+        }
+        return Result.success();
     }
 
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         boolean success = equipmentService.delete(id);
-        return success ? Result.success() : Result.error("删除失败");
+        if (!success) {
+            throw new BusinessException("删除失败");
+        }
+        return Result.success();
     }
 }
 

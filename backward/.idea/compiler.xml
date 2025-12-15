@@ -8,7 +8,6 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="hrp-gateway" />
-        <module name="hrp-user" />
         <module name="hrp-hr" />
         <module name="hrp-auth" />
         <module name="hrp-common" />
@@ -17,8 +16,12 @@
         <module name="hrp-reimb" />
         <module name="hrp-menu" />
         <module name="hrp-asset" />
+        <module name="hrp-budg" />
         <module name="hrp-cost" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="hrp-user" target="11" />
+    </bytecodeTargetLevel>
   </component>
 </project>

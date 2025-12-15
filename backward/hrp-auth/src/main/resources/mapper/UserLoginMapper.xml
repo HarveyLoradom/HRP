@@ -30,9 +30,14 @@
             <if test="lockTime != null">lock_time = #{lockTime},</if>
             <if test="loginFailCount != null">login_fail_count = #{loginFailCount},</if>
             <if test="lastLoginTime != null">last_login_time = #{lastLoginTime},</if>
+            update_time = NOW()
         </set>
         WHERE user_id = #{userId}
     </update>
+
+    <delete id="deleteByUserId">
+        DELETE FROM sys_user_login WHERE user_id = #{userId}
+    </delete>
 
 </mapper>
 

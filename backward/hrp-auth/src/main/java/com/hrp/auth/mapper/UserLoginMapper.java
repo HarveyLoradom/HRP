@@ -21,5 +21,10 @@ public interface UserLoginMapper {
      * 更新用户登录信息
      */
     int updateById(UserLogin userLogin);
+
+    /**
+     * 根据用户ID删除用户登录信息
+     */
+    int deleteByUserId(@Param("userId") String userId);
 }
 

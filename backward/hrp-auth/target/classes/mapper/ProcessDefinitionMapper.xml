@@ -36,6 +36,26 @@
         ORDER BY definition_type, version DESC
     </select>
 
+    <select id="selectAllPage" resultMap="BaseResultMap">
+        SELECT * FROM wf_process_definition WHERE is_active = 1
+        ORDER BY definition_type, version DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countAll" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM wf_process_definition WHERE is_active = 1
+    </select>
+
+    <select id="selectByTypePage" resultMap="BaseResultMap">
+        SELECT * FROM wf_process_definition WHERE definition_type = #{definitionType} AND is_active = 1
+        ORDER BY version DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByType" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM wf_process_definition WHERE definition_type = #{definitionType} AND is_active = 1
+    </select>
+
     <insert id="insert" parameterType="com.hrp.common.entity.ProcessDefinition">
         INSERT INTO wf_process_definition (definition_key, definition_name, definition_type, process_xml, process_json, version, is_active, description, create_user, create_time)
         VALUES (#{definitionKey}, #{definitionName}, #{definitionType}, #{processXml}, #{processJson}, #{version}, #{isActive}, #{description}, #{createUser}, NOW())
@@ -57,7 +77,10 @@
     </update>
 
     <delete id="deleteById">
-        UPDATE wf_process_definition SET is_active = 0 WHERE definition_id = #{definitionId}
+        DELETE FROM wf_process_definition WHERE definition_id = #{definitionId}
     </delete>
 
 </mapper>
+
+
+

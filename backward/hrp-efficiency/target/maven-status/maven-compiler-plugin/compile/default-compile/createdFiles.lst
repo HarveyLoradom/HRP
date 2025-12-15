@@ -1,0 +1,15 @@
+com\hrp\efficiency\mapper\impl\DataCollectionMapperImpl.class
+com\hrp\efficiency\mapper\InvestmentMapper.class
+com\hrp\efficiency\mapper\DataCollectionMapper.class
+com\hrp\efficiency\mapper\EquipmentReportMapper.class
+com\hrp\efficiency\controller\DataCollectionController.class
+com\hrp\efficiency\service\impl\DataCollectionServiceImpl.class
+com\hrp\efficiency\service\impl\InvestmentServiceImpl.class
+com\hrp\efficiency\service\EquipmentReportService.class
+com\hrp\efficiency\service\InvestmentService.class
+com\hrp\efficiency\mapper\impl\InvestmentMapperImpl.class
+com\hrp\efficiency\controller\InvestmentController.class
+com\hrp\efficiency\service\impl\EquipmentReportServiceImpl.class
+com\hrp\efficiency\mapper\impl\EquipmentReportMapperImpl.class
+com\hrp\efficiency\service\DataCollectionService.class
+com\hrp\efficiency\controller\EquipmentReportController.class

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.asset.mapper.ProcurementRequirementDetailMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.ProcurementRequirementDetail">
+        <id column="detail_id" property="detailId"/>
+        <result column="requirement_id" property="requirementId"/>
+        <result column="asset_name" property="assetName"/>
+        <result column="asset_type" property="assetType"/>
+        <result column="asset_spec" property="assetSpec"/>
+        <result column="quantity" property="quantity"/>
+        <result column="unit_price" property="unitPrice"/>
+        <result column="total_amount" property="totalAmount"/>
+        <result column="purpose" property="purpose"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM procurement_requirement_detail WHERE detail_id = #{id}
+    </select>
+
+    <select id="selectByRequirementId" resultMap="BaseResultMap">
+        SELECT * FROM procurement_requirement_detail WHERE requirement_id = #{requirementId} ORDER BY detail_id
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.ProcurementRequirementDetail" useGeneratedKeys="true" keyProperty="detailId">
+        INSERT INTO procurement_requirement_detail (requirement_id, asset_name, asset_type, asset_spec,
+                                                    quantity, unit_price, total_amount, purpose, remark)
+        VALUES (#{requirementId}, #{assetName}, #{assetType}, #{assetSpec},
+                #{quantity}, #{unitPrice}, #{totalAmount}, #{purpose}, #{remark})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.ProcurementRequirementDetail">
+        UPDATE procurement_requirement_detail
+        <set>
+            <if test="assetName != null">asset_name = #{assetName},</if>
+            <if test="assetType != null">asset_type = #{assetType},</if>
+            <if test="assetSpec != null">asset_spec = #{assetSpec},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="unitPrice != null">unit_price = #{unitPrice},</if>
+            <if test="totalAmount != null">total_amount = #{totalAmount},</if>
+            <if test="purpose != null">purpose = #{purpose},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE detail_id = #{detailId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM procurement_requirement_detail WHERE detail_id = #{id}
+    </delete>
+
+    <delete id="deleteByRequirementId">
+        DELETE FROM procurement_requirement_detail WHERE requirement_id = #{requirementId}
+    </delete>
+
+</mapper>
+

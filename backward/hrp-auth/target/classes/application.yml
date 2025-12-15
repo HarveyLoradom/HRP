@@ -27,6 +27,10 @@ spring:
         server-addr: localhost:8848
         namespace: public
         group: DEFAULT_GROUP
+  # Liquibase 配置 - 使用升级后的版本
+  liquibase:
+    enabled: false  # 默认禁用，需要时启用
+    change-log: classpath:db/changelog/db.changelog-master.xml  # 可选：指定 changelog 文件
 
 mybatis:
   mapper-locations: classpath:mapper/*.xml
@@ -34,3 +38,25 @@ mybatis:
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# Flowable 配置 - 完全禁用自动配置
+flowable:
+  # 禁用所有 Flowable 自动配置
+  enabled: false
+  # 完全禁用数据库初始化
+  database-schema-update: false
+  # 禁用异步执行器
+  async-executor-activate: false
+  # 禁用流程定义检查
+  check-process-definitions: false
+
+# 文件上传配置
+file:
+  upload:
+    # 文件上传根路径（支持绝对路径和相对路径）
+    # 相对路径相对于项目根目录，绝对路径如：F:/hrp/uploads 或 /var/hrp/uploads
+    base-path: F:/data/uploads
+    # 附件存储路径（相对于 base-path）
+    attachment-path: attachments
+    # 员工照片存储路径（相对于 base-path）
+    photo-path: employee-photos

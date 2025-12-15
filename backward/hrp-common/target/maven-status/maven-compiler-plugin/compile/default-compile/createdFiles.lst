@@ -1,1 +1,3 @@
 com\hrp\common\entity\UserMenu.class
+com\hrp\common\exception\GlobalExceptionHandler.class
+com\hrp\common\exception\BusinessException.class

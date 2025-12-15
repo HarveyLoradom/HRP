@@ -30,6 +30,26 @@ public interface ProcessDefinitionMapper {
     List<ProcessDefinition> selectAll();
 
     /**
+     * 分页查询所有流程定义
+     */
+    List<ProcessDefinition> selectAllPage(@Param("offset") Long offset, @Param("size") Long size);
+
+    /**
+     * 统计所有流程定义总数
+     */
+    Long countAll();
+
+    /**
+     * 根据类型分页查询流程定义
+     */
+    List<ProcessDefinition> selectByTypePage(@Param("definitionType") String definitionType, @Param("offset") Long offset, @Param("size") Long size);
+
+    /**
+     * 统计指定类型的流程定义总数
+     */
+    Long countByType(@Param("definitionType") String definitionType);
+
+    /**
      * 插入流程定义
      */
     int insert(ProcessDefinition definition);

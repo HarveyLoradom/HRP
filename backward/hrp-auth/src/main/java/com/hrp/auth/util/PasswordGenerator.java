@@ -19,7 +19,7 @@ public class PasswordGenerator {
         
         System.out.println("=== 用户信息 ===");
         System.out.println("用户ID (UUID): " + userId);
-        System.out.println("账号: ADMIN001");
+        System.out.println("账号: admin");
         System.out.println("原始密码: " + password);
         System.out.println("加密后密码: " + encodedPassword);
         

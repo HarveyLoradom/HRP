@@ -61,6 +61,18 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 分页组件 -->
+      <el-pagination
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        :current-page="pagination.page"
+        :page-sizes="[10, 20, 50, 100]"
+        :page-size="pagination.size"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="pagination.total"
+        style="margin-top: 20px; text-align: right;"
+      ></el-pagination>
     </el-card>
 
     <!-- 查看详情对话框 -->
@@ -119,7 +131,7 @@
 </template>
 
 <script>
-import { getAllPayouts, getPayoutById } from '@/api/reimb'
+import { getAllPayoutsPage, getPayoutById } from '@/api/reimb'
 import { getProcessInstanceById, getProcessInstanceVariables } from '@/api/process'
 import { getProcessDefinitionById } from '@/api/process'
 import { getCodeTypeOptions } from '@/utils/codeType'
@@ -130,7 +142,11 @@ export default {
     return {
       loading: false,
       tableData: [],
-      allData: [],
+      pagination: {
+        page: 1,
+        size: 10,
+        total: 0
+      },
       payoutTypeOptions: [],
       applyStatusOptions: [],
       searchForm: {
@@ -158,28 +174,46 @@ export default {
     },
     loadData() {
       this.loading = true
-      getAllPayouts().then(response => {
-        if (response.code === 200) {
-          this.allData = response.data || []
-          this.handleSearch()
+      getAllPayoutsPage(this.pagination.page, this.pagination.size).then(response => {
+        if (response.code === 200 && response.data) {
+          let records = response.data.records || []
+          // 只显示申请单
+          records = records.filter(item => item.billType === 'APPLY' || !item.billType)
+          // 前端过滤（如果数据量大可以移到后端）
+          if (this.searchForm.billcode) {
+            records = records.filter(item => item.payoutBillcode && item.payoutBillcode.includes(this.searchForm.billcode))
+          }
+          if (this.searchForm.empName) {
+            records = records.filter(item => item.empName && item.empName.includes(this.searchForm.empName))
+          }
+          if (this.searchForm.status) {
+            records = records.filter(item => item.status === this.searchForm.status)
+          }
+          this.tableData = records
+          this.pagination.total = (this.searchForm.billcode || this.searchForm.empName || this.searchForm.status) ? records.length : (response.data.total || 0)
+        } else {
+          this.tableData = []
+          this.pagination.total = 0
         }
         this.loading = false
       }).catch(() => {
+        this.tableData = []
+        this.pagination.total = 0
         this.loading = false
       })
     },
     handleSearch() {
-      let filtered = [...this.allData]
-      if (this.searchForm.billcode) {
-        filtered = filtered.filter(item => item.payoutBillcode && item.payoutBillcode.includes(this.searchForm.billcode))
-      }
-      if (this.searchForm.empName) {
-        filtered = filtered.filter(item => item.empName && item.empName.includes(this.searchForm.empName))
-      }
-      if (this.searchForm.status) {
-        filtered = filtered.filter(item => item.status === this.searchForm.status)
-      }
-      this.tableData = filtered
+      this.pagination.page = 1
+      this.loadData()
+    },
+    handleSizeChange(val) {
+      this.pagination.size = val
+      this.pagination.page = 1
+      this.loadData()
+    },
+    handleCurrentChange(val) {
+      this.pagination.page = val
+      this.loadData()
     },
     handleReset() {
       this.searchForm = {
@@ -187,7 +221,8 @@ export default {
         empName: '',
         status: ''
       }
-      this.tableData = this.allData
+      this.pagination.page = 1
+      this.handleSearch()
     },
     handleView(row) {
       getPayoutById(row.payoutId).then(response => {

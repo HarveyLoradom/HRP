@@ -8,6 +8,7 @@ import java.util.List;
 public interface CostAnalysisMapper {
     CostAnalysis selectById(@Param("id") Long id);
     List<CostAnalysis> selectAll();
+    List<CostAnalysis> selectByPeriod(@Param("analysisPeriod") String analysisPeriod);
     int insert(CostAnalysis costAnalysis);
     int updateById(CostAnalysis costAnalysis);
     int deleteById(@Param("id") Long id);

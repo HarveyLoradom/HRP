@@ -23,6 +23,9 @@ CREATE TABLE IF NOT EXISTS `sys_emp` (
   `create_user` VARCHAR(20) COMMENT '创建人',
   `is_stop` BIGINT DEFAULT 0 COMMENT '是否停用：0-否，1-是',
   `emp_type_id` BIGINT COMMENT '职工类型ID',
+  `bank_account` VARCHAR(30) COMMENT '银行卡号',
+  `bank_name` VARCHAR(50) COMMENT '银行名称',
+  `photo` VARCHAR(500) COMMENT '照片路径',
   KEY `idx_emp_code` (`emp_code`),
   KEY `idx_dept_id` (`dept_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='职工表';
@@ -119,17 +122,6 @@ CREATE TABLE IF NOT EXISTS `sys_role` (
   KEY `idx_role_code` (`role_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色表';
 
--- 角色菜单关联表
-CREATE TABLE IF NOT EXISTS `sys_role_menu` (
-  `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
-  `role_id` BIGINT NOT NULL COMMENT '角色ID',
-  `menu_id` BIGINT NOT NULL COMMENT '菜单ID',
-  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  UNIQUE KEY `uk_role_menu` (`role_id`, `menu_id`),
-  KEY `idx_role_id` (`role_id`),
-  KEY `idx_menu_id` (`menu_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色菜单关联表';
-
 -- 用户角色关联表
 CREATE TABLE IF NOT EXISTS `sys_user_role` (
   `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
@@ -140,6 +132,40 @@ CREATE TABLE IF NOT EXISTS `sys_user_role` (
   KEY `idx_user_id` (`user_id`),
   KEY `idx_role_id` (`role_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户角色关联表';
+
+-- 用户类型菜单关联表（用于根据用户类型设置菜单权限）
+CREATE TABLE IF NOT EXISTS `sys_user_type_menu` (
+  `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
+  `user_type` VARCHAR(10) NOT NULL COMMENT '用户类型（对应sys_code的code_value）',
+  `menu_id` BIGINT NOT NULL COMMENT '菜单ID',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  UNIQUE KEY `uk_user_type_menu` (`user_type`, `menu_id`),
+  KEY `idx_user_type` (`user_type`),
+  KEY `idx_menu_id` (`menu_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户类型菜单关联表';
+
+-- 岗位表
+CREATE TABLE IF NOT EXISTS `sys_position` (
+  `position_id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '岗位ID',
+  `position_code` VARCHAR(50) NOT NULL UNIQUE COMMENT '岗位编码',
+  `position_name` VARCHAR(100) NOT NULL COMMENT '岗位名称',
+  `is_stop` BIGINT DEFAULT 0 COMMENT '状态：0-启用，1-停用',
+  `create_user` VARCHAR(50) COMMENT '创建人',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  KEY `idx_position_code` (`position_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='岗位表';
+
+-- 岗位人员关联表
+CREATE TABLE IF NOT EXISTS `sys_position_user` (
+  `id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
+  `position_id` BIGINT NOT NULL COMMENT '岗位ID',
+  `user_id` VARCHAR(36) NOT NULL COMMENT '用户ID（UUID）',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  UNIQUE KEY `uk_position_user` (`position_id`, `user_id`),
+  KEY `idx_position_id` (`position_id`),
+  KEY `idx_user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='岗位人员关联表';
 
 -- 登录日志表
 CREATE TABLE IF NOT EXISTS `sys_login_log` (
@@ -175,7 +201,7 @@ CREATE TABLE IF NOT EXISTS `sys_user_login` (
 CREATE TABLE IF NOT EXISTS `sys_attachment` (
   `attachment_id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '附件ID',
   `business_type` VARCHAR(50) NOT NULL COMMENT '业务类型：PAYOUT-报账，CONTRACT-合同，BUDGET_EXECUTION-预算执行，BUDGET_ADJUSTMENT-预算调整',
-  `business_id` BIGINT NOT NULL COMMENT '业务ID',
+  `business_id` BIGINT COMMENT '业务ID（允许NULL，用于临时附件）',
   `file_name` VARCHAR(200) NOT NULL COMMENT '文件名称',
   `file_path` VARCHAR(500) NOT NULL COMMENT '文件路径',
   `file_size` BIGINT COMMENT '文件大小（字节）',
@@ -186,6 +212,35 @@ CREATE TABLE IF NOT EXISTS `sys_attachment` (
   KEY `idx_business` (`business_type`, `business_id`),
   KEY `idx_upload_user` (`upload_user`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='附件表';
+
+-- 打印模板表
+CREATE TABLE IF NOT EXISTS `sys_print_template` (
+  `template_id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '模板ID',
+  `template_code` VARCHAR(50) NOT NULL UNIQUE COMMENT '模板编码',
+  `template_name` VARCHAR(100) NOT NULL COMMENT '模板名称',
+  `template_type` VARCHAR(50) NOT NULL COMMENT '模板类型：APPLY-申请单，PAYOUT-报账单，CONTRACT-合同，ASSET-资产审批，PROCUREMENT-采购审批',
+  `template_content` TEXT COMMENT 'HTML格式的模板内容（兼容旧版本）',
+  `template_xml` LONGTEXT COMMENT 'XML格式的模板内容',
+  `template_json` LONGTEXT COMMENT 'JSON格式的模板内容（Fabric.js格式）',
+  `template_fields` TEXT COMMENT 'JSON格式的字段配置',
+  `page_size` VARCHAR(20) DEFAULT 'A4' COMMENT '页面大小：A4、A3、Letter等',
+  `orientation` VARCHAR(20) DEFAULT 'portrait' COMMENT '打印方向：portrait-纵向，landscape-横向',
+  `margin_top` INT DEFAULT 20 COMMENT '上边距（毫米）',
+  `margin_bottom` INT DEFAULT 20 COMMENT '下边距（毫米）',
+  `margin_left` INT DEFAULT 20 COMMENT '左边距（毫米）',
+  `margin_right` INT DEFAULT 20 COMMENT '右边距（毫米）',
+  `custom_css` TEXT COMMENT '自定义CSS样式',
+  `header_html` TEXT COMMENT '页眉HTML',
+  `footer_html` TEXT COMMENT '页脚HTML',
+  `is_default` INT DEFAULT 0 COMMENT '是否默认：0-否，1-是',
+  `is_active` INT DEFAULT 1 COMMENT '是否启用：0-否，1-是',
+  `remark` VARCHAR(500) COMMENT '备注',
+  `create_user` VARCHAR(50) COMMENT '创建人',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  KEY `idx_template_code` (`template_code`),
+  KEY `idx_template_type` (`template_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='打印模板表';
 
 -- ==================== 流程管理模块 ====================
 
@@ -659,7 +714,7 @@ CREATE TABLE IF NOT EXISTS `asset_approval` (
   `applicant_code` VARCHAR(50) COMMENT '申请人编码',
   `applicant_name` VARCHAR(100) COMMENT '申请人姓名',
   `apply_reason` VARCHAR(1000) COMMENT '申请原因',
-  `status` VARCHAR(20) DEFAULT 'DRAFT' COMMENT '状态：DRAFT-草稿，PENDING-待审批，APPROVED-已审批，REJECTED-已拒绝',
+  `status` VARCHAR(20) DEFAULT 'DRAFT' COMMENT '状态：DRAFT-草稿，PENDING-待审批，APPROVED-已审批，REJECTED-已拒绝，WITHDRAWN-已撤回',
   `process_definition_id` BIGINT COMMENT '流程定义ID',
   `process_instance_id` BIGINT COMMENT '流程实例ID',
   `create_user` VARCHAR(50) COMMENT '创建人',
@@ -750,6 +805,169 @@ CREATE TABLE IF NOT EXISTS `salary_rule` (
   KEY `idx_rule_code` (`rule_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='薪酬计算规则表';
 
+-- 业务申请表
+CREATE TABLE IF NOT EXISTS `business_apply` (
+  `apply_id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '申请ID',
+  `apply_no` VARCHAR(50) NOT NULL UNIQUE COMMENT '申请单号',
+  `apply_type` VARCHAR(20) NOT NULL COMMENT '申请类型：LEAVE-请假，ENTRY-入职，RESIGN-离职，OTHER-其他',
+  `apply_title` VARCHAR(200) NOT NULL COMMENT '申请标题',
+  `applicant_id` BIGINT NOT NULL COMMENT '申请人ID',
+  `applicant_code` VARCHAR(20) COMMENT '申请人工号',
+  `applicant_name` VARCHAR(50) COMMENT '申请人姓名',
+  `dept_id` BIGINT COMMENT '部门ID',
+  `leave_type` VARCHAR(20) COMMENT '请假类型（仅请假申请）：ANNUAL-年假，SICK-病假，PERSONAL-事假等',
+  `start_date` DATE COMMENT '开始日期',
+  `end_date` DATE COMMENT '结束日期',
+  `duration` INT DEFAULT 0 COMMENT '天数',
+  `apply_reason` VARCHAR(1000) COMMENT '申请事由',
+  `status` VARCHAR(20) DEFAULT 'DRAFT' COMMENT '状态：DRAFT-草稿，PENDING-待审批，APPROVED-已审批，REJECTED-已拒绝，WITHDRAWN-已撤回',
+  `process_instance_id` BIGINT COMMENT '流程实例ID',
+  `create_user` VARCHAR(50) COMMENT '创建人',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  KEY `idx_apply_no` (`apply_no`),
+  KEY `idx_applicant_id` (`applicant_id`),
+  KEY `idx_apply_type` (`apply_type`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='业务申请表';
+
+-- 业务申请审批记录表
+CREATE TABLE IF NOT EXISTS `business_apply_approval` (
+  `record_id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '记录ID',
+  `apply_id` BIGINT NOT NULL COMMENT '申请ID',
+  `approver_id` VARCHAR(50) COMMENT '审批人ID',
+  `approver_code` VARCHAR(20) COMMENT '审批人工号',
+  `approver_name` VARCHAR(50) COMMENT '审批人姓名',
+  `approval_type` VARCHAR(20) COMMENT '审批类型：APPROVE-同意，REJECT-拒绝',
+  `approval_opinion` VARCHAR(500) COMMENT '审批意见',
+  `approval_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '审批时间',
+  `task_id` BIGINT COMMENT '流程任务ID',
+  KEY `idx_apply_id` (`apply_id`),
+  KEY `idx_approver_id` (`approver_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='业务申请审批记录表';
+
+-- 考勤表
+CREATE TABLE IF NOT EXISTS `attendance` (
+  `attendance_id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '考勤ID',
+  `emp_id` BIGINT NOT NULL COMMENT '职工ID',
+  `emp_code` VARCHAR(20) COMMENT '工号',
+  `emp_name` VARCHAR(50) COMMENT '姓名',
+  `attendance_date` DATE NOT NULL COMMENT '考勤日期',
+  `check_in_time` DATETIME COMMENT '上班打卡时间',
+  `check_out_time` DATETIME COMMENT '下班打卡时间',
+  `work_hours` DECIMAL(5,2) DEFAULT 0.00 COMMENT '工作时长（小时）',
+  `attendance_status` VARCHAR(20) DEFAULT 'NORMAL' COMMENT '考勤状态：NORMAL-正常，LATE-迟到，EARLY_LEAVE-早退，ABSENT-缺勤，LEAVE-请假',
+  `remark` VARCHAR(500) COMMENT '备注',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  UNIQUE KEY `uk_emp_date` (`emp_id`, `attendance_date`),
+  KEY `idx_emp_id` (`emp_id`),
+  KEY `idx_attendance_date` (`attendance_date`),
+  KEY `idx_attendance_status` (`attendance_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='考勤表';
+
+-- 请假表
+CREATE TABLE IF NOT EXISTS `leave` (
+  `leave_id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '请假ID',
+  `leave_no` VARCHAR(50) NOT NULL UNIQUE COMMENT '请假单号',
+  `emp_id` BIGINT NOT NULL COMMENT '职工ID',
+  `emp_code` VARCHAR(20) COMMENT '工号',
+  `emp_name` VARCHAR(50) COMMENT '姓名',
+  `dept_id` BIGINT COMMENT '部门ID',
+  `leave_type` VARCHAR(20) NOT NULL COMMENT '请假类型：ANNUAL-年假，SICK-病假，PERSONAL-事假，MATERNITY-产假，PATERNITY-陪产假，MARRIAGE-婚假，BEREAVEMENT-丧假',
+  `start_date` DATE NOT NULL COMMENT '开始日期',
+  `end_date` DATE NOT NULL COMMENT '结束日期',
+  `duration` INT NOT NULL COMMENT '天数',
+  `leave_reason` VARCHAR(500) COMMENT '请假事由',
+  `status` VARCHAR(20) DEFAULT 'DRAFT' COMMENT '状态：DRAFT-草稿，PENDING-待审批，APPROVED-已审批，REJECTED-已拒绝，WITHDRAWN-已撤回',
+  `process_instance_id` BIGINT COMMENT '流程实例ID',
+  `create_user` VARCHAR(50) COMMENT '创建人',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  KEY `idx_leave_no` (`leave_no`),
+  KEY `idx_emp_id` (`emp_id`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='请假表';
+
+-- 请假审批记录表
+CREATE TABLE IF NOT EXISTS `leave_approval` (
+  `record_id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '记录ID',
+  `leave_id` BIGINT NOT NULL COMMENT '请假ID',
+  `approver_id` VARCHAR(50) COMMENT '审批人ID',
+  `approver_code` VARCHAR(20) COMMENT '审批人工号',
+  `approver_name` VARCHAR(50) COMMENT '审批人姓名',
+  `approval_type` VARCHAR(20) COMMENT '审批类型：APPROVE-同意，REJECT-拒绝',
+  `approval_opinion` VARCHAR(500) COMMENT '审批意见',
+  `approval_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '审批时间',
+  `task_id` BIGINT COMMENT '流程任务ID',
+  KEY `idx_leave_id` (`leave_id`),
+  KEY `idx_approver_id` (`approver_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='请假审批记录表';
+
+-- 绩效表
+CREATE TABLE IF NOT EXISTS `performance` (
+  `performance_id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '绩效ID',
+  `performance_no` VARCHAR(50) NOT NULL UNIQUE COMMENT '绩效编号',
+  `emp_id` BIGINT NOT NULL COMMENT '职工ID',
+  `emp_code` VARCHAR(20) COMMENT '工号',
+  `emp_name` VARCHAR(50) COMMENT '姓名',
+  `dept_id` BIGINT COMMENT '部门ID',
+  `performance_year` VARCHAR(4) NOT NULL COMMENT '年度',
+  `performance_quarter` VARCHAR(1) COMMENT '季度：1-第一季度，2-第二季度，3-第三季度，4-第四季度',
+  `performance_month` VARCHAR(2) COMMENT '月份',
+  `performance_score` DECIMAL(5,2) DEFAULT 0.00 COMMENT '绩效分数',
+  `performance_level` VARCHAR(20) COMMENT '绩效等级：EXCELLENT-优秀，GOOD-良好，QUALIFIED-合格，UNQUALIFIED-不合格',
+  `performance_desc` VARCHAR(1000) COMMENT '绩效说明',
+  `create_user` VARCHAR(50) COMMENT '创建人',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  KEY `idx_performance_no` (`performance_no`),
+  KEY `idx_emp_id` (`emp_id`),
+  KEY `idx_performance_year` (`performance_year`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='绩效表';
+
+-- 入转调离表
+CREATE TABLE IF NOT EXISTS `transfer` (
+  `transfer_id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '转调ID',
+  `transfer_no` VARCHAR(50) NOT NULL UNIQUE COMMENT '申请单号',
+  `transfer_type` VARCHAR(20) NOT NULL COMMENT '类型：ENTRY-入职，TRANSFER-转岗，ADJUST-调岗，EXIT-离职',
+  `emp_id` BIGINT NOT NULL COMMENT '职工ID',
+  `emp_code` VARCHAR(20) COMMENT '工号',
+  `emp_name` VARCHAR(50) COMMENT '姓名',
+  `from_dept_id` BIGINT COMMENT '原部门ID',
+  `from_dept_name` VARCHAR(100) COMMENT '原部门名称',
+  `to_dept_id` BIGINT COMMENT '目标部门ID',
+  `to_dept_name` VARCHAR(100) COMMENT '目标部门名称',
+  `from_position` VARCHAR(50) COMMENT '原岗位',
+  `to_position` VARCHAR(50) COMMENT '目标岗位',
+  `transfer_reason` VARCHAR(500) COMMENT '申请事由',
+  `effective_date` DATE COMMENT '生效日期',
+  `status` VARCHAR(20) DEFAULT 'DRAFT' COMMENT '状态：DRAFT-草稿，PENDING-待审批，APPROVED-已审批，REJECTED-已拒绝，WITHDRAWN-已撤回',
+  `process_instance_id` BIGINT COMMENT '流程实例ID',
+  `create_user` VARCHAR(50) COMMENT '创建人',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  KEY `idx_transfer_no` (`transfer_no`),
+  KEY `idx_emp_id` (`emp_id`),
+  KEY `idx_transfer_type` (`transfer_type`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='入转调离表';
+
+-- 入转调离审批记录表
+CREATE TABLE IF NOT EXISTS `transfer_approval` (
+  `record_id` BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '记录ID',
+  `transfer_id` BIGINT NOT NULL COMMENT '转调ID',
+  `approver_id` VARCHAR(50) COMMENT '审批人ID',
+  `approver_code` VARCHAR(20) COMMENT '审批人工号',
+  `approver_name` VARCHAR(50) COMMENT '审批人姓名',
+  `approval_type` VARCHAR(20) COMMENT '审批类型：APPROVE-同意，REJECT-拒绝',
+  `approval_opinion` VARCHAR(500) COMMENT '审批意见',
+  `approval_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '审批时间',
+  `task_id` BIGINT COMMENT '流程任务ID',
+  KEY `idx_transfer_id` (`transfer_id`),
+  KEY `idx_approver_id` (`approver_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='入转调离审批记录表';
+
 -- ==================== DIP成本模块 ====================
 
 -- 成本报表表
@@ -766,6 +984,7 @@ CREATE TABLE IF NOT EXISTS `cost_report` (
   `status` VARCHAR(20) DEFAULT 'DRAFT' COMMENT '状态',
   `create_user` VARCHAR(50) COMMENT '创建人',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   KEY `idx_report_no` (`report_no`),
   KEY `idx_report_period` (`report_period`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='成本报表表';
@@ -778,10 +997,17 @@ CREATE TABLE IF NOT EXISTS `cost_analysis` (
   `analysis_type` VARCHAR(20) COMMENT '分析类型',
   `analysis_period` VARCHAR(20) COMMENT '分析期间',
   `dept_id` BIGINT COMMENT '部门ID',
+  `total_cost` DECIMAL(18,2) DEFAULT 0.00 COMMENT '总成本',
+  `direct_cost` DECIMAL(18,2) DEFAULT 0.00 COMMENT '直接成本',
+  `indirect_cost` DECIMAL(18,2) DEFAULT 0.00 COMMENT '间接成本',
+  `cost_ratio` DECIMAL(5,2) DEFAULT 0.00 COMMENT '成本占比（%）',
+  `growth_rate` DECIMAL(5,2) DEFAULT 0.00 COMMENT '增长率（%）',
   `analysis_result` TEXT COMMENT '分析结果',
   `create_user` VARCHAR(50) COMMENT '创建人',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  KEY `idx_analysis_no` (`analysis_no`)
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  KEY `idx_analysis_no` (`analysis_no`),
+  KEY `idx_analysis_period` (`analysis_period`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='成本分析表';
 
 -- 成本核算表
@@ -790,11 +1016,18 @@ CREATE TABLE IF NOT EXISTS `cost_accounting` (
   `accounting_no` VARCHAR(50) NOT NULL UNIQUE COMMENT '核算编号',
   `accounting_name` VARCHAR(200) NOT NULL COMMENT '核算名称',
   `accounting_period` VARCHAR(20) COMMENT '核算期间',
+  `accounting_dimension` VARCHAR(20) COMMENT '核算维度：DEPT-科室，PROJECT-项目，EQUIPMENT-设备',
   `dept_id` BIGINT COMMENT '部门ID',
   `cost_item` VARCHAR(50) COMMENT '成本项目',
   `cost_amount` DECIMAL(18,2) DEFAULT 0.00 COMMENT '成本金额',
+  `direct_cost` DECIMAL(18,2) DEFAULT 0.00 COMMENT '直接成本',
+  `indirect_cost` DECIMAL(18,2) DEFAULT 0.00 COMMENT '间接成本',
+  `status` VARCHAR(20) DEFAULT 'DRAFT' COMMENT '状态：DRAFT-草稿，CALCULATED-已核算',
+  `create_user` VARCHAR(50) COMMENT '创建人',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  KEY `idx_accounting_no` (`accounting_no`)
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  KEY `idx_accounting_no` (`accounting_no`),
+  KEY `idx_accounting_period` (`accounting_period`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='成本核算表';
 
 -- ==================== 单机效能模块 ====================
@@ -834,12 +1067,15 @@ CREATE TABLE IF NOT EXISTS `income_his` (
   `income_date` DATE NOT NULL COMMENT '收入日期',
   `dept_id` BIGINT COMMENT '部门ID',
   `clinic_id` BIGINT COMMENT '科室ID',
+  `clinic_code` VARCHAR(20) COMMENT '科室编码',
+  `clinic_name` VARCHAR(50) COMMENT '科室名称',
   `income_type` VARCHAR(20) COMMENT '收入类型',
   `income_amount` DECIMAL(18,2) DEFAULT 0.00 COMMENT '收入金额',
   `his_system_no` VARCHAR(50) COMMENT 'HIS系统单号',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   KEY `idx_income_no` (`income_no`),
-  KEY `idx_income_date` (`income_date`)
+  KEY `idx_income_date` (`income_date`),
+  KEY `idx_clinic_id` (`clinic_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='HIS收入数据表';
 
 -- 收入数据表（设备收入）
@@ -849,10 +1085,13 @@ CREATE TABLE IF NOT EXISTS `income_equipment` (
   `income_date` DATE NOT NULL COMMENT '收入日期',
   `equipment_id` BIGINT COMMENT '设备ID',
   `equipment_code` VARCHAR(50) COMMENT '设备编码',
+  `equipment_name` VARCHAR(100) COMMENT '设备名称',
+  `dept_id` BIGINT COMMENT '部门ID',
   `income_type` VARCHAR(20) COMMENT '收入类型',
   `income_amount` DECIMAL(18,2) DEFAULT 0.00 COMMENT '收入金额',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   KEY `idx_income_no` (`income_no`),
+  KEY `idx_income_date` (`income_date`),
   KEY `idx_equipment_id` (`equipment_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='设备收入数据表';
 
@@ -882,6 +1121,7 @@ CREATE TABLE IF NOT EXISTS `equipment_analysis_report` (
   `analysis_result` TEXT COMMENT '分析结果',
   `create_user` VARCHAR(50) COMMENT '创建人',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   KEY `idx_report_no` (`report_no`),
   KEY `idx_equipment_id` (`equipment_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='设备分析报告表';
@@ -899,6 +1139,7 @@ CREATE TABLE IF NOT EXISTS `investment_return_analysis` (
   `analysis_result` TEXT COMMENT '分析结果',
   `create_user` VARCHAR(50) COMMENT '创建人',
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   KEY `idx_analysis_no` (`analysis_no`),
   KEY `idx_equipment_id` (`equipment_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='投资收益分析表';

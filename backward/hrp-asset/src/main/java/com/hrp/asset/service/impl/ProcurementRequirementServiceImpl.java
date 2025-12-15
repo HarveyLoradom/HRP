@@ -89,6 +89,39 @@ public class ProcurementRequirementServiceImpl implements ProcurementRequirement
     }
 
     @Override
+    public com.hrp.common.entity.PageResult<ProcurementRequirement> getMyListPage(String userId, Long empId, Long page, Long size) {
+        // 先获取所有数据（合并后的）
+        List<ProcurementRequirement> allData = getMyList(userId, empId);
+        Long total = (long) allData.size();
+        
+        // 内存分页
+        Long offset = (page - 1) * size;
+        Long end = Math.min(offset + size, total);
+        List<ProcurementRequirement> records = new ArrayList<>();
+        for (Long i = offset; i < end; i++) {
+            records.add(allData.get(i.intValue()));
+        }
+        
+        return com.hrp.common.entity.PageResult.of(records, total, size, page);
+    }
+
+    @Override
+    public com.hrp.common.entity.PageResult<ProcurementRequirement> getAllPage(Long page, Long size) {
+        List<ProcurementRequirement> allData = procurementRequirementMapper.selectAll();
+        Long total = (long) allData.size();
+        
+        // 内存分页
+        Long offset = (page - 1) * size;
+        Long end = Math.min(offset + size, total);
+        List<ProcurementRequirement> records = new ArrayList<>();
+        for (Long i = offset; i < end; i++) {
+            records.add(allData.get(i.intValue()));
+        }
+        
+        return com.hrp.common.entity.PageResult.of(records, total, size, page);
+    }
+
+    @Override
     public ProcurementRequirement getById(Long id) {
         return procurementRequirementMapper.selectById(id);
     }

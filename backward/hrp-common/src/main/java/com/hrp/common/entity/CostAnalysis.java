@@ -2,6 +2,7 @@ package com.hrp.common.entity;
 
 import lombok.Data;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -17,6 +18,11 @@ public class CostAnalysis implements Serializable {
     private String analysisType;
     private String analysisPeriod;
     private Long deptId;
+    private BigDecimal totalCost;
+    private BigDecimal directCost;
+    private BigDecimal indirectCost;
+    private BigDecimal costRatio;
+    private BigDecimal growthRate;
     private String analysisResult;
     private String createUser;
     private LocalDateTime createTime;

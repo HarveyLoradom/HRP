@@ -15,6 +15,7 @@ public class ProcessDefinition implements Serializable {
     private String definitionKey;
     private String definitionName;
     private String definitionType; // PAYOUT-报账审批，CONTRACT-合同审批
+    private String businessType; // 业务类型值（如：MEAL-餐费，TRAVEL-差旅费等）
     private String processXml; // BPMN格式的流程XML
     private String processJson; // 前端绘制用的JSON格式
     private Integer version;

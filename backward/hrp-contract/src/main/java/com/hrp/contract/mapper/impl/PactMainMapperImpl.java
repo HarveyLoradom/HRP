@@ -35,6 +35,33 @@ public class PactMainMapperImpl implements PactMainMapper {
     }
 
     @Override
+    public List<PactMain> selectAllPage(Long offset, Long size) {
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("offset", offset);
+        params.put("size", size);
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectAllPage", params);
+    }
+
+    @Override
+    public Long countAll() {
+        return sqlSessionTemplate.selectOne(NAMESPACE + ".countAll");
+    }
+
+    @Override
+    public List<PactMain> selectByStatusPage(String status, Long offset, Long size) {
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("status", status);
+        params.put("offset", offset);
+        params.put("size", size);
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectByStatusPage", params);
+    }
+
+    @Override
+    public Long countByStatus(String status) {
+        return sqlSessionTemplate.selectOne(NAMESPACE + ".countByStatus", status);
+    }
+
+    @Override
     public int insert(PactMain pactMain) {
         return sqlSessionTemplate.insert(NAMESPACE + ".insert", pactMain);
     }

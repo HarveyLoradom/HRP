@@ -42,6 +42,26 @@
         ORDER BY start_time DESC
     </select>
 
+    <select id="selectAllPage" resultMap="BaseResultMap">
+        SELECT * FROM wf_process_instance
+        ORDER BY start_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countAll" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM wf_process_instance
+    </select>
+
+    <select id="selectByStatusPage" resultMap="BaseResultMap">
+        SELECT * FROM wf_process_instance WHERE process_status = #{processStatus}
+        ORDER BY start_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByStatus" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM wf_process_instance WHERE process_status = #{processStatus}
+    </select>
+
     <insert id="insert" parameterType="com.hrp.common.entity.ProcessInstance">
         INSERT INTO wf_process_instance (process_definition_id, business_key, business_type, business_id, process_status, start_user_id, start_user_name, start_time, remark)
         VALUES (#{processDefinitionId}, #{businessKey}, #{businessType}, #{businessId}, #{processStatus}, #{startUserId}, #{startUserName}, NOW(), #{remark})
@@ -63,3 +83,6 @@
     </delete>
 
 </mapper>
+
+
+

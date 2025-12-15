@@ -16,9 +16,13 @@ public class CostAccounting implements Serializable {
     private String accountingNo;
     private String accountingName;
     private String accountingPeriod;
+    private String accountingDimension;
     private Long deptId;
     private String costItem;
     private BigDecimal costAmount;
+    private BigDecimal directCost;
+    private BigDecimal indirectCost;
+    private String status;
     private LocalDateTime createTime;
 }
 

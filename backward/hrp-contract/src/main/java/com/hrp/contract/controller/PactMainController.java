@@ -22,10 +22,27 @@ public class PactMainController {
         return Result.success(contracts);
     }
 
+    @GetMapping("/page")
+    public Result<com.hrp.common.entity.PageResult<PactMain>> getAllPage(
+            @RequestParam(defaultValue = "1") Long page,
+            @RequestParam(defaultValue = "10") Long size) {
+        com.hrp.common.entity.PageResult<PactMain> pageResult = pactMainService.getAllPage(page, size);
+        return Result.success(pageResult);
+    }
+
     @GetMapping("/status/{status}")
     public Result<List<PactMain>> getByStatus(@PathVariable String status) {
         List<PactMain> contracts = pactMainService.getByStatus(status);
         return Result.success(contracts);
+    }
+
+    @GetMapping("/status/{status}/page")
+    public Result<com.hrp.common.entity.PageResult<PactMain>> getByStatusPage(
+            @PathVariable String status,
+            @RequestParam(defaultValue = "1") Long page,
+            @RequestParam(defaultValue = "10") Long size) {
+        com.hrp.common.entity.PageResult<PactMain> pageResult = pactMainService.getByStatusPage(status, page, size);
+        return Result.success(pageResult);
     }
 
     @GetMapping("/{id}")

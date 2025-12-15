@@ -8,24 +8,46 @@
       <el-tabs v-model="activeTab">
         <el-tab-pane label="角色权限" name="role">
           <el-table :data="roleTableData" border style="width: 100%" v-loading="roleLoading">
-            <el-table-column prop="roleCode" label="角色编码" width="120"></el-table-column>
-            <el-table-column prop="roleName" label="角色名称" width="150"></el-table-column>
-            <el-table-column prop="roleDesc" label="角色描述"></el-table-column>
+            <el-table-column prop="codeValue" label="用户类型值" width="120"></el-table-column>
+            <el-table-column prop="codeName" label="用户类型名称" width="150"></el-table-column>
+            <el-table-column prop="codeTypeName" label="类型说明"></el-table-column>
             <el-table-column label="操作" width="150">
               <template slot-scope="scope">
-                <el-button size="mini" type="primary" @click="handleAssignMenu(scope.row)">分配菜单</el-button>
+                <el-button size="mini" type="primary" @click="handleAssignMenu(scope.row)">设置菜单权限</el-button>
               </template>
             </el-table-column>
           </el-table>
         </el-tab-pane>
         
         <el-tab-pane label="用户权限" name="user">
+          <!-- 搜索条件 -->
+          <el-form :inline="true" :model="userSearchForm" class="search-form" style="margin-bottom: 15px;">
+            <el-form-item label="工号/姓名">
+              <el-input v-model="userSearchForm.keyword" placeholder="请输入工号或姓名" clearable @keyup.enter.native="handleUserSearch"></el-input>
+            </el-form-item>
+            <el-form-item label="部门">
+              <el-select v-model="userSearchForm.deptCode" placeholder="请选择部门" clearable style="width: 200px;">
+                <el-option
+                  v-for="dept in deptOptions"
+                  :key="dept.deptCode"
+                  :label="dept.deptName"
+                  :value="dept.deptCode"
+                ></el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleUserSearch">查询</el-button>
+              <el-button @click="handleUserReset">重置</el-button>
+            </el-form-item>
+          </el-form>
+          
           <div style="margin-bottom: 15px;">
             <el-button type="primary" @click="handleBatchAssignMenu" :disabled="selectedUsers.length === 0">批量分配菜单</el-button>
+            <el-button type="success" @click="handleBatchAssignRole" :disabled="selectedUsers.length === 0" style="margin-left: 10px;">批量分配角色</el-button>
             <span style="margin-left: 10px; color: #909399;">已选择 {{ selectedUsers.length }} 个用户</span>
           </div>
           <el-table 
-            :data="userTableData" 
+            :data="filteredUserTableData" 
             border 
             style="width: 100%" 
             v-loading="userLoading"
@@ -34,6 +56,17 @@
             <el-table-column type="selection" width="55"></el-table-column>
             <el-table-column prop="account" label="账号" width="120"></el-table-column>
             <el-table-column prop="name" label="用户名" width="120"></el-table-column>
+            <el-table-column prop="deptName" label="部门" width="150">
+              <template slot-scope="scope">
+                <span v-if="scope.row.deptName">{{ scope.row.deptName }}</span>
+                <span v-else style="color: #999;">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="type" label="用户类型" width="120">
+              <template slot-scope="scope">
+                <span>{{ getUserTypeName(scope.row.type) }}</span>
+              </template>
+            </el-table-column>
             <el-table-column label="操作" width="200">
               <template slot-scope="scope">
                 <el-button size="mini" type="primary" @click="handleAssignRole(scope.row)">分配角色</el-button>
@@ -68,15 +101,19 @@
 
     <!-- 分配角色对话框 -->
     <el-dialog
-      title="分配角色"
+      :title="roleDialogTitle"
       :visible.sync="roleDialogVisible"
       width="500px"
+      @open="handleRoleDialogOpen"
     >
-      <el-checkbox-group v-model="selectedRoleIds">
-        <el-checkbox v-for="role in allRoles" :key="role.roleId" :label="role.roleId">
-          {{ role.roleName }}
-        </el-checkbox>
-      </el-checkbox-group>
+      <div v-if="userTypeOptions.length === 0" style="text-align: center; padding: 20px; color: #909399;">
+        暂无用户类型数据
+      </div>
+      <el-radio-group v-model="selectedUserType" v-else>
+        <el-radio v-for="type in userTypeOptions" :key="type.value" :label="type.value">
+          {{ type.label }}
+        </el-radio>
+      </el-radio-group>
       <div slot="footer" class="dialog-footer">
         <el-button @click="roleDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleSaveRoleAssign">确定</el-button>
@@ -86,7 +123,7 @@
 </template>
 
 <script>
-import { getRoleList, getRoleMenus, assignRoleMenus, getUserList, getUserRoles, assignUserRoles, getUserMenuIds, assignUserMenus } from '@/api/user'
+import { getRoleList, getUserList, getUserById, getUserRoles, assignUserRoles, batchAssignUserRoles, getUserMenuIds, assignUserMenus, getCodeByType, getUserTypeMenus, assignUserTypeMenus, updateUser, getDeptList } from '@/api/user'
 import { getMenuTree } from '@/api/menu'
 
 export default {
@@ -97,7 +134,6 @@ export default {
       roleLoading: false,
       userLoading: false,
       roleTableData: [],
-      userTableData: [],
       selectedUsers: [],
       menuDialogVisible: false,
       menuDialogTitle: '分配菜单',
@@ -106,9 +142,40 @@ export default {
       currentAssignId: null,
       assignType: '', // 'role' or 'user' or 'batch'
       roleDialogVisible: false,
+      roleDialogTitle: '分配角色',
       allRoles: [],
       selectedRoleIds: [],
-      currentUserId: null
+      currentUserId: null,
+      isBatchRoleAssign: false,
+      userTypeOptions: [],
+      selectedUserType: null,
+      userSearchForm: {
+        keyword: '',
+        deptCode: ''
+      },
+      deptOptions: [],
+      allUserTableData: []
+    }
+  },
+  computed: {
+    filteredUserTableData() {
+      let filtered = [...this.allUserTableData]
+      
+      // 按工号/姓名筛选
+      if (this.userSearchForm.keyword && this.userSearchForm.keyword.trim()) {
+        const keyword = this.userSearchForm.keyword.trim().toLowerCase()
+        filtered = filtered.filter(user => 
+          (user.account && user.account.toLowerCase().includes(keyword)) ||
+          (user.name && user.name.toLowerCase().includes(keyword))
+        )
+      }
+      
+      // 按部门筛选
+      if (this.userSearchForm.deptCode) {
+        filtered = filtered.filter(user => user.deptCode === this.userSearchForm.deptCode)
+      }
+      
+      return filtered
     }
   },
   mounted() {
@@ -116,16 +183,23 @@ export default {
     this.loadUserData()
     this.loadAllRoles()
     this.loadMenuTree()
+    this.loadUserTypeOptions()
+    this.loadDeptList()
   },
   methods: {
     loadRoleData() {
       this.roleLoading = true
-      getRoleList().then(response => {
+      // 从sys_code中获取USER_TYPE类型的用户类型
+      getCodeByType('USER_TYPE').then(response => {
         if (response.code === 200) {
-          this.roleTableData = response.data || []
+          // 只显示未停用的用户类型
+          this.roleTableData = (response.data || []).filter(item => item.isStop === 0 || item.isStop === '0')
+        } else {
+          this.roleTableData = []
         }
         this.roleLoading = false
       }).catch(() => {
+        this.roleTableData = []
         this.roleLoading = false
       })
     },
@@ -133,18 +207,54 @@ export default {
       this.userLoading = true
       getUserList().then(response => {
         if (response.code === 200) {
-          this.userTableData = response.data || []
+          this.allUserTableData = response.data || []
         }
         this.userLoading = false
       }).catch(() => {
         this.userLoading = false
       })
     },
+    loadDeptList() {
+      getDeptList().then(response => {
+        if (response.code === 200) {
+          this.deptOptions = response.data || []
+        }
+      }).catch(() => {
+        this.deptOptions = []
+      })
+    },
     loadAllRoles() {
-      getRoleList().then(response => {
+      return getRoleList().then(response => {
         if (response.code === 200) {
           this.allRoles = response.data || []
+          console.log('角色列表加载成功:', this.allRoles)
+          return this.allRoles
+        } else {
+          this.$message.error(response.message || '获取角色列表失败')
+          this.allRoles = []
+          return []
         }
+      }).catch(error => {
+        console.error('获取角色列表失败:', error)
+        this.$message.error('获取角色列表失败：' + (error.message || '未知错误'))
+        this.allRoles = []
+        return []
+      })
+    },
+    loadUserTypeOptions() {
+      getCodeByType('USER_TYPE').then(response => {
+        if (response.code === 200) {
+          this.userTypeOptions = (response.data || [])
+            .filter(item => item.isStop === 0 || item.isStop === '0')
+            .map(item => ({
+              label: item.codeName,
+              value: item.codeValue
+            }))
+        } else {
+          this.userTypeOptions = []
+        }
+      }).catch(() => {
+        this.userTypeOptions = []
       })
     },
     loadMenuTree() {
@@ -156,14 +266,14 @@ export default {
     },
     handleAssignMenu(row) {
       if (this.activeTab === 'role') {
-        // 角色分配菜单
-        this.menuDialogTitle = `为角色"${row.roleName}"分配菜单`
-        this.assignType = 'role'
-        this.currentAssignId = row.roleId
+        // 用户类型分配菜单
+        this.menuDialogTitle = `为用户类型"${row.codeName}"设置菜单权限`
+        this.assignType = 'userType'
+        this.currentAssignId = row.codeValue // 使用codeValue作为用户类型标识
         // 先清空勾选
         this.checkedMenuIds = []
-        // 获取角色已有菜单
-        getRoleMenus(row.roleId).then(response => {
+        // 获取用户类型已有菜单
+        getUserTypeMenus(row.codeValue).then(response => {
           if (response.code === 200) {
             this.checkedMenuIds = (response.data || []).map(item => item.menuId)
           }
@@ -205,12 +315,57 @@ export default {
     },
     handleAssignRole(row) {
       this.currentUserId = row.id
-      getUserRoles(row.id).then(response => {
-        if (response.code === 200) {
-          this.selectedRoleIds = (response.data || []).map(item => item.roleId)
-        }
+      this.isBatchRoleAssign = false
+      this.roleDialogTitle = `为用户"${row.name}"分配角色`
+      // 确保用户类型列表已加载
+      if (!this.userTypeOptions || this.userTypeOptions.length === 0) {
+        this.loadUserTypeOptions()
+      }
+      // 获取用户当前类型
+      if (row.type) {
+        this.selectedUserType = String(row.type)
+      } else {
+        getUserById(row.id).then(response => {
+          if (response.code === 200 && response.data && response.data.type) {
+            this.selectedUserType = String(response.data.type)
+          } else {
+            this.selectedUserType = null
+          }
+          this.roleDialogVisible = true
+        }).catch(() => {
+          this.selectedUserType = null
+          this.roleDialogVisible = true
+        })
+      }
+      if (this.selectedUserType) {
         this.roleDialogVisible = true
-      })
+      }
+    },
+    handleBatchAssignRole() {
+      if (this.selectedUsers.length === 0) {
+        this.$message.warning('请先选择用户')
+        return
+      }
+      this.isBatchRoleAssign = true
+      this.roleDialogTitle = `为 ${this.selectedUsers.length} 个用户批量分配角色`
+      // 确保用户类型列表已加载
+      if (!this.userTypeOptions || this.userTypeOptions.length === 0) {
+        this.loadUserTypeOptions()
+      }
+      this.selectedUserType = null
+      this.roleDialogVisible = true
+    },
+    handleRoleDialogOpen() {
+      // 对话框打开时，如果角色列表为空，重新加载
+      if (!this.allRoles || this.allRoles.length === 0) {
+        this.loadAllRoles()
+      }
+    },
+    getUserTypeName(type) {
+      if (!type) return '-'
+      const typeStr = String(type)
+      const userType = this.userTypeOptions.find(opt => opt.value === typeStr)
+      return userType ? userType.label : '-'
     },
     handleSelectionChange(selection) {
       this.selectedUsers = selection
@@ -231,17 +386,17 @@ export default {
       // 合并完全勾选和半勾选的菜单ID
       const allKeys = [...checkedKeys, ...halfCheckedKeys]
       
-      if (this.assignType === 'role') {
-        // 角色分配菜单
-        assignRoleMenus(this.currentAssignId, allKeys).then(response => {
+      if (this.assignType === 'userType') {
+        // 用户类型分配菜单
+        assignUserTypeMenus(this.currentAssignId, allKeys).then(response => {
           if (response.code === 200) {
-            this.$message.success('分配成功')
+            this.$message.success('设置成功')
             this.menuDialogVisible = false
           } else {
-            this.$message.error(response.message || '分配失败')
+            this.$message.error(response.message || '设置失败')
           }
         }).catch(error => {
-          this.$message.error('分配失败：' + (error.message || '未知错误'))
+          this.$message.error('设置失败：' + (error.message || '未知错误'))
         })
       } else if (this.assignType === 'batch') {
         // 批量分配菜单
@@ -274,14 +429,63 @@ export default {
       }
     },
     handleSaveRoleAssign() {
-      assignUserRoles(this.currentUserId, this.selectedRoleIds).then(response => {
-        if (response.code === 200) {
-          this.$message.success('分配成功')
-          this.roleDialogVisible = false
-        } else {
-          this.$message.error(response.message || '分配失败')
-        }
-      })
+      if (!this.selectedUserType) {
+        this.$message.warning('请选择用户类型')
+        return
+      }
+
+      if (this.isBatchRoleAssign) {
+        // 批量分配用户类型
+        const userIds = this.selectedUsers.map(user => user.id)
+        const updatePromises = userIds.map(userId => {
+          // 获取用户信息
+          return getUserById(userId).then(response => {
+            if (response.code === 200 && response.data) {
+              // 更新用户类型
+              const userData = { ...response.data, type: parseInt(this.selectedUserType) }
+              return updateUser(userData)
+            }
+            return Promise.resolve({ code: 500, message: '用户不存在' })
+          })
+        })
+
+        Promise.all(updatePromises).then(results => {
+          const successCount = results.filter(r => r.code === 200).length
+          if (successCount === userIds.length) {
+            this.$message.success(`成功为 ${successCount} 个用户分配用户类型`)
+            this.roleDialogVisible = false
+            this.selectedUsers = []
+            this.loadUserData() // 刷新用户列表
+          } else {
+            this.$message.warning(`部分用户分配失败，成功：${successCount}，失败：${userIds.length - successCount}`)
+          }
+        }).catch(error => {
+          this.$message.error('批量分配失败：' + (error.message || '未知错误'))
+        })
+      } else {
+        // 单个用户分配用户类型
+        getUserById(this.currentUserId).then(response => {
+          if (response.code === 200 && response.data) {
+            // 更新用户类型
+            const userData = { ...response.data, type: parseInt(this.selectedUserType) }
+            updateUser(userData).then(updateResponse => {
+              if (updateResponse.code === 200) {
+                this.$message.success('分配成功')
+                this.roleDialogVisible = false
+                this.loadUserData() // 刷新用户列表
+              } else {
+                this.$message.error(updateResponse.message || '分配失败')
+              }
+            }).catch(error => {
+              this.$message.error('分配失败：' + (error.message || '未知错误'))
+            })
+          } else {
+            this.$message.error('用户不存在')
+          }
+        }).catch(error => {
+          this.$message.error('获取用户信息失败：' + (error.message || '未知错误'))
+        })
+      }
     }
   }
 }
@@ -290,6 +494,10 @@ export default {
 <style scoped>
 .permission-management {
   padding: 20px;
+}
+
+.search-form {
+  margin-bottom: 15px;
 }
 </style>
 

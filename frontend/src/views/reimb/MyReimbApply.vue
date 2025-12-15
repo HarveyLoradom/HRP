@@ -46,10 +46,22 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination-container" style="margin-top: 20px; text-align: right;">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="pagination.page"
+          :page-sizes="[10, 20, 50, 100]"
+          :page-size="pagination.size"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="pagination.total">
+        </el-pagination>
+      </div>
     </el-card>
 
     <!-- 新增/编辑对话框 -->
-    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="800px">
+    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="800px" @close="handleDialogCancel">
       <el-form :model="form" :rules="rules" ref="form" label-width="120px">
         <el-row :gutter="20">
           <el-col :span="12">
@@ -126,7 +138,7 @@
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button @click="handleDialogCancel">取消</el-button>
         <el-button type="primary" @click="handleSave">确定</el-button>
       </div>
     </el-dialog>
@@ -161,9 +173,10 @@
                 {{ formatDate(scope.row.uploadTime) }}
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="100">
+            <el-table-column label="操作" width="150">
               <template slot-scope="scope">
-                <el-button size="mini" type="text" @click="handleDownload(scope.row)">下载</el-button>
+                <el-button size="mini" type="text" @click="handlePreviewAttachment(scope.row)">预览</el-button>
+                <el-button size="mini" type="text" @click="handleDownloadAttachment(scope.row)">下载</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -192,14 +205,16 @@
 </template>
 
 <script>
-import { getMyPayouts, savePayout, updatePayout, deletePayout, submitPayout, withdrawPayout, getPayoutDetail, getPayoutApprovals } from '@/api/reimb'
+import { getMyPayoutsPage, savePayout, updatePayout, deletePayout, submitPayout, withdrawPayout, getPayoutDetail, getPayoutApprovals } from '@/api/reimb'
 import { getBudgetSubjects, getBudgetItems, getBudgetsBySubjectAndItem, checkBudgetAmount } from '@/api/budg'
-import { getAttachmentsByBusiness } from '@/api/attachment'
+import { getAttachmentsByBusiness, deleteAttachment, updateAttachmentBusinessId } from '@/api/attachment'
 import { getCodeTypeOptions } from '@/utils/codeType'
+import { paginationMixin } from '@/mixins/pagination'
 import Cookies from 'js-cookie'
 
 export default {
   name: 'MyReimbApply',
+  mixins: [paginationMixin],
   data() {
     return {
       loading: false,
@@ -217,7 +232,8 @@ export default {
       isEdit: false,
       currentDetail: null,
       fileList: [],
-      uploadUrl: '/api/attachment/upload',
+      uploadedAttachmentIds: [], // 记录新上传的附件ID，用于取消时删除
+      uploadUrl: '/api/auth/attachment/upload',
       uploadHeaders: {
         Authorization: 'Bearer ' + Cookies.get('token')
       },
@@ -314,15 +330,31 @@ export default {
     loadData() {
       this.loading = true
       const empId = this.$store.state.user.userInfo.empId || 1
-      getMyPayouts(empId).then(response => {
-        if (response.code === 200) {
+      getMyPayoutsPage(empId, this.pagination.page, this.pagination.size).then(response => {
+        if (response.code === 200 && response.data) {
           // 只显示申请单
-          this.tableData = (response.data || []).filter(item => item.billType === 'APPLY' || !item.billType)
+          let records = (response.data.records || []).filter(item => item.billType === 'APPLY' || !item.billType)
+          this.tableData = records
+          this.pagination.total = records.length > 0 ? records.length : (response.data.total || 0)
+        } else {
+          this.tableData = []
+          this.pagination.total = 0
         }
         this.loading = false
       }).catch(() => {
+        this.tableData = []
+        this.pagination.total = 0
         this.loading = false
       })
+    },
+    handleSizeChange(val) {
+      this.pagination.size = val
+      this.pagination.page = 1
+      this.loadData()
+    },
+    handleCurrentChange(val) {
+      this.pagination.page = val
+      this.loadData()
     },
     handleAdd() {
       this.dialogTitle = '新增申请'
@@ -341,6 +373,7 @@ export default {
         status: 'DRAFT'
       }
       this.uploadData.businessId = null
+      this.uploadedAttachmentIds = [] // 重置上传附件ID列表
       this.dialogVisible = true
     },
     handleEdit(row) {
@@ -352,6 +385,7 @@ export default {
       this.isEdit = true
       this.form = { ...row }
       this.uploadData.businessId = row.payoutId
+      this.uploadedAttachmentIds = [] // 重置上传附件ID列表
       this.loadAttachments(row.payoutId)
       this.dialogVisible = true
     },
@@ -363,7 +397,10 @@ export default {
           this.fileList = (response.data || []).map(item => ({
             name: item.fileName,
             url: item.filePath,
-            uid: item.attachmentId
+            uid: item.attachmentId,
+            response: { data: item.attachmentId }, // 添加response以便handleRemove能识别
+            filePath: item.filePath, // 保存filePath用于预览
+            fileName: item.fileName // 保存fileName用于预览
           }))
         }
       } catch (error) {
@@ -383,6 +420,7 @@ export default {
         deletePayout(row.payoutId).then(response => {
           if (response.code === 200) {
             this.$message.success('删除成功')
+            this.pagination.page = 1
             this.loadData()
           } else {
             this.$message.error(response.message || '删除失败')
@@ -404,6 +442,7 @@ export default {
           if (response.code === 200) {
             const message = response.message || '提交成功'
             this.$message.success(message)
+            this.pagination.page = 1
             this.loadData()
           } else {
             this.$message.error(response.message || '提交失败')
@@ -424,6 +463,7 @@ export default {
         withdrawPayout(row.payoutId).then(response => {
           if (response.code === 200) {
             this.$message.success('撤回成功')
+            this.pagination.page = 1
             this.loadData()
           } else {
             this.$message.error(response.message || '撤回失败')
@@ -465,12 +505,23 @@ export default {
           api(this.form).then(response => {
             if (response.code === 200) {
               // 如果是新增，需要更新附件的businessId
-              if (!this.isEdit && this.fileList.length > 0) {
-                // TODO: 更新附件的businessId为新的payoutId
-                // 这里需要获取保存后的payoutId，可以通过返回数据或重新查询获取
+              if (!this.isEdit && this.uploadedAttachmentIds.length > 0) {
+                // 从响应中获取保存后的payoutId
+                const payoutId = response.data?.payoutId || response.data?.id
+                if (payoutId) {
+                  // 更新附件的businessId
+                  updateAttachmentBusinessId('PAYOUT', payoutId, this.uploadedAttachmentIds).then(() => {
+                    console.log('附件businessId更新成功')
+                  }).catch(error => {
+                    console.error('更新附件businessId失败:', error)
+                  })
+                }
               }
+              // 清空上传附件ID列表（已保存，不再需要删除）
+              this.uploadedAttachmentIds = []
               this.$message.success(this.isEdit ? '更新成功' : '新增成功')
               this.dialogVisible = false
+              this.pagination.page = 1
               this.loadData()
             } else {
               this.$message.error(response.message || '操作失败')
@@ -489,21 +540,159 @@ export default {
       return true
     },
     handleUploadSuccess(response, file) {
-      if (response.code === 200) {
+      console.log('附件上传成功响应:', response)
+      // el-upload 的响应可能是包装后的格式
+      let res = response
+      if (typeof response === 'string') {
+        try {
+          res = JSON.parse(response)
+        } catch (e) {
+          console.error('解析响应JSON失败:', e)
+          this.$message.error('上传失败：响应格式错误')
+          return
+        }
+      }
+      if (response && response.data && typeof response.data === 'object') {
+        res = response.data
+      }
+      
+      if (res && res.code === 200 && res.data) {
         this.$message.success('上传成功')
-        // 如果是新增，保存后需要更新附件关联的businessId
-        if (!this.form.payoutId && response.data) {
-          // 保存附件ID，在保存主表后更新
+        // 如果是新增，记录附件ID，取消时删除
+        if (!this.form.payoutId) {
+          this.uploadedAttachmentIds.push(res.data)
         }
       } else {
-        this.$message.error(response.message || '上传失败')
+        this.$message.error((res && res.message) || '上传失败')
       }
     },
-    handleRemove(file, fileList) {
+    async handleRemove(file, fileList) {
       this.fileList = fileList
+      // 如果删除的是新上传的文件，需要删除服务器上的文件
+      let attachmentId = null
+      if (file.response && file.response.data) {
+        attachmentId = file.response.data
+      } else if (file.uid && typeof file.uid === 'number') {
+        // 可能是已保存的附件，uid就是attachmentId
+        attachmentId = file.uid
+      }
+      
+      if (attachmentId) {
+        // 从列表中移除
+        const index = this.uploadedAttachmentIds.indexOf(attachmentId)
+        if (index > -1) {
+          this.uploadedAttachmentIds.splice(index, 1)
+          // 如果是未保存的新上传文件，删除服务器文件
+          if (!this.form.payoutId) {
+            try {
+              await deleteAttachment(attachmentId)
+              console.log('已删除附件:', attachmentId)
+            } catch (error) {
+              console.error('删除附件失败:', error)
+            }
+          }
+        }
+      }
     },
-    handleDownload(attachment) {
-      window.open(attachment.filePath, '_blank')
+    async handleDialogCancel() {
+      // 如果上传了附件但没有保存，需要删除这些附件
+      if (this.uploadedAttachmentIds.length > 0) {
+        // 批量删除未保存的附件
+        for (const attachmentId of this.uploadedAttachmentIds) {
+          try {
+            await deleteAttachment(attachmentId)
+            console.log('已删除未保存的附件:', attachmentId)
+          } catch (error) {
+            console.error('删除附件失败:', error)
+            // 继续删除其他附件，不中断
+          }
+        }
+        this.uploadedAttachmentIds = []
+      }
+      
+      // 重置文件列表
+      this.fileList = []
+      
+      // 关闭对话框
+      this.dialogVisible = false
+    },
+    handlePreviewAttachment(attachment) {
+      console.log('预览附件:', attachment)
+      // 构建文件URL
+      let fileUrl = attachment.filePath || attachment.url
+      if (!fileUrl) {
+        this.$message.error('附件路径不存在')
+        return
+      }
+      
+      console.log('原始文件路径:', fileUrl)
+      
+      // 如果filePath是相对路径，需要转换为完整URL
+      if (!fileUrl.startsWith('http://') && !fileUrl.startsWith('https://')) {
+        // filePath可能是完整路径，需要转换为访问URL
+        // 例如：F:/data/uploads/attachments/PAYOUT/xxx.pdf
+        // 需要转换为：/api/uploads/attachments/PAYOUT/xxx.pdf
+        if (fileUrl.includes('/uploads/')) {
+          const parts = fileUrl.split('/uploads/')
+          fileUrl = '/api/uploads/' + parts[parts.length - 1]
+        } else if (fileUrl.includes('\\uploads\\')) {
+          const parts = fileUrl.split('\\uploads\\')
+          fileUrl = '/api/uploads/' + parts[parts.length - 1].replace(/\\/g, '/')
+        } else if (fileUrl.includes('attachments/')) {
+          // 如果路径包含attachments/，说明可能是相对路径
+          fileUrl = '/api/uploads/' + fileUrl.replace(/\\/g, '/')
+        } else {
+          // 其他情况，尝试作为相对路径处理
+          fileUrl = '/api/uploads/' + fileUrl.replace(/\\/g, '/')
+        }
+      }
+      
+      console.log('转换后的文件URL:', fileUrl)
+      
+      // 判断文件类型，如果是图片，使用图片预览
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
+      const fileName = attachment.fileName || attachment.name || ''
+      const fileExt = fileName ? fileName.substring(fileName.lastIndexOf('.')).toLowerCase() : ''
+      
+      console.log('文件扩展名:', fileExt)
+      
+      if (imageExtensions.includes(fileExt)) {
+        // 图片预览
+        this.$alert(`<img src="${fileUrl}" style="max-width: 100%; max-height: 500px; display: block; margin: 0 auto;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" /><p style="display:none; text-align:center; color:red;">图片加载失败，URL: ${fileUrl}</p>`, '图片预览', {
+          dangerouslyUseHTMLString: true,
+          showConfirmButton: true,
+          confirmButtonText: '关闭',
+          customClass: 'image-preview-dialog',
+          width: '600px'
+        })
+      } else {
+        // 其他文件类型，在新窗口打开
+        console.log('打开文件:', fileUrl)
+        window.open(fileUrl, '_blank')
+      }
+    },
+    handleDownloadAttachment(attachment) {
+      // 构建文件URL
+      let fileUrl = attachment.filePath || attachment.url
+      if (!fileUrl) {
+        this.$message.error('附件路径不存在')
+        return
+      }
+      
+      // 如果filePath是相对路径，需要转换为完整URL
+      if (!fileUrl.startsWith('http://') && !fileUrl.startsWith('https://')) {
+        // filePath可能是完整路径，需要转换为访问URL
+        if (fileUrl.includes('/uploads/')) {
+          const parts = fileUrl.split('/uploads/')
+          fileUrl = '/api/uploads/' + parts[parts.length - 1]
+        } else if (fileUrl.includes('\\uploads\\')) {
+          const parts = fileUrl.split('\\uploads\\')
+          fileUrl = '/api/uploads/' + parts[parts.length - 1].replace(/\\/g, '/')
+        } else {
+          fileUrl = '/api/uploads/' + fileUrl.replace(/\\/g, '/')
+        }
+      }
+      window.open(fileUrl, '_blank')
     },
     formatFileSize(size) {
       if (!size) return '-'

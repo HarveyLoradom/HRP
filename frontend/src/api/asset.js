@@ -94,6 +94,14 @@ export function saveProcurement(data) {
   })
 }
 
+export function updateProcurement(data) {
+  return request({
+    url: '/asset/procurement',
+    method: 'put',
+    data
+  })
+}
+
 export function submitProcurement(id) {
   return request({
     url: `/asset/procurement/submit/${id}`,
@@ -140,6 +148,14 @@ export function getAssetApprovalMyList(approvalType, empId) {
   })
 }
 
+export function getAssetApprovalMyListPage(approvalType, empId, page, size) {
+  return request({
+    url: '/asset/approval/my-list/page',
+    method: 'get',
+    params: { approvalType, empId, page, size }
+  })
+}
+
 export function getAssetApprovalsByType(type) {
   return request({
     url: `/asset/approval/type/${type}`,
@@ -179,6 +195,14 @@ export function saveAssetApproval(data) {
   return request({
     url: '/asset/approval',
     method: 'post',
+    data
+  })
+}
+
+export function updateAssetApproval(data) {
+  return request({
+    url: '/asset/approval',
+    method: 'put',
     data
   })
 }
@@ -232,6 +256,14 @@ export function getProcurementMyList(empId) {
     url: '/asset/procurement/my-list',
     method: 'get',
     params: { empId }
+  })
+}
+
+export function getProcurementMyListPage(empId, page, size) {
+  return request({
+    url: '/asset/procurement/my-list/page',
+    method: 'get',
+    params: { empId, page, size }
   })
 }
 

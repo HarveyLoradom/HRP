@@ -7,9 +7,23 @@ export function getMyPayouts(empId) {
   })
 }
 
+export function getMyPayoutsPage(empId, page, size) {
+  return request({
+    url: `/reimb/payout/my/${empId}/page?page=${page}&size=${size}`,
+    method: 'get'
+  })
+}
+
 export function getPayoutsByStatus(status) {
   return request({
     url: `/reimb/payout/status/${status}`,
+    method: 'get'
+  })
+}
+
+export function getPayoutsByStatusPage(status, page, size) {
+  return request({
+    url: `/reimb/payout/status/${status}/page?page=${page}&size=${size}`,
     method: 'get'
   })
 }
@@ -65,9 +79,23 @@ export function getMyApprovalPayouts(userId) {
   })
 }
 
+export function getMyApprovalPayoutsPage(userId, page, size) {
+  return request({
+    url: `/reimb/payout/my-approval/${userId}/page?page=${page}&size=${size}`,
+    method: 'get'
+  })
+}
+
 export function getAllPayouts() {
   return request({
     url: '/reimb/payout/all',
+    method: 'get'
+  })
+}
+
+export function getAllPayoutsPage(page, size) {
+  return request({
+    url: `/reimb/payout/all/page?page=${page}&size=${size}`,
     method: 'get'
   })
 }

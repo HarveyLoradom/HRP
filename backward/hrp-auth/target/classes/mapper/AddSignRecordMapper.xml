@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.auth.mapper.AddSignRecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.AddSignRecord">
+        <id column="addsign_id" property="addsignId"/>
+        <result column="process_instance_id" property="processInstanceId"/>
+        <result column="parent_task_id" property="parentTaskId"/>
+        <result column="addsign_task_id" property="addsignTaskId"/>
+        <result column="addsign_user_id" property="addsignUserId"/>
+        <result column="addsign_user_name" property="addsignUserName"/>
+        <result column="addsign_emp_code" property="addsignEmpCode"/>
+        <result column="target_user_id" property="targetUserId"/>
+        <result column="target_user_name" property="targetUserName"/>
+        <result column="target_emp_code" property="targetEmpCode"/>
+        <result column="addsign_reason" property="addsignReason"/>
+        <result column="addsign_status" property="addsignStatus"/>
+        <result column="complete_time" property="completeTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM wf_addsign_record WHERE addsign_id = #{addsignId}
+    </select>
+
+    <select id="selectByParentTaskId" resultMap="BaseResultMap">
+        SELECT * FROM wf_addsign_record WHERE parent_task_id = #{parentTaskId}
+        ORDER BY create_time ASC
+    </select>
+
+    <select id="selectByProcessInstanceId" resultMap="BaseResultMap">
+        SELECT * FROM wf_addsign_record WHERE process_instance_id = #{processInstanceId}
+        ORDER BY create_time ASC
+    </select>
+
+    <select id="selectByAddsignTaskId" resultMap="BaseResultMap">
+        SELECT * FROM wf_addsign_record WHERE addsign_task_id = #{addsignTaskId}
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.AddSignRecord">
+        INSERT INTO wf_addsign_record (process_instance_id, parent_task_id, addsign_user_id, addsign_user_name, addsign_emp_code, target_user_id, target_user_name, target_emp_code, addsign_reason, addsign_status, create_time)
+        VALUES (#{processInstanceId}, #{parentTaskId}, #{addsignUserId}, #{addsignUserName}, #{addsignEmpCode}, #{targetUserId}, #{targetUserName}, #{targetEmpCode}, #{addsignReason}, #{addsignStatus}, NOW())
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.AddSignRecord">
+        UPDATE wf_addsign_record
+        <set>
+            <if test="addsignTaskId != null">addsign_task_id = #{addsignTaskId},</if>
+            <if test="addsignStatus != null">addsign_status = #{addsignStatus},</if>
+            <if test="completeTime != null">complete_time = #{completeTime},</if>
+            update_time = NOW()
+        </set>
+        WHERE addsign_id = #{addsignId}
+    </update>
+
+</mapper>
+

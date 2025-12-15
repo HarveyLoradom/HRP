@@ -6,7 +6,9 @@ import java.util.List;
 
 public interface PactMainService {
     List<PactMain> getAll();
+    com.hrp.common.entity.PageResult<PactMain> getAllPage(Long page, Long size);
     List<PactMain> getByStatus(String status);
+    com.hrp.common.entity.PageResult<PactMain> getByStatusPage(String status, Long page, Long size);
     List<PactMain> getMyApprovalContracts(String userId);
     PactMain getById(Long id);
     PactMain getByContractNo(String contractNo);

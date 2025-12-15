@@ -25,6 +25,11 @@ public class CostAnalysisMapperImpl implements CostAnalysisMapper {
     }
 
     @Override
+    public List<CostAnalysis> selectByPeriod(String analysisPeriod) {
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectByPeriod", analysisPeriod);
+    }
+
+    @Override
     public int insert(CostAnalysis costAnalysis) {
         return sqlSessionTemplate.insert(NAMESPACE + ".insert", costAnalysis);
     }

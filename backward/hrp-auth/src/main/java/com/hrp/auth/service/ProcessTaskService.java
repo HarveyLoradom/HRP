@@ -34,6 +34,16 @@ public interface ProcessTaskService {
     List<ProcessTask> getByStatus(String taskStatus);
 
     /**
+     * 根据任务状态分页查询任务列表
+     */
+    com.hrp.common.entity.PageResult<ProcessTask> getByStatusPage(String taskStatus, Long page, Long size);
+
+    /**
+     * 根据业务主键分页查询任务列表
+     */
+    com.hrp.common.entity.PageResult<ProcessTask> getByBusinessKeyPage(String businessKey, Long page, Long size);
+
+    /**
      * 转办任务（更改办理人）
      */
     boolean transferTask(Long taskId, String newAssigneeUserId, String newAssigneeUserName, String newAssigneeEmpCode);

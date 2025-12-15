@@ -21,7 +21,7 @@
         </el-form-item>
       </el-form>
 
-      <el-table :data="tableData" border style="width: 100%">
+      <el-table :data="paginatedData" border style="width: 100%" v-loading="loading">
         <el-table-column prop="empCode" label="工号" width="120"></el-table-column>
         <el-table-column prop="empName" label="姓名" width="100"></el-table-column>
         <el-table-column prop="salaryMonth" label="薪酬月份" width="120"></el-table-column>
@@ -53,19 +53,42 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination-container" style="margin-top: 20px; text-align: right;">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="pagination.page"
+          :page-sizes="[10, 20, 50, 100]"
+          :page-size="pagination.size"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="pagination.total">
+        </el-pagination>
+      </div>
     </el-card>
   </div>
 </template>
 
 <script>
 import { getAllSalaries, getSalariesByMonth } from '@/api/hr'
+import { paginationMixin } from '@/mixins/pagination'
 
 export default {
   name: 'SalaryManagement',
+  mixins: [paginationMixin],
   data() {
     return {
+      loading: false,
       tableData: [],
+      allData: [],
       searchMonth: ''
+    }
+  },
+  computed: {
+    paginatedData() {
+      const start = (this.pagination.page - 1) * this.pagination.size
+      const end = start + this.pagination.size
+      return this.tableData.slice(start, end)
     }
   },
   mounted() {
@@ -73,22 +96,32 @@ export default {
   },
   methods: {
     loadData() {
+      this.loading = true
       getAllSalaries().then(response => {
         if (response.code === 200) {
-          this.tableData = response.data
+          this.allData = response.data || []
+          this.handleSearch()
         }
+        this.loading = false
+      }).catch(() => {
+        this.loading = false
       })
     },
     handleSearch() {
+      let filtered = [...this.allData]
       if (this.searchMonth) {
-        getSalariesByMonth(this.searchMonth).then(response => {
-          if (response.code === 200) {
-            this.tableData = response.data
-          }
-        })
-      } else {
-        this.loadData()
+        filtered = filtered.filter(item => item.salaryMonth === this.searchMonth)
       }
+      this.tableData = filtered
+      this.pagination.total = filtered.length
+      this.pagination.page = 1
+    },
+    handleSizeChange(val) {
+      this.pagination.size = val
+      this.pagination.page = 1
+    },
+    handleCurrentChange(val) {
+      this.pagination.page = val
     },
     getStatusText(status) {
       const statusMap = {

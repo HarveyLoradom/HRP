@@ -6,6 +6,7 @@ import com.hrp.common.entity.AssetApproval;
 import com.hrp.common.entity.AssetApprovalDTO;
 import com.hrp.common.entity.Result;
 import com.hrp.common.entity.User;
+import com.hrp.common.exception.BusinessException;
 import com.hrp.common.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -33,35 +34,60 @@ public class AssetApprovalController {
             @RequestHeader(value = "Authorization", required = false) String token,
             @RequestParam(required = false) String approvalType,
             @RequestParam(required = false) Long empId) {
-        try {
-            String userId = null;
-            if (token != null && token.startsWith("Bearer ")) {
-                userId = JwtUtil.getUserId(token.substring(7));
-            }
-            
-            if (userId == null) {
-                return Result.error("未登录");
-            }
-            
-            // 获取用户信息，判断是否是管理员
-            User user = userMapper.selectById(userId);
-            if (user != null && user.getType() != null && user.getType() == 1L) {
-                // 管理员，返回所有数据
-                List<AssetApproval> approvals;
-                if (approvalType != null && !approvalType.isEmpty()) {
-                    approvals = assetApprovalService.getByType(approvalType);
-                } else {
-                    approvals = assetApprovalService.getAll();
-                }
-                return Result.success(approvals);
-            } else {
-                // 普通用户，返回自己发起的和待审批的
-                List<AssetApproval> approvals = assetApprovalService.getMyList(userId, empId, approvalType);
-                return Result.success(approvals);
-            }
-        } catch (Exception e) {
-            return Result.error("获取数据失败：" + e.getMessage());
+        String userId = null;
+        if (token != null && token.startsWith("Bearer ")) {
+            userId = JwtUtil.getUserId(token.substring(7));
         }
+        
+        if (userId == null) {
+            throw new BusinessException(401, "未登录");
+        }
+        
+        // 获取用户信息，判断是否是管理员
+        User user = userMapper.selectById(userId);
+        if (user != null && user.getType() != null && user.getType() == 1L) {
+            // 管理员，返回所有数据
+            List<AssetApproval> approvals;
+            if (approvalType != null && !approvalType.isEmpty()) {
+                approvals = assetApprovalService.getByType(approvalType);
+            } else {
+                approvals = assetApprovalService.getAll();
+            }
+            return Result.success(approvals);
+        } else {
+            // 普通用户，返回自己发起的和待审批的
+            List<AssetApproval> approvals = assetApprovalService.getMyList(userId, empId, approvalType);
+            return Result.success(approvals);
+        }
+    }
+
+    @GetMapping("/my-list/page")
+    public Result<com.hrp.common.entity.PageResult<AssetApproval>> getMyListPage(
+            @RequestHeader(value = "Authorization", required = false) String token,
+            @RequestParam(required = false) String approvalType,
+            @RequestParam(required = false) Long empId,
+            @RequestParam(defaultValue = "1") Long page,
+            @RequestParam(defaultValue = "10") Long size) {
+        String userId = null;
+        if (token != null && token.startsWith("Bearer ")) {
+            userId = JwtUtil.getUserId(token.substring(7));
+        }
+        
+        if (userId == null) {
+            throw new BusinessException(401, "未登录");
+        }
+        
+        // 获取用户信息，判断是否是管理员
+        User user = userMapper.selectById(userId);
+        com.hrp.common.entity.PageResult<AssetApproval> pageResult;
+        if (user != null && user.getType() != null && user.getType() == 1L) {
+            // 管理员，返回所有数据的分页
+            pageResult = assetApprovalService.getAllPage(page, size);
+        } else {
+            // 普通用户，返回自己发起的和待审批的分页
+            pageResult = assetApprovalService.getMyListPage(userId, empId, approvalType, page, size);
+        }
+        return Result.success(pageResult);
     }
 
     @GetMapping("/list")
@@ -109,25 +135,46 @@ public class AssetApprovalController {
     @PostMapping
     public Result<Void> save(@RequestBody AssetApprovalDTO dto) {
         boolean success = assetApprovalService.save(dto);
-        return success ? Result.success() : Result.error("保存失败");
+        if (!success) {
+            throw new BusinessException("保存失败");
+        }
+        return Result.success();
     }
 
     @PutMapping
     public Result<Void> update(@RequestBody AssetApprovalDTO dto) {
         boolean success = assetApprovalService.update(dto);
-        return success ? Result.success() : Result.error("更新失败");
+        if (!success) {
+            throw new BusinessException("更新失败");
+        }
+        return Result.success();
     }
 
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         boolean success = assetApprovalService.delete(id);
-        return success ? Result.success() : Result.error("删除失败");
+        if (!success) {
+            throw new BusinessException("删除失败");
+        }
+        return Result.success();
     }
 
     @PostMapping("/submit/{id}")
     public Result<Void> submit(@PathVariable Long id) {
         boolean success = assetApprovalService.submit(id);
-        return success ? Result.success() : Result.error("提交失败");
+        if (!success) {
+            throw new BusinessException("提交失败");
+        }
+        return Result.success();
+    }
+
+    @PostMapping("/withdraw/{id}")
+    public Result<Void> withdraw(@PathVariable Long id) {
+        boolean success = assetApprovalService.withdraw(id);
+        if (!success) {
+            throw new BusinessException("撤回失败");
+        }
+        return Result.success();
     }
 
     @PostMapping("/approve")
@@ -136,7 +183,10 @@ public class AssetApprovalController {
         String userId = params.get("userId");
         String opinion = params.get("opinion");
         boolean success = assetApprovalService.approve(approvalId, userId, opinion);
-        return success ? Result.success() : Result.error("审批失败");
+        if (!success) {
+            throw new BusinessException("审批失败");
+        }
+        return Result.success();
     }
 
     @PostMapping("/reject")
@@ -145,7 +195,10 @@ public class AssetApprovalController {
         String userId = params.get("userId");
         String opinion = params.get("opinion");
         boolean success = assetApprovalService.reject(approvalId, userId, opinion);
-        return success ? Result.success() : Result.error("驳回失败");
+        if (!success) {
+            throw new BusinessException("驳回失败");
+        }
+        return Result.success();
     }
 
     @GetMapping("/records/{approvalId}")

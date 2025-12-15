@@ -46,6 +46,18 @@
         FROM ctrl_payout WHERE emp_id = #{empId} ORDER BY create_time DESC
     </select>
 
+    <select id="selectByEmpIdPage" resultMap="BaseResultMap">
+        SELECT payout_id, payout_billcode, bill_type, emp_id, emp_code, emp_name, dept_id, payout_type_id,
+               apply_amount, apply_reason, apply_date, status, process_definition_id, process_instance_id,
+               budget_id, budget_item_id, remark, create_user, create_time, update_time
+        FROM ctrl_payout WHERE emp_id = #{empId} ORDER BY create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByEmpId" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM ctrl_payout WHERE emp_id = #{empId}
+    </select>
+
     <select id="selectByStatus" resultMap="BaseResultMap">
         SELECT payout_id, payout_billcode, bill_type, emp_id, emp_code, emp_name, dept_id, payout_type_id,
                apply_amount, apply_reason, apply_date, status, process_definition_id, process_instance_id,
@@ -53,11 +65,35 @@
         FROM ctrl_payout WHERE status = #{status} ORDER BY create_time DESC
     </select>
 
+    <select id="selectByStatusPage" resultMap="BaseResultMap">
+        SELECT payout_id, payout_billcode, bill_type, emp_id, emp_code, emp_name, dept_id, payout_type_id,
+               apply_amount, apply_reason, apply_date, status, process_definition_id, process_instance_id,
+               budget_id, budget_item_id, remark, create_user, create_time, update_time
+        FROM ctrl_payout WHERE status = #{status} ORDER BY create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByStatus" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM ctrl_payout WHERE status = #{status}
+    </select>
+
     <select id="selectAll" resultMap="BaseResultMap">
         SELECT payout_id, payout_billcode, bill_type, emp_id, emp_code, emp_name, dept_id, payout_type_id,
                apply_amount, apply_reason, apply_date, status, process_definition_id, process_instance_id,
                budget_id, budget_item_id, remark, create_user, create_time, update_time
         FROM ctrl_payout ORDER BY create_time DESC
+    </select>
+
+    <select id="selectAllPage" resultMap="BaseResultMap">
+        SELECT payout_id, payout_billcode, bill_type, emp_id, emp_code, emp_name, dept_id, payout_type_id,
+               apply_amount, apply_reason, apply_date, status, process_definition_id, process_instance_id,
+               budget_id, budget_item_id, remark, create_user, create_time, update_time
+        FROM ctrl_payout ORDER BY create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countAll" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM ctrl_payout
     </select>
 
     <select id="selectByApprover" resultMap="BaseResultMap">
@@ -71,6 +107,30 @@
         AND pt.task_status = 'PENDING'
         AND p.status = 'PENDING'
         ORDER BY p.create_time DESC
+    </select>
+
+    <select id="selectByApproverPage" resultMap="BaseResultMap">
+        SELECT DISTINCT p.payout_id, p.payout_billcode, p.bill_type, p.emp_id, p.emp_code, p.emp_name, p.dept_id, p.payout_type_id,
+               p.apply_amount, p.apply_reason, p.apply_date, p.status, p.process_definition_id, p.process_instance_id,
+               p.budget_id, p.budget_item_id, p.remark, p.create_user, p.create_time, p.update_time
+        FROM ctrl_payout p
+        INNER JOIN wf_process_instance pi ON p.process_instance_id = pi.instance_id
+        INNER JOIN wf_process_task pt ON pi.instance_id = pt.instance_id
+        WHERE pt.assignee_user_id = #{userId}
+        AND pt.task_status = 'PENDING'
+        AND p.status = 'PENDING'
+        ORDER BY p.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByApprover" resultType="java.lang.Long">
+        SELECT COUNT(DISTINCT p.payout_id)
+        FROM ctrl_payout p
+        INNER JOIN wf_process_instance pi ON p.process_instance_id = pi.instance_id
+        INNER JOIN wf_process_task pt ON pi.instance_id = pt.instance_id
+        WHERE pt.assignee_user_id = #{userId}
+        AND pt.task_status = 'PENDING'
+        AND p.status = 'PENDING'
     </select>
 
     <insert id="insert" parameterType="com.hrp.common.entity.CtrlPayout">

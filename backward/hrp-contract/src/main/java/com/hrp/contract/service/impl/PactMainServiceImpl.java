@@ -21,8 +21,24 @@ public class PactMainServiceImpl implements PactMainService {
     }
 
     @Override
+    public com.hrp.common.entity.PageResult<PactMain> getAllPage(Long page, Long size) {
+        Long offset = (page - 1) * size;
+        List<PactMain> records = pactMainMapper.selectAllPage(offset, size);
+        Long total = pactMainMapper.countAll();
+        return com.hrp.common.entity.PageResult.of(records, total, size, page);
+    }
+
+    @Override
     public List<PactMain> getByStatus(String status) {
         return pactMainMapper.selectByStatus(status);
+    }
+
+    @Override
+    public com.hrp.common.entity.PageResult<PactMain> getByStatusPage(String status, Long page, Long size) {
+        Long offset = (page - 1) * size;
+        List<PactMain> records = pactMainMapper.selectByStatusPage(status, offset, size);
+        Long total = pactMainMapper.countByStatus(status);
+        return com.hrp.common.entity.PageResult.of(records, total, size, page);
     }
 
     @Override

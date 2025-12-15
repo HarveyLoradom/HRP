@@ -15,12 +15,6 @@ spring:
             - Path=/api/auth/**
           filters:
             - StripPrefix=1
-        - id: hrp-user
-          uri: lb://hrp-user
-          predicates:
-            - Path=/api/user/**
-          filters:
-            - StripPrefix=1
         - id: hrp-menu
           uri: lb://hrp-menu
           predicates:
@@ -61,6 +55,18 @@ spring:
           uri: lb://hrp-efficiency
           predicates:
             - Path=/api/efficiency/**
+          filters:
+            - StripPrefix=1
+        - id: hrp-budg
+          uri: lb://hrp-budg
+          predicates:
+            - Path=/api/budg/**
+          filters:
+            - StripPrefix=1
+        - id: hrp-auth-attachment
+          uri: lb://hrp-auth
+          predicates:
+            - Path=/api/attachment/**
           filters:
             - StripPrefix=1
       globalcors:

@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.auth.mapper.UserEmployeeMapper">
+
+    <resultMap id="UserEmployeeResultMap" type="com.hrp.common.entity.UserWithEmployee">
+        <!-- 用户信息 -->
+        <result column="user_id" property="userId"/>
+        <result column="account" property="account"/>
+        <result column="user_name" property="userName"/>
+        <result column="user_type" property="userType"/>
+        <result column="user_type_name" property="userTypeName"/>
+        <result column="phone" property="phone"/>
+        <result column="is_stop" property="isStop"/>
+        <result column="locked" property="locked"/>
+        <result column="user_create_time" property="createTime"/>
+        <result column="user_update_time" property="updateTime"/>
+        <!-- 员工信息 -->
+        <result column="emp_id" property="empId"/>
+        <result column="emp_code" property="empCode"/>
+        <result column="emp_name" property="empName"/>
+        <result column="emp_sex" property="empSex"/>
+        <result column="emp_phone" property="empPhone"/>
+        <result column="emp_email" property="empEmail"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_code" property="deptCode"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="emp_type_id" property="empTypeId"/>
+        <result column="emp_type_name" property="empTypeName"/>
+        <result column="bank_account" property="bankAccount"/>
+        <result column="bank_name" property="bankName"/>
+        <result column="photo" property="photo"/>
+    </resultMap>
+
+    <select id="selectAllEmployeesWithUser" resultMap="UserEmployeeResultMap">
+        SELECT 
+            e.emp_id,
+            e.emp_code,
+            e.emp_name,
+            e.emp_sex,
+            e.emp_phone,
+            e.emp_email,
+            e.dept_id,
+            e.dept_code,
+            d.dept_name,
+            u.id as user_id,
+            u.account,
+            u.name as user_name,
+            u.type as user_type,
+            uc.code_name as user_type_name,
+            u.phone,
+            e.is_stop,
+            COALESCE(ul.locked, 0) as locked,
+            u.create_time as user_create_time,
+            u.update_time as user_update_time,
+            e.emp_type_id,
+            ec.code_name as emp_type_name,
+            e.bank_account,
+            e.bank_name,
+            e.photo
+        FROM sys_emp e
+        LEFT JOIN sys_dept d ON e.dept_id = d.dept_id
+        LEFT JOIN sys_user u ON e.emp_code = u.account
+        LEFT JOIN sys_user_login ul ON u.id = ul.user_id
+        LEFT JOIN sys_code ec ON ec.code_type = 'EMP_TYPE' AND ec.code_value = CAST(e.emp_type_id AS CHAR) AND ec.is_stop = 0
+        LEFT JOIN sys_code uc ON uc.code_type = 'USER_TYPE' AND uc.code_value = CAST(u.type AS CHAR) AND uc.is_stop = 0
+        ORDER BY e.emp_code ASC
+    </select>
+
+    <select id="selectEmployeesByKeyword" resultMap="UserEmployeeResultMap">
+        SELECT 
+            e.emp_id,
+            e.emp_code,
+            e.emp_name,
+            e.emp_sex,
+            e.emp_phone,
+            e.emp_email,
+            e.dept_id,
+            e.dept_code,
+            d.dept_name,
+            u.id as user_id,
+            u.account,
+            u.name as user_name,
+            u.type as user_type,
+            uc.code_name as user_type_name,
+            u.phone,
+            e.is_stop,
+            COALESCE(ul.locked, 0) as locked,
+            u.create_time as user_create_time,
+            u.update_time as user_update_time,
+            e.emp_type_id,
+            ec.code_name as emp_type_name,
+            e.bank_account,
+            e.bank_name,
+            e.photo
+        FROM sys_emp e
+        LEFT JOIN sys_dept d ON e.dept_id = d.dept_id
+        LEFT JOIN sys_user u ON e.emp_code = u.account
+        LEFT JOIN sys_user_login ul ON u.id = ul.user_id
+        LEFT JOIN sys_code ec ON ec.code_type = 'EMP_TYPE' AND ec.code_value = CAST(e.emp_type_id AS CHAR) AND ec.is_stop = 0
+        LEFT JOIN sys_code uc ON uc.code_type = 'USER_TYPE' AND uc.code_value = CAST(u.type AS CHAR) AND uc.is_stop = 0
+        WHERE (e.emp_code LIKE CONCAT('%', #{keyword}, '%') 
+             OR e.emp_name LIKE CONCAT('%', #{keyword}, '%'))
+        ORDER BY e.emp_code ASC
+    </select>
+
+    <select id="selectAllEmployeesWithUserPage" resultMap="UserEmployeeResultMap">
+        SELECT 
+            e.emp_id,
+            e.emp_code,
+            e.emp_name,
+            e.emp_sex,
+            e.emp_phone,
+            e.emp_email,
+            e.dept_id,
+            e.dept_code,
+            d.dept_name,
+            u.id as user_id,
+            u.account,
+            u.name as user_name,
+            u.type as user_type,
+            uc.code_name as user_type_name,
+            u.phone,
+            e.is_stop,
+            COALESCE(ul.locked, 0) as locked,
+            u.create_time as user_create_time,
+            u.update_time as user_update_time,
+            e.emp_type_id,
+            ec.code_name as emp_type_name,
+            e.bank_account,
+            e.bank_name,
+            e.photo
+        FROM sys_emp e
+        LEFT JOIN sys_dept d ON e.dept_id = d.dept_id
+        LEFT JOIN sys_user u ON e.emp_code = u.account
+        LEFT JOIN sys_user_login ul ON u.id = ul.user_id
+        LEFT JOIN sys_code ec ON ec.code_type = 'EMP_TYPE' AND ec.code_value = CAST(e.emp_type_id AS CHAR) AND ec.is_stop = 0
+        LEFT JOIN sys_code uc ON uc.code_type = 'USER_TYPE' AND uc.code_value = CAST(u.type AS CHAR) AND uc.is_stop = 0
+        ORDER BY e.emp_code ASC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="selectEmployeesByKeywordPage" resultMap="UserEmployeeResultMap">
+        SELECT 
+            e.emp_id,
+            e.emp_code,
+            e.emp_name,
+            e.emp_sex,
+            e.emp_phone,
+            e.emp_email,
+            e.dept_id,
+            e.dept_code,
+            d.dept_name,
+            u.id as user_id,
+            u.account,
+            u.name as user_name,
+            u.type as user_type,
+            uc.code_name as user_type_name,
+            u.phone,
+            e.is_stop,
+            COALESCE(ul.locked, 0) as locked,
+            u.create_time as user_create_time,
+            u.update_time as user_update_time,
+            e.emp_type_id,
+            ec.code_name as emp_type_name,
+            e.bank_account,
+            e.bank_name,
+            e.photo
+        FROM sys_emp e
+        LEFT JOIN sys_dept d ON e.dept_id = d.dept_id
+        LEFT JOIN sys_user u ON e.emp_code = u.account
+        LEFT JOIN sys_user_login ul ON u.id = ul.user_id
+        LEFT JOIN sys_code ec ON ec.code_type = 'EMP_TYPE' AND ec.code_value = CAST(e.emp_type_id AS CHAR) AND ec.is_stop = 0
+        LEFT JOIN sys_code uc ON uc.code_type = 'USER_TYPE' AND uc.code_value = CAST(u.type AS CHAR) AND uc.is_stop = 0
+        WHERE (e.emp_code LIKE CONCAT('%', #{keyword}, '%') 
+             OR e.emp_name LIKE CONCAT('%', #{keyword}, '%'))
+        ORDER BY e.emp_code ASC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countAllEmployeesWithUser" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM sys_emp e
+    </select>
+
+    <select id="countEmployeesByKeyword" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM sys_emp e
+        WHERE (e.emp_code LIKE CONCAT('%', #{keyword}, '%') 
+             OR e.emp_name LIKE CONCAT('%', #{keyword}, '%'))
+    </select>
+
+    <resultMap id="EmployeeResultMap" type="com.hrp.common.entity.Employee">
+        <id column="emp_id" property="empId"/>
+        <result column="emp_code" property="empCode"/>
+        <result column="emp_name" property="empName"/>
+        <result column="emp_sex" property="empSex"/>
+        <result column="id_card" property="idCard"/>
+        <result column="emp_birthday" property="empBirthday"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="emp_email" property="empEmail"/>
+        <result column="emp_phone" property="empPhone"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_code" property="deptCode"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="create_user" property="createUser"/>
+        <result column="is_stop" property="isStop"/>
+        <result column="emp_type_id" property="empTypeId"/>
+        <result column="emp_type_name" property="empTypeName"/>
+        <result column="user_type" property="userType"/>
+        <result column="user_type_name" property="userTypeName"/>
+        <result column="bank_account" property="bankAccount"/>
+        <result column="bank_name" property="bankName"/>
+        <result column="photo" property="photo"/>
+    </resultMap>
+
+    <select id="selectEmployeeByCode" resultMap="EmployeeResultMap">
+        SELECT 
+            e.emp_id,
+            e.emp_code,
+            e.emp_name,
+            e.emp_sex,
+            e.id_card,
+            e.emp_birthday,
+            e.create_time,
+            e.update_time,
+            e.emp_email,
+            e.emp_phone,
+            e.dept_id,
+            e.dept_code,
+            d.dept_name,
+            e.create_user,
+            e.is_stop,
+            e.emp_type_id,
+            ec.code_name as emp_type_name,
+            u.type as user_type,
+            uc.code_name as user_type_name,
+            e.bank_account,
+            e.bank_name,
+            e.photo
+        FROM sys_emp e
+        LEFT JOIN sys_dept d ON e.dept_id = d.dept_id
+        LEFT JOIN sys_user u ON e.emp_code = u.account
+        LEFT JOIN sys_code ec ON ec.code_type = 'EMP_TYPE' AND ec.code_value = CAST(e.emp_type_id AS CHAR) AND ec.is_stop = 0
+        LEFT JOIN sys_code uc ON uc.code_type = 'USER_TYPE' AND uc.code_value = CAST(u.type AS CHAR) AND uc.is_stop = 0
+        WHERE e.emp_code = #{empCode}
+    </select>
+
+    <select id="selectAllEmployees" resultMap="EmployeeResultMap">
+        SELECT 
+            emp_id,
+            emp_code,
+            emp_name,
+            emp_sex,
+            id_card,
+            emp_birthday,
+            create_time,
+            update_time,
+            emp_email,
+            emp_phone,
+            dept_id,
+            dept_code,
+            create_user,
+            is_stop,
+            emp_type_id,
+            bank_account,
+            bank_name,
+            photo
+        FROM sys_emp
+        WHERE is_stop = 0
+        ORDER BY emp_code ASC
+    </select>
+
+    <insert id="insertEmployee" parameterType="com.hrp.common.entity.Employee">
+        INSERT INTO sys_emp (emp_code, emp_name, emp_sex, id_card, emp_birthday, emp_email, emp_phone, 
+                            dept_id, dept_code, create_user, is_stop, emp_type_id, bank_account, bank_name, photo)
+        VALUES (#{empCode}, #{empName}, #{empSex}, #{idCard}, #{empBirthday}, #{empEmail}, #{empPhone},
+                #{deptId}, #{deptCode}, #{createUser}, #{isStop}, #{empTypeId}, #{bankAccount}, #{bankName}, #{photo})
+    </insert>
+
+    <update id="updateEmployee" parameterType="com.hrp.common.entity.Employee">
+        UPDATE sys_emp
+        <set>
+            <if test="empName != null">emp_name = #{empName},</if>
+            <if test="empSex != null">emp_sex = #{empSex},</if>
+            <if test="idCard != null">id_card = #{idCard},</if>
+            <if test="empBirthday != null">emp_birthday = #{empBirthday},</if>
+            <if test="empEmail != null">emp_email = #{empEmail},</if>
+            <if test="empPhone != null">emp_phone = #{empPhone},</if>
+            <if test="deptId != null">dept_id = #{deptId},</if>
+            <if test="deptCode != null">dept_code = #{deptCode},</if>
+            <if test="isStop != null">is_stop = #{isStop},</if>
+            <if test="empTypeId != null">emp_type_id = #{empTypeId},</if>
+            <if test="bankAccount != null">bank_account = #{bankAccount},</if>
+            <if test="bankName != null">bank_name = #{bankName},</if>
+            <if test="photo != null">photo = #{photo},</if>
+        </set>
+        WHERE emp_code = #{empCode}
+    </update>
+
+    <delete id="deleteEmployeeByCode">
+        DELETE FROM sys_emp WHERE emp_code = #{empCode}
+    </delete>
+
+</mapper>
+

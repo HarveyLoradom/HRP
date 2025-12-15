@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.auth.mapper.PrintTemplateMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.PrintTemplate">
+        <id column="template_id" property="templateId"/>
+        <result column="template_code" property="templateCode"/>
+        <result column="template_name" property="templateName"/>
+        <result column="template_type" property="templateType"/>
+        <result column="template_content" property="templateContent"/>
+        <result column="template_xml" property="templateXml"/>
+        <result column="template_json" property="templateJson"/>
+        <result column="template_fields" property="templateFields"/>
+        <result column="page_size" property="pageSize"/>
+        <result column="orientation" property="orientation"/>
+        <result column="margin_top" property="marginTop"/>
+        <result column="margin_bottom" property="marginBottom"/>
+        <result column="margin_left" property="marginLeft"/>
+        <result column="margin_right" property="marginRight"/>
+        <result column="custom_css" property="customCss"/>
+        <result column="header_html" property="headerHtml"/>
+        <result column="footer_html" property="footerHtml"/>
+        <result column="is_default" property="isDefault"/>
+        <result column="is_active" property="isActive"/>
+        <result column="remark" property="remark"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM sys_print_template WHERE template_id = #{templateId}
+    </select>
+
+    <select id="selectByCode" resultMap="BaseResultMap">
+        SELECT * FROM sys_print_template WHERE template_code = #{templateCode}
+    </select>
+
+    <select id="selectByType" resultMap="BaseResultMap">
+        SELECT * FROM sys_print_template 
+        WHERE template_type = #{templateType}
+        ORDER BY is_default DESC, create_time DESC
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM sys_print_template 
+        ORDER BY template_type, is_default DESC, create_time DESC
+    </select>
+
+    <select id="selectDefaultByType" resultMap="BaseResultMap">
+        SELECT * FROM sys_print_template 
+        WHERE template_type = #{templateType} AND is_default = 1 AND is_active = 1
+        LIMIT 1
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.PrintTemplate">
+        INSERT INTO sys_print_template 
+        (template_code, template_name, template_type, template_content, template_xml, template_json, template_fields, 
+         page_size, orientation, margin_top, margin_bottom, margin_left, margin_right, 
+         custom_css, header_html, footer_html, is_default, is_active, remark, create_user, create_time)
+        VALUES 
+        (#{templateCode}, #{templateName}, #{templateType}, #{templateContent}, #{templateXml}, #{templateJson}, #{templateFields},
+         #{pageSize}, #{orientation}, #{marginTop}, #{marginBottom}, #{marginLeft}, #{marginRight},
+         #{customCss}, #{headerHtml}, #{footerHtml}, #{isDefault}, #{isActive}, #{remark}, #{createUser}, NOW())
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.PrintTemplate">
+        UPDATE sys_print_template
+        <set>
+            <if test="templateName != null">template_name = #{templateName},</if>
+            <if test="templateType != null">template_type = #{templateType},</if>
+            <if test="templateContent != null">template_content = #{templateContent},</if>
+            <if test="templateXml != null">template_xml = #{templateXml},</if>
+            <if test="templateJson != null">template_json = #{templateJson},</if>
+            <if test="templateFields != null">template_fields = #{templateFields},</if>
+            <if test="pageSize != null">page_size = #{pageSize},</if>
+            <if test="orientation != null">orientation = #{orientation},</if>
+            <if test="marginTop != null">margin_top = #{marginTop},</if>
+            <if test="marginBottom != null">margin_bottom = #{marginBottom},</if>
+            <if test="marginLeft != null">margin_left = #{marginLeft},</if>
+            <if test="marginRight != null">margin_right = #{marginRight},</if>
+            <if test="customCss != null">custom_css = #{customCss},</if>
+            <if test="headerHtml != null">header_html = #{headerHtml},</if>
+            <if test="footerHtml != null">footer_html = #{footerHtml},</if>
+            <if test="isDefault != null">is_default = #{isDefault},</if>
+            <if test="isActive != null">is_active = #{isActive},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = NOW()
+        </set>
+        WHERE template_id = #{templateId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM sys_print_template WHERE template_id = #{templateId}
+    </delete>
+
+    <!-- 通用数据查询：根据模板类型和业务主键查询数据 -->
+    <select id="selectDataByBusinessKey" resultType="java.util.HashMap">
+        <choose>
+            <!-- 申请单/报账单 -->
+            <when test="templateType == 'APPLY' or templateType == 'PAYOUT'">
+                SELECT 
+                    payout_id as payoutId,
+                    payout_billcode as payoutBillcode,
+                    bill_type as billType,
+                    emp_id as empId,
+                    emp_code as empCode,
+                    emp_name as empName,
+                    dept_id as deptId,
+                    payout_type_id as payoutTypeId,
+                    apply_amount as applyAmount,
+                    apply_reason as applyReason,
+                    DATE_FORMAT(apply_date, '%Y-%m-%d %H:%i:%s') as applyDate,
+                    status,
+                    remark,
+                    DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s') as createTime
+                FROM ctrl_payout 
+                WHERE payout_billcode = #{businessKey}
+            </when>
+            <!-- 合同 -->
+            <when test="templateType == 'CONTRACT'">
+                SELECT 
+                    pact_id as pactId,
+                    contract_no as contractNo,
+                    contract_name as contractName,
+                    contract_type as contractType,
+                    party_a as partyA,
+                    party_b as partyB,
+                    contract_amount as contractAmount,
+                    DATE_FORMAT(sign_date, '%Y-%m-%d') as signDate,
+                    DATE_FORMAT(start_date, '%Y-%m-%d') as startDate,
+                    DATE_FORMAT(end_date, '%Y-%m-%d') as endDate,
+                    status,
+                    remark,
+                    DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s') as createTime
+                FROM pact_main 
+                WHERE contract_no = #{businessKey}
+            </when>
+            <!-- 资产审批 -->
+            <when test="templateType == 'ASSET'">
+                SELECT 
+                    approval_id as approvalId,
+                    approval_no as approvalNo,
+                    approval_type as approvalType,
+                    approval_title as approvalTitle,
+                    dept_id as deptId,
+                    dept_code as deptCode,
+                    dept_name as deptName,
+                    applicant_id as applicantId,
+                    applicant_code as applicantCode,
+                    applicant_name as applicantName,
+                    apply_reason as applyReason,
+                    status,
+                    DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s') as createTime
+                FROM asset_approval 
+                WHERE approval_no = #{businessKey}
+            </when>
+            <!-- 采购审批 -->
+            <when test="templateType == 'PROCUREMENT'">
+                SELECT 
+                    requirement_id as requirementId,
+                    requirement_no as requirementNo,
+                    requirement_name as requirementName,
+                    requirement_type as requirementType,
+                    dept_id as deptId,
+                    dept_code as deptCode,
+                    dept_name as deptName,
+                    applicant_id as applicantId,
+                    applicant_code as applicantCode,
+                    applicant_name as applicantName,
+                    estimated_amount as estimatedAmount,
+                    requirement_desc as requirementDesc,
+                    status,
+                    DATE_FORMAT(create_time, '%Y-%m-%d %H:%i:%s') as createTime
+                FROM procurement_requirement 
+                WHERE requirement_no = #{businessKey}
+            </when>
+            <otherwise>
+                SELECT 1 as `dummy` WHERE 1 = 0
+            </otherwise>
+        </choose>
+    </select>
+
+</mapper>
+

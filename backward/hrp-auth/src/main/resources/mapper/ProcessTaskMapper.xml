@@ -13,6 +13,12 @@
         <result column="candidate_users" property="candidateUsers"/>
         <result column="task_status" property="taskStatus"/>
         <result column="task_type" property="taskType"/>
+        <result column="approval_type" property="approvalType"/>
+        <result column="approver_list" property="approverList"/>
+        <result column="approved_list" property="approvedList"/>
+        <result column="need_print" property="needPrint"/>
+        <result column="parent_task_id" property="parentTaskId"/>
+        <result column="is_addsign_task" property="isAddsignTask"/>
         <result column="priority" property="priority"/>
         <result column="due_date" property="dueDate"/>
         <result column="claim_time" property="claimTime"/>
@@ -58,9 +64,42 @@
         ORDER BY t.create_time DESC
     </select>
 
+    <select id="selectByStatusPage" resultMap="BaseResultMap">
+        SELECT t.*, i.business_key, i.business_type, d.definition_name as process_definition_name
+        FROM wf_process_task t
+        LEFT JOIN wf_process_instance i ON t.process_instance_id = i.instance_id
+        LEFT JOIN wf_process_definition d ON i.process_definition_id = d.definition_id
+        WHERE t.task_status = #{taskStatus}
+        ORDER BY t.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByStatus" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM wf_process_task t
+        WHERE t.task_status = #{taskStatus}
+    </select>
+
+    <select id="selectByBusinessKeyPage" resultMap="BaseResultMap">
+        SELECT t.*, i.business_key, i.business_type, d.definition_name as process_definition_name
+        FROM wf_process_task t
+        LEFT JOIN wf_process_instance i ON t.process_instance_id = i.instance_id
+        LEFT JOIN wf_process_definition d ON i.process_definition_id = d.definition_id
+        WHERE i.business_key = #{businessKey}
+        ORDER BY t.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByBusinessKey" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM wf_process_task t
+        LEFT JOIN wf_process_instance i ON t.process_instance_id = i.instance_id
+        WHERE i.business_key = #{businessKey}
+    </select>
+
     <insert id="insert" parameterType="com.hrp.common.entity.ProcessTask">
-        INSERT INTO wf_process_task (process_instance_id, task_key, task_name, assignee_user_id, assignee_user_name, assignee_emp_code, candidate_users, task_status, task_type, priority, due_date, comment, create_time)
-        VALUES (#{processInstanceId}, #{taskKey}, #{taskName}, #{assigneeUserId}, #{assigneeUserName}, #{assigneeEmpCode}, #{candidateUsers}, #{taskStatus}, #{taskType}, #{priority}, #{dueDate}, #{comment}, NOW())
+        INSERT INTO wf_process_task (process_instance_id, task_key, task_name, assignee_user_id, assignee_user_name, assignee_emp_code, candidate_users, task_status, task_type, approval_type, approver_list, approved_list, need_print, parent_task_id, is_addsign_task, priority, due_date, comment, create_time)
+        VALUES (#{processInstanceId}, #{taskKey}, #{taskName}, #{assigneeUserId}, #{assigneeUserName}, #{assigneeEmpCode}, #{candidateUsers}, #{taskStatus}, #{taskType}, #{approvalType}, #{approverList}, #{approvedList}, #{needPrint}, #{parentTaskId}, #{isAddsignTask}, #{priority}, #{dueDate}, #{comment}, NOW())
     </insert>
 
     <update id="updateById" parameterType="com.hrp.common.entity.ProcessTask">
@@ -70,6 +109,12 @@
             <if test="assigneeUserName != null">assignee_user_name = #{assigneeUserName},</if>
             <if test="assigneeEmpCode != null">assignee_emp_code = #{assigneeEmpCode},</if>
             <if test="taskStatus != null">task_status = #{taskStatus},</if>
+            <if test="approvalType != null">approval_type = #{approvalType},</if>
+            <if test="approverList != null">approver_list = #{approverList},</if>
+            <if test="approvedList != null">approved_list = #{approvedList},</if>
+            <if test="needPrint != null">need_print = #{needPrint},</if>
+            <if test="parentTaskId != null">parent_task_id = #{parentTaskId},</if>
+            <if test="isAddsignTask != null">is_addsign_task = #{isAddsignTask},</if>
             <if test="claimTime != null">claim_time = #{claimTime},</if>
             <if test="completeTime != null">complete_time = #{completeTime},</if>
             <if test="comment != null">comment = #{comment},</if>

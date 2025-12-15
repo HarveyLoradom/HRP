@@ -2,7 +2,9 @@ import request from './request'
 
 // 合同管理
 export const getAllContracts = () => request.get('/contract/list')
+export const getAllContractsPage = (page, size) => request.get(`/contract/page?page=${page}&size=${size}`)
 export const getContractsByStatus = (status) => request.get(`/contract/status/${status}`)
+export const getContractsByStatusPage = (status, page, size) => request.get(`/contract/status/${status}/page?page=${page}&size=${size}`)
 export const getContractById = (id) => request.get(`/contract/${id}`)
 export const getContractByNo = (contractNo) => request.get(`/contract/no/${contractNo}`)
 export const saveContract = (data) => request.post('/contract', data)

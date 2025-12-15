@@ -13,24 +13,39 @@
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
         <result column="is_stop" property="isStop"/>
+        <result column="locked" property="locked"/>
+        <result column="dept_code" property="deptCode"/>
+        <result column="dept_name" property="deptName"/>
     </resultMap>
 
     <select id="selectById" resultMap="BaseResultMap">
-        SELECT id, account, name, type, phone, TRIM(password) as password, create_user, create_time, update_time, is_stop 
-        FROM sys_user 
-        WHERE id = #{id}
+        SELECT u.id, u.account, u.name, u.type, u.phone, TRIM(u.password) as password, 
+               u.create_user, u.create_time, u.update_time, u.is_stop,
+               COALESCE(ul.locked, 0) as locked
+        FROM sys_user u
+        LEFT JOIN sys_user_login ul ON u.id = ul.user_id
+        WHERE u.id = #{id}
     </select>
 
     <select id="selectByAccount" resultMap="BaseResultMap">
-        SELECT id, account, name, type, phone, TRIM(password) as password, create_user, create_time, update_time, is_stop 
-        FROM sys_user 
-        WHERE account = #{account} AND is_stop = 0
+        SELECT u.id, u.account, u.name, u.type, u.phone, TRIM(u.password) as password, 
+               u.create_user, u.create_time, u.update_time, u.is_stop
+        FROM sys_user u
+        LEFT JOIN sys_emp e ON u.account = e.emp_code
+        WHERE u.account = #{account}
     </select>
 
     <select id="selectAll" resultMap="BaseResultMap">
-        SELECT id, account, name, type, phone, TRIM(password) as password, create_user, create_time, update_time, is_stop 
-        FROM sys_user 
-        ORDER BY create_time DESC
+        SELECT u.id, u.account, u.name, u.type, u.phone, TRIM(u.password) as password, 
+               u.create_user, u.create_time, u.update_time, u.is_stop,
+               COALESCE(ul.locked, 0) as locked,
+               COALESCE(e.dept_code, d.dept_code, '') as dept_code, 
+               COALESCE(d.dept_name, '') as dept_name
+        FROM sys_user u
+        LEFT JOIN sys_user_login ul ON u.id = ul.user_id
+        LEFT JOIN sys_emp e ON u.account = e.emp_code
+        LEFT JOIN sys_dept d ON (e.dept_id = d.dept_id OR (e.dept_code IS NOT NULL AND e.dept_code = d.dept_code))
+        ORDER BY u.create_time DESC
     </select>
 
     <insert id="insert" parameterType="com.hrp.common.entity.User">

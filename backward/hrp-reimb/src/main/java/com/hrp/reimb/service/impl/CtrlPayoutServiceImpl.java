@@ -22,8 +22,24 @@ public class CtrlPayoutServiceImpl implements CtrlPayoutService {
     }
 
     @Override
+    public com.hrp.common.entity.PageResult<CtrlPayout> getMyPayoutsPage(Long empId, Long page, Long size) {
+        Long offset = (page - 1) * size;
+        List<CtrlPayout> records = ctrlPayoutMapper.selectByEmpIdPage(empId, offset, size);
+        Long total = ctrlPayoutMapper.countByEmpId(empId);
+        return com.hrp.common.entity.PageResult.of(records, total, size, page);
+    }
+
+    @Override
     public List<CtrlPayout> getPayoutsByStatus(String status) {
         return ctrlPayoutMapper.selectByStatus(status);
+    }
+
+    @Override
+    public com.hrp.common.entity.PageResult<CtrlPayout> getPayoutsByStatusPage(String status, Long page, Long size) {
+        Long offset = (page - 1) * size;
+        List<CtrlPayout> records = ctrlPayoutMapper.selectByStatusPage(status, offset, size);
+        Long total = ctrlPayoutMapper.countByStatus(status);
+        return com.hrp.common.entity.PageResult.of(records, total, size, page);
     }
 
     @Override
@@ -85,9 +101,56 @@ public class CtrlPayoutServiceImpl implements CtrlPayoutService {
         if (!"DRAFT".equals(payout.getStatus())) {
             return false; // 只有草稿状态才能提交
         }
+        
+        // 根据报账类型从模板设置中获取流程定义
+        if (payout.getPayoutTypeId() != null && !payout.getPayoutTypeId().isEmpty()) {
+            try {
+                // 调用auth服务的模板设置接口获取流程定义
+                com.hrp.common.entity.TemplateConfig templateConfig = getTemplateConfigByPayoutType(payout.getPayoutTypeId());
+                if (templateConfig != null && templateConfig.getProcessDefinitionId() != null) {
+                    // 启动流程实例
+                    Long processInstanceId = startProcessInstance(
+                        templateConfig.getProcessDefinitionId(),
+                        payout.getPayoutBillcode(),
+                        "PAYOUT",
+                        payoutId
+                    );
+                    if (processInstanceId != null) {
+                        payout.setProcessDefinitionId(templateConfig.getProcessDefinitionId());
+                        payout.setProcessInstanceId(processInstanceId);
+                    }
+                }
+            } catch (Exception e) {
+                // 如果获取流程失败，记录日志但不阻止提交
+                System.err.println("启动流程失败: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        
         payout.setStatus("PENDING");
-        // TODO: 启动流程实例
         return ctrlPayoutMapper.updateById(payout) > 0;
+    }
+    
+    /**
+     * 根据报账类型获取模板设置
+     * 注意：这里需要通过HTTP调用auth服务，实际项目中可以使用Feign客户端
+     */
+    private com.hrp.common.entity.TemplateConfig getTemplateConfigByPayoutType(String payoutTypeId) {
+        // TODO: 通过Feign客户端或RestTemplate调用auth服务的模板设置接口
+        // GET /auth/template-config/business-type?businessType=PAYOUT_TYPE&businessTypeValue={payoutTypeId}
+        // 暂时返回null，需要在auth服务中实现
+        return null;
+    }
+    
+    /**
+     * 启动流程实例
+     * 注意：这里需要通过HTTP调用auth服务，实际项目中可以使用Feign客户端
+     */
+    private Long startProcessInstance(Long processDefinitionId, String businessKey, String businessType, Long businessId) {
+        // TODO: 通过Feign客户端或RestTemplate调用auth服务的流程实例启动接口
+        // POST /auth/process-instance/start
+        // 暂时返回null，需要在auth服务中实现
+        return null;
     }
 
     @Override
@@ -111,8 +174,24 @@ public class CtrlPayoutServiceImpl implements CtrlPayoutService {
     }
 
     @Override
+    public com.hrp.common.entity.PageResult<CtrlPayout> getMyApprovalPayoutsPage(String userId, Long page, Long size) {
+        Long offset = (page - 1) * size;
+        List<CtrlPayout> records = ctrlPayoutMapper.selectByApproverPage(userId, offset, size);
+        Long total = ctrlPayoutMapper.countByApprover(userId);
+        return com.hrp.common.entity.PageResult.of(records, total, size, page);
+    }
+
+    @Override
     public List<CtrlPayout> getAllPayouts() {
         return ctrlPayoutMapper.selectAll();
+    }
+
+    @Override
+    public com.hrp.common.entity.PageResult<CtrlPayout> getAllPayoutsPage(Long page, Long size) {
+        Long offset = (page - 1) * size;
+        List<CtrlPayout> records = ctrlPayoutMapper.selectAllPage(offset, size);
+        Long total = ctrlPayoutMapper.countAll();
+        return com.hrp.common.entity.PageResult.of(records, total, size, page);
     }
 
     @Override

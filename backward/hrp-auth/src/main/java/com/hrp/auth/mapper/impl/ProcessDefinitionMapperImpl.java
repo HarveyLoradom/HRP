@@ -40,6 +40,33 @@ public class ProcessDefinitionMapperImpl implements ProcessDefinitionMapper {
     }
 
     @Override
+    public List<ProcessDefinition> selectAllPage(Long offset, Long size) {
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("offset", offset);
+        params.put("size", size);
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectAllPage", params);
+    }
+
+    @Override
+    public Long countAll() {
+        return sqlSessionTemplate.selectOne(NAMESPACE + ".countAll");
+    }
+
+    @Override
+    public List<ProcessDefinition> selectByTypePage(String definitionType, Long offset, Long size) {
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("definitionType", definitionType);
+        params.put("offset", offset);
+        params.put("size", size);
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectByTypePage", params);
+    }
+
+    @Override
+    public Long countByType(String definitionType) {
+        return sqlSessionTemplate.selectOne(NAMESPACE + ".countByType", definitionType);
+    }
+
+    @Override
     public int insert(ProcessDefinition definition) {
         return sqlSessionTemplate.insert(NAMESPACE + ".insert", definition);
     }

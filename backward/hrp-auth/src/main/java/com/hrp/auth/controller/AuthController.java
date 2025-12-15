@@ -3,6 +3,7 @@ package com.hrp.auth.controller;
 import com.hrp.auth.service.AuthService;
 import com.hrp.auth.service.CaptchaService;
 import com.hrp.common.entity.Result;
+import com.hrp.common.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,19 +51,16 @@ public class AuthController {
         // 验证验证码
         if (captchaCode != null && captchaKey != null) {
             if (!captchaService.validateCaptcha(captchaKey, captchaCode)) {
-                return Result.error("验证码错误");
+                throw new BusinessException(400, "验证码错误");
             }
         }
-
 
         String ip = getClientIp(request);
 
         // 执行登录
+        // AuthServiceImpl.login方法现在会抛出BusinessException，包含详细的错误信息
+        // 不需要再检查result是否为null，异常会被全局异常处理器捕获
         Map<String, Object> result = authService.login(account, password, ip, captchaCode != null);
-
-        if (result == null) {
-            return Result.error("登录失败");
-        }
 
         return Result.success(result);
     }
@@ -87,19 +85,18 @@ public class AuthController {
         String newPassword = params.get("newPassword");
 
         if (userId == null || oldPassword == null || newPassword == null) {
-            return Result.error("参数不完整");
+            throw new BusinessException(400, "参数不完整");
         }
 
         if (newPassword.length() < 6 || newPassword.length() > 20) {
-            return Result.error("新密码长度必须在6-20位之间");
+            throw new BusinessException(400, "新密码长度必须在6-20位之间");
         }
 
         boolean success = userService.changePassword(userId, oldPassword, newPassword);
-        if (success) {
-            return Result.success();
-        } else {
-            return Result.error("原密码错误或修改失败");
+        if (!success) {
+            throw new BusinessException("原密码错误或修改失败");
         }
+        return Result.success();
     }
 
     /**
@@ -111,19 +108,18 @@ public class AuthController {
         String newPassword = params.get("newPassword");
 
         if (userId == null || newPassword == null) {
-            return Result.error("参数不完整");
+            throw new BusinessException(400, "参数不完整");
         }
 
         if (newPassword.length() < 6 || newPassword.length() > 20) {
-            return Result.error("新密码长度必须在6-20位之间");
+            throw new BusinessException(400, "新密码长度必须在6-20位之间");
         }
 
         boolean success = userService.forceChangePassword(userId, newPassword);
-        if (success) {
-            return Result.success();
-        } else {
-            return Result.error("修改密码失败");
+        if (!success) {
+            throw new BusinessException("修改密码失败");
         }
+        return Result.success();
     }
 
     /**

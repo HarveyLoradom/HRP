@@ -16,7 +16,7 @@
         <i class="el-icon-lock"></i>
         <span>修改密码</span>
       </el-dropdown-item>
-      <el-dropdown-item divided command="logout">
+      <el-dropdown-item  command="logout">
         <i class="el-icon-switch-button"></i>
         <span>退出登录</span>
       </el-dropdown-item>
@@ -29,7 +29,10 @@ export default {
   name: 'UserDropdown',
   computed: {
     userName() {
-      return this.$store.state.user.userInfo.name || 
+      // 优先显示empName（员工姓名），如果没有才显示其他字段
+      return this.$store.state.user.userInfo.empName || 
+             this.$store.state.user.userInfo.realName || 
+             this.$store.state.user.userInfo.name || 
              this.$store.state.user.userInfo.account || 
              '用户'
     },
@@ -58,8 +61,11 @@ export default {
         type: 'warning'
       }).then(() => {
         this.$store.dispatch('user/logout').then(() => {
-          this.$router.push('/login')
+          this.$router.push('/login').catch(() => {})
           this.$message.success('退出成功')
+        }).catch(() => {
+          // 即使出错也跳转到登录页
+          this.$router.push('/login').catch(() => {})
         })
       }).catch(() => {})
     }
@@ -112,11 +118,16 @@ export default {
   text-align: center;
   font-size: 16px;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .user-dropdown-menu .el-dropdown-menu__item span {
   flex: 1;
   text-align: left;
+  display: inline-flex;
+  align-items: center;
 }
 </style>
 

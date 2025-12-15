@@ -51,6 +51,18 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination-container" style="margin-top: 20px; text-align: right;">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="pagination.page"
+          :page-sizes="[10, 20, 50, 100]"
+          :page-size="pagination.size"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="pagination.total">
+        </el-pagination>
+      </div>
     </el-card>
 
     <!-- 转办对话框 -->
@@ -87,12 +99,14 @@
 </template>
 
 <script>
-import { getProcessTaskByBusinessKey, getProcessTaskByStatus, transferProcessTask } from '@/api/process'
+import { getProcessTaskByBusinessKeyPage, getProcessTaskByStatusPage, transferProcessTask } from '@/api/process'
 import { getEmployeeList, getEmployeeByCode, getUserByAccount } from '@/api/user'
 import { getCodeTypeOptions } from '@/utils/codeType'
+import { paginationMixin } from '@/mixins/pagination'
 
 export default {
   name: 'ProcessTask',
+  mixins: [paginationMixin],
   data() {
     return {
       loading: false,
@@ -147,19 +161,25 @@ export default {
       this.loading = true
       let api
       if (this.searchForm.businessKey) {
-        api = getProcessTaskByBusinessKey(this.searchForm.businessKey)
+        api = getProcessTaskByBusinessKeyPage(this.searchForm.businessKey, this.pagination.page, this.pagination.size)
       } else if (this.searchForm.taskStatus) {
-        api = getProcessTaskByStatus(this.searchForm.taskStatus)
+        api = getProcessTaskByStatusPage(this.searchForm.taskStatus, this.pagination.page, this.pagination.size)
       } else {
         // 默认查询待办理任务
-        api = getProcessTaskByStatus('PENDING')
+        api = getProcessTaskByStatusPage('PENDING', this.pagination.page, this.pagination.size)
       }
       api.then(response => {
-        if (response.code === 200) {
-          this.tableData = response.data || []
+        if (response.code === 200 && response.data) {
+          this.tableData = response.data.records || []
+          this.pagination.total = response.data.total || 0
+        } else {
+          this.tableData = []
+          this.pagination.total = 0
         }
         this.loading = false
       }).catch(() => {
+        this.tableData = []
+        this.pagination.total = 0
         this.loading = false
       })
     },
@@ -203,11 +223,22 @@ export default {
       })
     },
     handleSearch() {
+      this.pagination.page = 1
       this.loadData()
     },
     handleReset() {
       this.searchForm.businessKey = ''
       this.searchForm.taskStatus = ''
+      this.pagination.page = 1
+      this.loadData()
+    },
+    handleSizeChange(val) {
+      this.pagination.size = val
+      this.pagination.page = 1
+      this.loadData()
+    },
+    handleCurrentChange(val) {
+      this.pagination.page = val
       this.loadData()
     },
     handleTransfer(row) {

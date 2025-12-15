@@ -68,6 +68,30 @@ public class ProcessTaskController {
     }
 
     /**
+     * 根据任务状态分页查询任务列表
+     */
+    @GetMapping("/status/{status}/page")
+    public Result<com.hrp.common.entity.PageResult<ProcessTask>> getByStatusPage(
+            @PathVariable String status,
+            @RequestParam(defaultValue = "1") Long page,
+            @RequestParam(defaultValue = "10") Long size) {
+        com.hrp.common.entity.PageResult<ProcessTask> pageResult = processTaskService.getByStatusPage(status, page, size);
+        return Result.success(pageResult);
+    }
+
+    /**
+     * 根据业务主键分页查询任务列表
+     */
+    @GetMapping("/business-key/{businessKey}/page")
+    public Result<com.hrp.common.entity.PageResult<ProcessTask>> getByBusinessKeyPage(
+            @PathVariable String businessKey,
+            @RequestParam(defaultValue = "1") Long page,
+            @RequestParam(defaultValue = "10") Long size) {
+        com.hrp.common.entity.PageResult<ProcessTask> pageResult = processTaskService.getByBusinessKeyPage(businessKey, page, size);
+        return Result.success(pageResult);
+    }
+
+    /**
      * 转办任务（更改办理人）
      */
     @PutMapping("/transfer")

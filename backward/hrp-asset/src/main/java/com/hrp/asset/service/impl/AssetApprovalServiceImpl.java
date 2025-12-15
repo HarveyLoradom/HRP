@@ -96,6 +96,39 @@ public class AssetApprovalServiceImpl implements AssetApprovalService {
     }
 
     @Override
+    public com.hrp.common.entity.PageResult<AssetApproval> getMyListPage(String userId, Long empId, String approvalType, Long page, Long size) {
+        // 先获取所有数据（合并后的）
+        List<AssetApproval> allData = getMyList(userId, empId, approvalType);
+        Long total = (long) allData.size();
+        
+        // 内存分页
+        Long offset = (page - 1) * size;
+        Long end = Math.min(offset + size, total);
+        List<AssetApproval> records = new ArrayList<>();
+        for (Long i = offset; i < end; i++) {
+            records.add(allData.get(i.intValue()));
+        }
+        
+        return com.hrp.common.entity.PageResult.of(records, total, size, page);
+    }
+
+    @Override
+    public com.hrp.common.entity.PageResult<AssetApproval> getAllPage(Long page, Long size) {
+        List<AssetApproval> allData = assetApprovalMapper.selectAll();
+        Long total = (long) allData.size();
+        
+        // 内存分页
+        Long offset = (page - 1) * size;
+        Long end = Math.min(offset + size, total);
+        List<AssetApproval> records = new ArrayList<>();
+        for (Long i = offset; i < end; i++) {
+            records.add(allData.get(i.intValue()));
+        }
+        
+        return com.hrp.common.entity.PageResult.of(records, total, size, page);
+    }
+
+    @Override
     public AssetApproval getById(Long id) {
         return assetApprovalMapper.selectById(id);
     }
@@ -191,6 +224,18 @@ public class AssetApprovalServiceImpl implements AssetApprovalService {
         }
         approval.setStatus("PENDING");
         // TODO: 启动流程实例
+        return assetApprovalMapper.updateById(approval) > 0;
+    }
+
+    @Override
+    @Transactional
+    public boolean withdraw(Long approvalId) {
+        AssetApproval approval = assetApprovalMapper.selectById(approvalId);
+        if (approval == null || !"PENDING".equals(approval.getStatus())) {
+            return false;
+        }
+        approval.setStatus("WITHDRAWN");
+        // TODO: 取消流程实例
         return assetApprovalMapper.updateById(approval) > 0;
     }
 

@@ -35,6 +35,26 @@ public interface ProcessTaskMapper {
     List<ProcessTask> selectByStatus(@Param("taskStatus") String taskStatus);
 
     /**
+     * 根据任务状态分页查询任务列表
+     */
+    List<ProcessTask> selectByStatusPage(@Param("taskStatus") String taskStatus, @Param("offset") Long offset, @Param("size") Long size);
+
+    /**
+     * 统计指定状态的任务总数
+     */
+    Long countByStatus(@Param("taskStatus") String taskStatus);
+
+    /**
+     * 根据业务主键分页查询任务列表
+     */
+    List<ProcessTask> selectByBusinessKeyPage(@Param("businessKey") String businessKey, @Param("offset") Long offset, @Param("size") Long size);
+
+    /**
+     * 统计指定业务主键的任务总数
+     */
+    Long countByBusinessKey(@Param("businessKey") String businessKey);
+
+    /**
      * 插入流程任务
      */
     int insert(ProcessTask task);

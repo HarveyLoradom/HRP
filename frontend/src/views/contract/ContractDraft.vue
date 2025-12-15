@@ -6,7 +6,7 @@
         <el-button style="float: right; padding: 3px 0" type="text" @click="handleAdd">新增合同</el-button>
       </div>
       
-      <el-table :data="tableData" border style="width: 100%" v-loading="loading">
+      <el-table :data="paginatedData" border style="width: 100%" v-loading="loading">
         <el-table-column prop="contractNo" label="合同编号" width="150"></el-table-column>
         <el-table-column prop="contractName" label="合同名称" width="200"></el-table-column>
         <el-table-column prop="contractType" label="合同类型" width="120">
@@ -35,6 +35,18 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination-container" style="margin-top: 20px; text-align: right;">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="pagination.page"
+          :page-sizes="[10, 20, 50, 100]"
+          :page-size="pagination.size"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="pagination.total">
+        </el-pagination>
+      </div>
     </el-card>
 
     <!-- 新增/编辑对话框 -->
@@ -86,13 +98,16 @@
 <script>
 import { getContractsByStatus, saveContract, updateContract, deleteContract, submitContract, withdrawContract } from '@/api/contract'
 import { getCodeTypeOptions } from '@/utils/codeType'
+import { paginationMixin } from '@/mixins/pagination'
 
 export default {
   name: 'ContractDraft',
+  mixins: [paginationMixin],
   data() {
     return {
       loading: false,
       tableData: [],
+      allData: [],
       contractTypeOptions: [],
       dialogVisible: false,
       dialogTitle: '新增合同',
@@ -120,6 +135,13 @@ export default {
       }
     }
   },
+  computed: {
+    paginatedData() {
+      const start = (this.pagination.page - 1) * this.pagination.size
+      const end = start + this.pagination.size
+      return this.tableData.slice(start, end)
+    }
+  },
   mounted() {
     this.loadCodeTypeOptions()
     this.loadData()
@@ -132,12 +154,22 @@ export default {
       this.loading = true
       getContractsByStatus('DRAFT').then(response => {
         if (response.code === 200) {
-          this.tableData = response.data || []
+          this.allData = response.data || []
+          this.tableData = this.allData
+          this.pagination.total = this.tableData.length
+          this.pagination.page = 1
         }
         this.loading = false
       }).catch(() => {
         this.loading = false
       })
+    },
+    handleSizeChange(val) {
+      this.pagination.size = val
+      this.pagination.page = 1
+    },
+    handleCurrentChange(val) {
+      this.pagination.page = val
     },
     getContractTypeName(codeValue) {
       const option = this.contractTypeOptions.find(item => item.value === codeValue)
@@ -185,6 +217,7 @@ export default {
         deleteContract(row.pactId).then(response => {
           if (response.code === 200) {
             this.$message.success('删除成功')
+            this.pagination.page = 1
             this.loadData()
           } else {
             this.$message.error(response.message || '删除失败')
@@ -206,6 +239,7 @@ export default {
           if (response.code === 200) {
             const message = response.message || '提交成功'
             this.$message.success(message)
+            this.pagination.page = 1
             this.loadData()
           } else {
             this.$message.error(response.message || '提交失败')
@@ -226,6 +260,7 @@ export default {
         withdrawContract(row.pactId).then(response => {
           if (response.code === 200) {
             this.$message.success('撤回成功')
+            this.pagination.page = 1
             this.loadData()
           } else {
             this.$message.error(response.message || '撤回失败')
@@ -241,6 +276,7 @@ export default {
             if (response.code === 200) {
               this.$message.success(this.isEdit ? '更新成功' : '新增成功')
               this.dialogVisible = false
+              this.pagination.page = 1
               this.loadData()
             }
           })

@@ -2,11 +2,13 @@ package com.hrp.cost.controller;
 
 import com.hrp.common.entity.CostAccounting;
 import com.hrp.common.entity.Result;
+import com.hrp.common.exception.BusinessException;
 import com.hrp.cost.service.CostAccountingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/cost/accounting")
@@ -34,22 +36,46 @@ public class CostAccountingController {
         return Result.success(accounting);
     }
 
+    @GetMapping("/detail/{id}")
+    public Result<Map<String, Object>> getDetail(@PathVariable Long id) {
+        return Result.success(costAccountingService.getDetail(id));
+    }
+
     @PostMapping
     public Result<Void> save(@RequestBody CostAccounting costAccounting) {
         boolean success = costAccountingService.save(costAccounting);
-        return success ? Result.success() : Result.error("保存失败");
+        if (!success) {
+            throw new BusinessException("保存失败");
+        }
+        return Result.success();
     }
 
     @PutMapping
     public Result<Void> update(@RequestBody CostAccounting costAccounting) {
         boolean success = costAccountingService.update(costAccounting);
-        return success ? Result.success() : Result.error("更新失败");
+        if (!success) {
+            throw new BusinessException("更新失败");
+        }
+        return Result.success();
     }
 
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         boolean success = costAccountingService.delete(id);
-        return success ? Result.success() : Result.error("删除失败");
+        if (!success) {
+            throw new BusinessException("删除失败");
+        }
+        return Result.success();
+    }
+
+    @PostMapping("/calculate")
+    public Result<Void> calculate(@RequestBody Map<String, Object> params) {
+        Long accountingId = Long.valueOf(params.get("accountingId").toString());
+        boolean success = costAccountingService.calculate(accountingId);
+        if (!success) {
+            throw new BusinessException("核算失败");
+        }
+        return Result.success();
     }
 }
 

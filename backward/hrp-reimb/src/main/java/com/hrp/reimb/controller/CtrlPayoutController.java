@@ -47,12 +47,36 @@ public class CtrlPayoutController {
     }
 
     /**
+     * 我的申请列表（分页）
+     */
+    @GetMapping("/my/{empId}/page")
+    public Result<com.hrp.common.entity.PageResult<CtrlPayout>> getMyPayoutsPage(
+            @PathVariable Long empId,
+            @RequestParam(defaultValue = "1") Long page,
+            @RequestParam(defaultValue = "10") Long size) {
+        com.hrp.common.entity.PageResult<CtrlPayout> pageResult = ctrlPayoutService.getMyPayoutsPage(empId, page, size);
+        return Result.success(pageResult);
+    }
+
+    /**
      * 根据状态查询申请列表（用于审批）
      */
     @GetMapping("/status/{status}")
     public Result<List<CtrlPayout>> getPayoutsByStatus(@PathVariable String status) {
         List<CtrlPayout> payouts = ctrlPayoutService.getPayoutsByStatus(status);
         return Result.success(payouts);
+    }
+
+    /**
+     * 根据状态查询申请列表（分页）
+     */
+    @GetMapping("/status/{status}/page")
+    public Result<com.hrp.common.entity.PageResult<CtrlPayout>> getPayoutsByStatusPage(
+            @PathVariable String status,
+            @RequestParam(defaultValue = "1") Long page,
+            @RequestParam(defaultValue = "10") Long size) {
+        com.hrp.common.entity.PageResult<CtrlPayout> pageResult = ctrlPayoutService.getPayoutsByStatusPage(status, page, size);
+        return Result.success(pageResult);
     }
 
     /**
@@ -149,12 +173,35 @@ public class CtrlPayoutController {
     }
 
     /**
+     * 获取我的审批列表（分页）
+     */
+    @GetMapping("/my-approval/{userId}/page")
+    public Result<com.hrp.common.entity.PageResult<CtrlPayout>> getMyApprovalPayoutsPage(
+            @PathVariable String userId,
+            @RequestParam(defaultValue = "1") Long page,
+            @RequestParam(defaultValue = "10") Long size) {
+        com.hrp.common.entity.PageResult<CtrlPayout> pageResult = ctrlPayoutService.getMyApprovalPayoutsPage(userId, page, size);
+        return Result.success(pageResult);
+    }
+
+    /**
      * 获取所有申请（管理员查询）
      */
     @GetMapping("/all")
     public Result<List<CtrlPayout>> getAllPayouts() {
         List<CtrlPayout> payouts = ctrlPayoutService.getAllPayouts();
         return Result.success(payouts);
+    }
+
+    /**
+     * 获取所有申请（分页）
+     */
+    @GetMapping("/all/page")
+    public Result<com.hrp.common.entity.PageResult<CtrlPayout>> getAllPayoutsPage(
+            @RequestParam(defaultValue = "1") Long page,
+            @RequestParam(defaultValue = "10") Long size) {
+        com.hrp.common.entity.PageResult<CtrlPayout> pageResult = ctrlPayoutService.getAllPayoutsPage(page, size);
+        return Result.success(pageResult);
     }
 
     /**

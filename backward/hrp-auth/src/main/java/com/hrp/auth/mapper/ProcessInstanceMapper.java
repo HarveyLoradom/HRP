@@ -35,6 +35,26 @@ public interface ProcessInstanceMapper {
     List<ProcessInstance> selectByStatus(@Param("processStatus") String processStatus);
 
     /**
+     * 分页查询所有流程实例
+     */
+    List<ProcessInstance> selectAllPage(@Param("offset") Long offset, @Param("size") Long size);
+
+    /**
+     * 统计所有流程实例总数
+     */
+    Long countAll();
+
+    /**
+     * 根据状态分页查询流程实例
+     */
+    List<ProcessInstance> selectByStatusPage(@Param("processStatus") String processStatus, @Param("offset") Long offset, @Param("size") Long size);
+
+    /**
+     * 统计指定状态的流程实例总数
+     */
+    Long countByStatus(@Param("processStatus") String processStatus);
+
+    /**
      * 插入流程实例
      */
     int insert(ProcessInstance instance);

@@ -29,7 +29,14 @@ public class UserWithEmployee implements Serializable {
     private Long empSex;
     private String empPhone;
     private String empEmail;
+    private Long deptId;
     private String deptCode;
     private String deptName;
+    private Long empTypeId;
+    private String empTypeName;
+    private String userTypeName;
+    private String bankAccount; // 银行卡号
+    private String bankName; // 银行名称
+    private String photo; // 照片路径
 }
 

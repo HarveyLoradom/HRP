@@ -51,7 +51,7 @@
             router
             background-color="#304156"
             text-color="#bfcbd9"
-            active-text-color="#409EFF"
+            active-text-color="#fff"
           >
             <menu-item
               v-for="menu in filteredMenus"
@@ -96,15 +96,15 @@
     <!-- 修改密码对话框 -->
     <ChangePassword v-model="showChangePassword" />
     
-    <!-- 个人中心对话框 -->
+    <!-- 个人信息对话框 -->
     <el-dialog
-      title="个人中心"
+      title="个人信息"
       :visible.sync="showProfile"
       width="900px"
       :close-on-click-modal="false"
-      @close="showProfile = false"
+      @close="handleProfileClose"
     >
-      <Profile v-if="showProfile" />
+      <Profile v-if="showProfile" ref="profile" @close="showProfile = false" />
     </el-dialog>
   </div>
 </template>
@@ -198,6 +198,14 @@ export default {
     },
     goToMenu(path) {
       this.$router.push(`/hrp/${path}`)
+    },
+    async handleProfileClose() {
+      // 通知Profile组件清理未保存的数据
+      if (this.$refs.profile) {
+        // 通过ref调用组件方法
+        await this.$refs.profile.cleanupUnsavedPhoto()
+      }
+      this.showProfile = false
     }
   }
 }
@@ -306,6 +314,35 @@ export default {
   border-right: none;
   height: calc(100vh - 60px);
   overflow-y: auto;
+}
+
+/* 确保菜单文字颜色正确显示 */
+.el-menu-vertical .el-menu-item,
+.el-menu-vertical .el-submenu__title {
+  color: #bfcbd9 !important;
+}
+
+.el-menu-vertical .el-menu-item.is-active {
+  background-color: #409EFF !important;
+  color: #fff !important;
+}
+
+.el-menu-vertical .el-menu-item.is-active span,
+.el-menu-vertical .el-menu-item.is-active i {
+  color: #fff !important;
+}
+
+.el-menu-vertical .el-menu-item:hover,
+.el-menu-vertical .el-submenu__title:hover {
+  background-color: #263445 !important;
+  color: #fff !important;
+}
+
+.el-menu-vertical .el-menu-item:hover span,
+.el-menu-vertical .el-menu-item:hover i,
+.el-menu-vertical .el-submenu__title:hover span,
+.el-menu-vertical .el-submenu__title:hover i {
+  color: #fff !important;
 }
 
 .el-menu-vertical:not(.el-menu--collapse) {

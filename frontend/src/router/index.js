@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import store from '../store'
+import Cookies from 'js-cookie'
 
 Vue.use(VueRouter)
 
@@ -25,33 +26,51 @@ const routes = [
       {
         path: '/hrp/system/user',
         name: 'UserManagement',
-        component: () => import('../views/system/UserManagement.vue')
+        component: () => import('../views/system/UserManagement.vue'),
+        meta: { requiresAuth: true }
       },
       {
         path: '/hrp/system/permission',
         name: 'PermissionManagement',
-        component: () => import('../views/system/PermissionManagement.vue')
+        component: () => import('../views/system/PermissionManagement.vue'),
+        meta: { requiresAuth: true }
       },
       {
         path: '/hrp/system/dept',
         name: 'DeptManagement',
-        component: () => import('../views/system/DeptManagement.vue')
+        component: () => import('../views/system/DeptManagement.vue'),
+        meta: { requiresAuth: true }
       },
       {
         path: '/hrp/system/position',
         name: 'PositionManagement',
-        component: () => import('../views/system/PositionManagement.vue')
-      },
-      {
-        path: '/hrp/system/employee',
-        name: 'EmployeeManagement',
-        component: () => import('../views/system/EmployeeManagement.vue')
+        component: () => import('../views/system/PositionManagement.vue'),
+        meta: { requiresAuth: true }
       },
       // 系统平台 - 系统设置
       {
         path: '/hrp/system/params',
         name: 'SystemParams',
-        component: () => import('../views/system/SystemParams.vue')
+        component: () => import('../views/system/SystemParams.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: '/hrp/system/print-settings',
+        name: 'PrintSettings',
+        component: () => import('../views/system/PrintSettings.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: '/hrp/system/print-preview',
+        name: 'PrintPreview',
+        component: () => import('../views/system/PrintPreview.vue'),
+        meta: { requiresAuth: true }
+      },
+      {
+        path: '/hrp/system/template-config',
+        name: 'TemplateConfig',
+        component: () => import('../views/system/TemplateConfig.vue'),
+        meta: { requiresAuth: true }
       },
       // 系统平台 - 业务平台
       {
@@ -68,12 +87,6 @@ const routes = [
         path: '/hrp/business/process-instance',
         name: 'ProcessInstance',
         component: () => import('../views/business/ProcessInstance.vue')
-      },
-      // 旧路由（保留兼容）
-      {
-        path: '/hrp/role',
-        name: 'RoleManagement',
-        component: () => import('../views/system/RoleManagement.vue')
       },
       // 智能报账 - 业务办理
       {
@@ -158,9 +171,34 @@ const routes = [
       },
       // 全景人力
       {
+        path: '/hrp/hr/business-apply',
+        name: 'BusinessApply',
+        component: () => import('../views/hr/BusinessApply.vue')
+      },
+      {
+        path: '/hrp/hr/attendance/manage',
+        name: 'AttendanceManage',
+        component: () => import('../views/hr/AttendanceManage.vue')
+      },
+      {
+        path: '/hrp/hr/attendance/leave',
+        name: 'LeaveManage',
+        component: () => import('../views/hr/LeaveManage.vue')
+      },
+      {
         path: '/hrp/hr/salary',
         name: 'SalaryManagement',
         component: () => import('../views/hr/SalaryManagement.vue')
+      },
+      {
+        path: '/hrp/hr/performance',
+        name: 'PerformanceManagement',
+        component: () => import('../views/hr/PerformanceManagement.vue')
+      },
+      {
+        path: '/hrp/hr/transfer',
+        name: 'TransferManagement',
+        component: () => import('../views/hr/TransferManagement.vue')
       },
       {
         path: '/hrp/hr/salary-calc',
@@ -262,16 +300,143 @@ const router = new VueRouter({
   routes
 })
 
+// 辅助函数：检查路径是否在菜单权限中
+function isPathInMenus(path, menus) {
+  if (!menus || menus.length === 0) {
+    return false
+  }
+  
+  // 递归检查菜单树
+  function checkMenu(menuList) {
+    for (const menu of menuList) {
+      // 先检查子菜单
+      if (menu.children && menu.children.length > 0) {
+        if (checkMenu(menu.children)) {
+          return true
+        }
+      }
+      
+      // 检查当前菜单的路径
+      if (menu.path) {
+        let menuPath = menu.path
+        // 如果path不以/开头，拼接/hrp/
+        if (!menuPath.startsWith('/')) {
+          menuPath = `/hrp/${menuPath}`
+        }
+        // 标准化路径（移除末尾的斜杠）
+        menuPath = menuPath.replace(/\/$/, '')
+        const normalizedPath = path.replace(/\/$/, '')
+        
+        // 精确匹配
+        if (menuPath === normalizedPath) {
+          return true
+        }
+        // 路径前缀匹配（用于子路由）
+        if (normalizedPath.startsWith(menuPath + '/')) {
+          return true
+        }
+      }
+    }
+    return false
+  }
+  
+  return checkMenu(menus)
+}
+
 // 路由守卫
 router.beforeEach((to, from, next) => {
-  const token = store.state.user.token
-  if (to.meta.requiresAuth && !token) {
-    next('/login')
-  } else if (to.path === '/login' && token) {
-    next('/hrp')
-  } else {
-    next()
+  // 从多个位置获取token
+  const token = store.state.user.token || Cookies.get('token')
+  const userInfo = store.state.user.userInfo || JSON.parse(localStorage.getItem('userInfo') || '{}')
+  
+  // 如果访问登录页
+  if (to.path === '/login') {
+    // 如果已登录且有用户信息，跳转到主页（避免重复登录）
+    if (token && userInfo && Object.keys(userInfo).length > 0) {
+      next('/hrp')
+    } else {
+      // 清除可能存在的无效token
+      if (token && (!userInfo || Object.keys(userInfo).length === 0)) {
+        Cookies.remove('token')
+        localStorage.removeItem('userInfo')
+        store.commit('user/REMOVE_TOKEN')
+        store.commit('user/REMOVE_USER_INFO')
+      }
+      // 如果未登录，允许访问登录页
+      next()
+    }
+    return
   }
+  
+  // 检查是否需要认证（所有 /hrp 开头的路径都需要认证）
+  const requiresAuth = to.meta.requiresAuth !== false && to.path.startsWith('/hrp')
+  
+  if (requiresAuth) {
+    // 如果没有token或没有用户信息，跳转到登录页
+    if (!token || !userInfo || Object.keys(userInfo).length === 0) {
+      // 清除可能存在的无效数据
+      Cookies.remove('token')
+      localStorage.removeItem('userInfo')
+      store.commit('user/REMOVE_TOKEN')
+      store.commit('user/REMOVE_USER_INFO')
+      // 使用 replace 避免在历史记录中留下重定向记录
+      next({
+        path: '/login',
+        replace: true
+      })
+      return
+    }
+    
+    // 如果访问的是首页，直接允许
+    if (to.path === '/hrp') {
+      next()
+      return
+    }
+    
+    // 不允许通过直接输入URL的方式访问任何子页面，必须通过菜单点击
+    // 判断是否为直接输入URL：
+    // 1. from.name === null（首次访问或刷新）
+    // 2. from.path === '/'（从根路径跳转）
+    // 3. from.path === to.path（刷新当前页面，但这种情况应该允许）
+    // 4. from.path 不在 /hrp 路径下（从外部跳转）
+    const isDirectUrlAccess = 
+      from.name === null || 
+      from.path === '/' || 
+      (from.path !== '/hrp' && !from.path.startsWith('/hrp/'))
+    
+    // 如果是直接输入URL访问子页面，重定向到首页
+    if (isDirectUrlAccess) {
+      next({
+        path: '/hrp',
+        replace: true
+      })
+      return
+    }
+    
+    // 如果是从首页或其他页面跳转过来的，还需要检查路径是否在菜单权限中
+    const menus = store.state.menu.menus || []
+    
+    // 如果菜单为空，可能是还没加载，允许访问（会在HRP组件中加载菜单）
+    if (menus.length === 0) {
+      next()
+      return
+    }
+    
+    // 检查路径是否在菜单权限中
+    const isInMenus = isPathInMenus(to.path, menus)
+    
+    // 如果路径不在菜单权限中，重定向到首页
+    if (!isInMenus) {
+      next({
+        path: '/hrp',
+        replace: true
+      })
+      return
+    }
+  }
+  
+  // 允许访问
+  next()
 })
 
 export default router

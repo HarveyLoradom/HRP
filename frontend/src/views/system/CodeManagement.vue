@@ -6,7 +6,7 @@
         <el-button style="float: right; padding: 3px 0" type="text" @click="handleAdd">新增字典</el-button>
       </div>
       
-      <el-table :data="tableData" border style="width: 100%">
+      <el-table :data="paginatedData" border style="width: 100%" v-loading="loading">
         <el-table-column prop="codeType" label="字典类型" width="120"></el-table-column>
         <el-table-column prop="codeTypeName" label="类型名称" width="120"></el-table-column>
         <el-table-column prop="codeValue" label="字典值" width="100"></el-table-column>
@@ -18,6 +18,18 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination-container" style="margin-top: 20px; text-align: right;">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="pagination.page"
+          :page-sizes="[10, 20, 50, 100]"
+          :page-size="pagination.size"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="pagination.total">
+        </el-pagination>
+      </div>
     </el-card>
 
     <!-- 新增/编辑对话框 -->
@@ -49,12 +61,16 @@
 
 <script>
 import { getCodeList, saveCode, updateCode, deleteCode } from '@/api/user'
+import { paginationMixin } from '@/mixins/pagination'
 
 export default {
   name: 'CodeManagement',
+  mixins: [paginationMixin],
   data() {
     return {
+      loading: false,
       tableData: [],
+      allData: [],
       dialogVisible: false,
       dialogTitle: '新增字典',
       isEdit: false,
@@ -73,16 +89,37 @@ export default {
       }
     }
   },
+  computed: {
+    paginatedData() {
+      const start = (this.pagination.page - 1) * this.pagination.size
+      const end = start + this.pagination.size
+      return this.tableData.slice(start, end)
+    }
+  },
   mounted() {
     this.loadData()
   },
   methods: {
     loadData() {
+      this.loading = true
       getCodeList().then(response => {
         if (response.code === 200) {
-          this.tableData = response.data
+          this.allData = response.data || []
+          this.tableData = this.allData
+          this.pagination.total = this.tableData.length
+          this.pagination.page = 1
         }
+        this.loading = false
+      }).catch(() => {
+        this.loading = false
       })
+    },
+    handleSizeChange(val) {
+      this.pagination.size = val
+      this.pagination.page = 1
+    },
+    handleCurrentChange(val) {
+      this.pagination.page = val
     },
     handleAdd() {
       this.dialogTitle = '新增字典'
@@ -111,6 +148,7 @@ export default {
         deleteCode(row.id).then(response => {
           if (response.code === 200) {
             this.$message.success('删除成功')
+            this.pagination.page = 1
             this.loadData()
           } else {
             this.$message.error(response.message || '删除失败')
@@ -126,6 +164,7 @@ export default {
             if (response.code === 200) {
               this.$message.success(this.isEdit ? '更新成功' : '新增成功')
               this.dialogVisible = false
+              this.pagination.page = 1
               this.loadData()
             } else {
               this.$message.error(response.message || '操作失败')

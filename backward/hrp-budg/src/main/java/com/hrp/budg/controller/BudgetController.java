@@ -44,12 +44,6 @@ public class BudgetController {
         return Result.success(list);
     }
 
-    @GetMapping("/subject/{subjectId}")
-    public Result<List<Budget>> getBySubjectId(@PathVariable Long subjectId) {
-        List<Budget> list = budgetService.getBySubjectId(subjectId);
-        return Result.success(list);
-    }
-
     @GetMapping("/item/{itemId}")
     public Result<List<Budget>> getByItemId(@PathVariable Long itemId) {
         List<Budget> list = budgetService.getByItemId(itemId);

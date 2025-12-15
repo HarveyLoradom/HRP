@@ -11,6 +11,8 @@ public interface ProcurementRequirementService {
     List<ProcurementRequirement> getByApplicant(Long applicantId);
     List<ProcurementRequirement> getByApprover(String approverId);
     List<ProcurementRequirement> getMyList(String userId, Long empId);
+    com.hrp.common.entity.PageResult<ProcurementRequirement> getMyListPage(String userId, Long empId, Long page, Long size);
+    com.hrp.common.entity.PageResult<ProcurementRequirement> getAllPage(Long page, Long size);
     ProcurementRequirement getById(Long id);
     ProcurementRequirementDTO getDetail(Long id);
     boolean save(ProcurementRequirementDTO dto);

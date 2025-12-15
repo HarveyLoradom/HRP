@@ -44,21 +44,64 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 分页组件 -->
+      <el-pagination
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        :current-page="pagination.page"
+        :page-sizes="[10, 20, 50, 100]"
+        :page-size="pagination.size"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="pagination.total"
+        style="margin-top: 20px; text-align: right;"
+      ></el-pagination>
     </el-card>
 
     <!-- 新增/编辑对话框 -->
-    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="500px">
-      <el-form :model="form" :rules="rules" ref="form" label-width="100px">
-        <el-form-item label="参数类型" prop="codeType">
-          <el-input v-model="form.codeType" placeholder="请输入参数类型"></el-input>
+    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="700px">
+      <el-form :model="form" :rules="rules" ref="form" label-width="120px">
+        <!-- 参数类型和类型名称（上方固定） -->
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="参数类型" prop="codeType">
+              <el-input v-model="form.codeType" :disabled="isEdit" placeholder="请输入参数类型"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="类型名称" prop="codeTypeName">
+              <el-input v-model="form.codeTypeName" :disabled="isEdit" placeholder="请输入类型名称"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        
+        <!-- 参数值和参数名称（批量添加） -->
+        <el-form-item label="参数值列表" v-if="!isEdit">
+          <el-button type="primary" size="small" @click="handleAddValueRow" style="margin-bottom: 10px;">添加一行</el-button>
+          <el-table :data="form.valueList" border style="width: 100%">
+            <el-table-column label="参数值" width="200">
+              <template slot-scope="scope">
+                <el-input v-model="scope.row.codeValue" placeholder="请输入参数值"></el-input>
+              </template>
+            </el-table-column>
+            <el-table-column label="参数名称" width="250">
+              <template slot-scope="scope">
+                <el-input v-model="scope.row.codeName" placeholder="请输入参数名称"></el-input>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="100">
+              <template slot-scope="scope">
+                <el-button size="mini" type="danger" @click="handleRemoveValueRow(scope.$index)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
         </el-form-item>
-        <el-form-item label="类型名称" prop="codeTypeName">
-          <el-input v-model="form.codeTypeName" placeholder="请输入类型名称"></el-input>
-        </el-form-item>
-        <el-form-item label="参数值" prop="codeValue">
+        
+        <!-- 编辑时显示单个参数值和名称 -->
+        <el-form-item label="参数值" prop="codeValue" v-if="isEdit">
           <el-input v-model="form.codeValue" placeholder="请输入参数值"></el-input>
         </el-form-item>
-        <el-form-item label="参数名称" prop="codeName">
+        <el-form-item label="参数名称" prop="codeName" v-if="isEdit">
           <el-input v-model="form.codeName" placeholder="请输入参数名称"></el-input>
         </el-form-item>
       </el-form>
@@ -71,7 +114,7 @@
 </template>
 
 <script>
-import { getCodeList, getCodeByType, saveCode, updateCode, deleteCode } from '@/api/user'
+import { getCodeList, getCodeByType, getCodePage, getCodeByTypePage, saveCode, saveCodeBatch, updateCode, deleteCode } from '@/api/user'
 
 export default {
   name: 'SystemParams',
@@ -83,6 +126,11 @@ export default {
       searchForm: {
         codeType: ''
       },
+      pagination: {
+        page: 1,
+        size: 10,
+        total: 0
+      },
       dialogVisible: false,
       dialogTitle: '新增参数',
       isEdit: false,
@@ -92,7 +140,8 @@ export default {
         codeTypeName: '',
         codeValue: '',
         codeName: '',
-        isStop: 0
+        isStop: 0,
+        valueList: [] // 批量添加的参数值列表
       },
       rules: {
         codeType: [{ required: true, message: '请输入参数类型', trigger: 'blur' }],
@@ -109,15 +158,27 @@ export default {
   methods: {
     loadData() {
       this.loading = true
-      const api = this.searchForm.codeType ? getCodeByType(this.searchForm.codeType) : getCodeList()
+      const api = this.searchForm.codeType 
+        ? getCodeByTypePage(this.searchForm.codeType, this.pagination.page, this.pagination.size)
+        : getCodePage(this.pagination.page, this.pagination.size)
       api.then(response => {
-        if (response.code === 200) {
-          this.tableData = response.data || []
+        if (response.code === 200 && response.data) {
+          this.tableData = response.data.records || []
+          this.pagination.total = response.data.total || 0
         }
         this.loading = false
       }).catch(() => {
         this.loading = false
       })
+    },
+    handleSizeChange(val) {
+      this.pagination.size = val
+      this.pagination.page = 1
+      this.loadData()
+    },
+    handleCurrentChange(val) {
+      this.pagination.page = val
+      this.loadData()
     },
     loadTypeList() {
       getCodeList().then(response => {
@@ -133,10 +194,12 @@ export default {
       })
     },
     handleSearch() {
+      this.pagination.page = 1
       this.loadData()
     },
     handleReset() {
       this.searchForm.codeType = ''
+      this.pagination.page = 1
       this.loadData()
     },
     handleAdd() {
@@ -148,9 +211,16 @@ export default {
         codeTypeName: '',
         codeValue: '',
         codeName: '',
-        isStop: 0
+        isStop: 0,
+        valueList: [{ codeValue: '', codeName: '' }] // 默认添加一行
       }
       this.dialogVisible = true
+    },
+    handleAddValueRow() {
+      this.form.valueList.push({ codeValue: '', codeName: '' })
+    },
+    handleRemoveValueRow(index) {
+      this.form.valueList.splice(index, 1)
     },
     handleEdit(row) {
       this.dialogTitle = '编辑参数'
@@ -168,22 +238,65 @@ export default {
     handleSubmit() {
       this.$refs.form.validate(valid => {
         if (valid) {
-          // 新增时不需要传ID，后端会自动生成UUID
-          const formData = { ...this.form }
-          if (!this.isEdit) {
-            delete formData.id
-          }
-          const api = this.isEdit ? updateCode : saveCode
-          api(formData).then(response => {
-            if (response.code === 200) {
-              this.$message.success(response.message || '操作成功')
-              this.dialogVisible = false
-              this.loadData()
-              this.loadTypeList()
-            } else {
-              this.$message.error(response.message || '操作失败')
+          if (this.isEdit) {
+            // 编辑模式：更新单个参数
+            const formData = { ...this.form }
+            const api = updateCode
+            api(formData).then(response => {
+              if (response.code === 200) {
+                this.$message.success(response.message || '操作成功')
+                this.dialogVisible = false
+                this.pagination.page = 1
+                this.loadData()
+                this.loadTypeList()
+              } else {
+                this.$message.error(response.message || '操作失败')
+              }
+            })
+          } else {
+            // 新增模式：批量创建参数
+            if (!this.form.valueList || this.form.valueList.length === 0) {
+              this.$message.warning('请至少添加一个参数值')
+              return
             }
-          })
+            
+            // 验证所有参数值是否填写完整
+            let hasError = false
+            for (let i = 0; i < this.form.valueList.length; i++) {
+              const item = this.form.valueList[i]
+              if (!item.codeValue || !item.codeName) {
+                this.$message.warning(`第${i + 1}行的参数值和参数名称不能为空`)
+                hasError = true
+                break
+              }
+            }
+            if (hasError) {
+              return
+            }
+            
+            // 批量创建
+            const codeList = this.form.valueList.map(item => ({
+              codeType: this.form.codeType,
+              codeTypeName: this.form.codeTypeName,
+              codeValue: item.codeValue,
+              codeName: item.codeName,
+              isStop: 0
+            }))
+            
+            saveCodeBatch(codeList).then(response => {
+              if (response.code === 200) {
+                this.$message.success(response.message || '批量创建成功')
+                this.dialogVisible = false
+                this.pagination.page = 1
+                this.loadData()
+                this.loadTypeList()
+              } else {
+                this.$message.error(response.message || '批量创建失败')
+              }
+            }).catch(error => {
+              this.$message.error('批量创建失败：' + (error.message || '未知错误'))
+            })
+          }
         }
       })
     },
@@ -196,6 +309,7 @@ export default {
         deleteCode(row.id).then(response => {
           if (response.code === 200) {
             this.$message.success('删除成功')
+            this.pagination.page = 1
             this.loadData()
             this.loadTypeList()
           } else {

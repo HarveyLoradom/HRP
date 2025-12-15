@@ -11,7 +11,7 @@
         <el-tab-pane label="已拒绝" name="REJECTED"></el-tab-pane>
       </el-tabs>
 
-      <el-table :data="tableData" border style="width: 100%; margin-top: 20px" v-loading="loading">
+      <el-table :data="paginatedData" border style="width: 100%; margin-top: 20px" v-loading="loading">
         <el-table-column prop="contractNo" label="合同编号" width="150"></el-table-column>
         <el-table-column prop="contractName" label="合同名称" width="200"></el-table-column>
         <el-table-column prop="contractType" label="合同类型" width="120">
@@ -33,14 +33,28 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="250">
+        <el-table-column label="操作" width="380">
           <template slot-scope="scope">
             <el-button v-if="scope.row.status === 'PENDING'" size="mini" type="success" @click="handleApprove(scope.row)">通过</el-button>
             <el-button v-if="scope.row.status === 'PENDING'" size="mini" type="danger" @click="handleReject(scope.row)">驳回</el-button>
+            <el-button v-if="scope.row.status === 'PENDING'" size="mini" type="warning" @click="handleAddSign(scope.row)">加签</el-button>
+            <el-button size="mini" type="info" icon="el-icon-printer" @click="handlePrint(scope.row)">打印</el-button>
             <el-button size="mini" @click="handleView(scope.row)">查看</el-button>
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination-container" style="margin-top: 20px; text-align: right;">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="pagination.page"
+          :page-sizes="[10, 20, 50, 100]"
+          :page-size="pagination.size"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="pagination.total">
+        </el-pagination>
+      </div>
     </el-card>
 
     <!-- 审批对话框 -->
@@ -53,6 +67,33 @@
       <div slot="footer" class="dialog-footer">
         <el-button @click="approvalVisible = false">取消</el-button>
         <el-button type="primary" @click="handleConfirmApproval">确定</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 加签对话框 -->
+    <el-dialog title="加签" :visible.sync="addSignVisible" width="500px">
+      <el-form :model="addSignForm" :rules="addSignRules" ref="addSignForm" label-width="100px">
+        <el-form-item label="被加签人" prop="targetEmpCode">
+          <el-autocomplete
+            v-model="addSignForm.targetEmpCode"
+            :fetch-suggestions="searchEmployee"
+            placeholder="请输入工号或姓名搜索"
+            value-key="empCode"
+            @select="handleAddSignEmployeeSelect"
+            style="width: 100%"
+          >
+            <template slot-scope="{ item }">
+              <div>{{ item.empCode }} - {{ item.empName }}</div>
+            </template>
+          </el-autocomplete>
+        </el-form-item>
+        <el-form-item label="加签原因" prop="addsignReason">
+          <el-input type="textarea" v-model="addSignForm.addsignReason" :rows="4" placeholder="请输入加签原因"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="addSignVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleConfirmAddSign">确定</el-button>
       </div>
     </el-dialog>
 
@@ -80,14 +121,20 @@
 <script>
 import { getMyApprovalContracts, approveContract, rejectContract, getContractById } from '@/api/contract'
 import { getCodeTypeOptions } from '@/utils/codeType'
+import { paginationMixin } from '@/mixins/pagination'
+import { createAddSign, getProcessTaskByBusinessKey } from '@/api/process'
+import { getEmployeeList } from '@/api/user'
+import { getDefaultPrintTemplate, generatePrintContent } from '@/api/print'
 
 export default {
   name: 'ContractApproval',
+  mixins: [paginationMixin],
   data() {
     return {
       loading: false,
       activeTab: 'PENDING',
       tableData: [],
+      allData: [],
       contractTypeOptions: [],
       approvalVisible: false,
       approvalTitle: '',
@@ -97,12 +144,33 @@ export default {
         approvalOpinion: ''
       },
       detailVisible: false,
-      currentDetail: null
+      currentDetail: null,
+      addSignVisible: false,
+      addSignForm: {
+        parentTaskId: null,
+        targetUserId: '',
+        targetUserName: '',
+        targetEmpCode: '',
+        addsignReason: ''
+      },
+      addSignRules: {
+        targetEmpCode: [{ required: true, message: '请选择被加签人', trigger: 'change' }],
+        addsignReason: [{ required: true, message: '请输入加签原因', trigger: 'blur' }]
+      },
+      employeeList: []
+    }
+  },
+  computed: {
+    paginatedData() {
+      const start = (this.pagination.page - 1) * this.pagination.size
+      const end = start + this.pagination.size
+      return this.tableData.slice(start, end)
     }
   },
   mounted() {
     this.loadCodeTypeOptions()
     this.loadData()
+    this.loadEmployeeList()
   },
   methods: {
     async loadCodeTypeOptions() {
@@ -113,22 +181,38 @@ export default {
       const userId = this.$store.state.user.userInfo.userId || this.$store.state.user.userInfo.id
       getMyApprovalContracts(userId).then(response => {
         if (response.code === 200) {
-          // 根据当前tab过滤数据
-          if (this.activeTab === 'PENDING') {
-            this.tableData = (response.data || []).filter(item => item.status === 'PENDING')
-          } else if (this.activeTab === 'APPROVED') {
-            this.tableData = (response.data || []).filter(item => item.status === 'APPROVED')
-          } else if (this.activeTab === 'REJECTED') {
-            this.tableData = (response.data || []).filter(item => item.status === 'REJECTED')
-          }
+          this.allData = response.data || []
+          this.filterAndPaginateData()
         }
         this.loading = false
       }).catch(() => {
         this.loading = false
       })
     },
+    filterAndPaginateData() {
+      let filtered = [...this.allData]
+      // 根据当前tab过滤数据
+      if (this.activeTab === 'PENDING') {
+        filtered = filtered.filter(item => item.status === 'PENDING')
+      } else if (this.activeTab === 'APPROVED') {
+        filtered = filtered.filter(item => item.status === 'APPROVED')
+      } else if (this.activeTab === 'REJECTED') {
+        filtered = filtered.filter(item => item.status === 'REJECTED')
+      }
+      this.tableData = filtered
+      this.pagination.total = filtered.length
+      this.pagination.page = 1
+    },
     handleTabClick() {
-      this.loadData()
+      this.pagination.page = 1
+      this.filterAndPaginateData()
+    },
+    handleSizeChange(val) {
+      this.pagination.size = val
+      this.pagination.page = 1
+    },
+    handleCurrentChange(val) {
+      this.pagination.page = val
     },
     handleApprove(row) {
       this.approvalTitle = '审批通过'
@@ -155,11 +239,128 @@ export default {
         if (response.code === 200) {
           this.$message.success(this.approvalForm.approvalType === 'approve' ? '审批通过' : '已驳回')
           this.approvalVisible = false
+          this.pagination.page = 1
           this.loadData()
         } else {
           this.$message.error(response.message || '操作失败')
         }
       })
+    },
+    loadEmployeeList() {
+      getEmployeeList().then(response => {
+        if (response.code === 200) {
+          this.employeeList = response.data || []
+        }
+      })
+    },
+    searchEmployee(queryString, cb) {
+      const results = this.employeeList.filter(emp => {
+        return (emp.empCode && emp.empCode.includes(queryString)) ||
+               (emp.empName && emp.empName.includes(queryString))
+      }).map(emp => ({
+        empCode: emp.empCode,
+        empName: emp.empName,
+        empId: emp.empId
+      }))
+      cb(results)
+    },
+    handleAddSignEmployeeSelect(item) {
+      this.addSignForm.targetUserId = item.empId
+      this.addSignForm.targetUserName = item.empName
+      this.addSignForm.targetEmpCode = item.empCode
+    },
+    async handleAddSign(row) {
+      // 根据业务主键获取当前任务
+      try {
+        const taskResponse = await getProcessTaskByBusinessKey(row.contractNo)
+        if (taskResponse.code === 200 && taskResponse.data && taskResponse.data.length > 0) {
+          // 找到当前用户的任务
+          const userId = this.$store.state.user.userInfo.userId || this.$store.state.user.userInfo.id
+          const currentTask = taskResponse.data.find(t => t.assigneeUserId === userId && t.taskStatus === 'PENDING')
+          if (currentTask) {
+            this.addSignForm.parentTaskId = currentTask.taskId
+            this.addSignForm.targetUserId = ''
+            this.addSignForm.targetUserName = ''
+            this.addSignForm.targetEmpCode = ''
+            this.addSignForm.addsignReason = ''
+            this.addSignVisible = true
+          } else {
+            this.$message.warning('未找到当前用户的待办任务')
+          }
+        } else {
+          this.$message.warning('未找到相关流程任务')
+        }
+      } catch (error) {
+        this.$message.error('获取任务信息失败')
+      }
+    },
+    handleConfirmAddSign() {
+      this.$refs.addSignForm.validate(valid => {
+        if (valid) {
+          const userInfo = this.$store.state.user.userInfo
+          const addsignData = {
+            parentTaskId: this.addSignForm.parentTaskId,
+            targetUserId: this.addSignForm.targetUserId,
+            targetUserName: this.addSignForm.targetUserName,
+            targetEmpCode: this.addSignForm.targetEmpCode,
+            addsignUserId: userInfo.userId || userInfo.id,
+            addsignUserName: userInfo.name || userInfo.userName,
+            addsignEmpCode: userInfo.empCode || userInfo.account,
+            addsignReason: this.addSignForm.addsignReason
+          }
+          createAddSign(addsignData).then(response => {
+            if (response.code === 200) {
+              this.$message.success('加签成功')
+              this.addSignVisible = false
+              this.loadData()
+            } else {
+              this.$message.error(response.message || '加签失败')
+            }
+          }).catch(() => {
+            this.$message.error('加签失败')
+          })
+        }
+      })
+    },
+    async handlePrint(row) {
+      try {
+        const templateResponse = await getDefaultPrintTemplate('CONTRACT')
+        if (templateResponse.code !== 200 || !templateResponse.data) {
+          this.$message.warning('未找到打印模板，请先在系统设置中配置打印模板')
+          return
+        }
+        const template = templateResponse.data
+        const printResponse = await generatePrintContent({
+          templateId: template.templateId,
+          businessKey: row.contractNo,
+          templateType: 'CONTRACT'
+        })
+        if (printResponse.code === 200) {
+          const printWindow = window.open('', '_blank')
+          printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>打印 - ${row.contractNo}</title>
+              <style>
+                body { margin: 0; padding: ${template.marginTop || 20}mm ${template.marginRight || 20}mm ${template.marginBottom || 20}mm ${template.marginLeft || 20}mm; }
+                @media print {
+                  @page { size: ${template.pageSize || 'A4'} ${template.orientation || 'portrait'}; margin: 0; }
+                }
+              </style>
+            </head>
+            <body>${printResponse.data}</body>
+            </html>
+          `)
+          printWindow.document.close()
+          printWindow.focus()
+          setTimeout(() => { printWindow.print() }, 250)
+        } else {
+          this.$message.error(printResponse.message || '生成打印内容失败')
+        }
+      } catch (error) {
+        this.$message.error('打印失败：' + (error.message || '未知错误'))
+      }
     },
     handleView(row) {
       getContractById(row.pactId).then(response => {

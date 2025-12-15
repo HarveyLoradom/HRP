@@ -16,5 +16,13 @@
         VALUES (#{account}, #{ip}, #{status}, #{message}, #{loginTime})
     </insert>
 
+    <delete id="deleteBeforeTime">
+        DELETE FROM sys_login_log WHERE login_time &lt; #{beforeTime}
+    </delete>
+
+    <select id="count" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM sys_login_log
+    </select>
+
 </mapper>
 

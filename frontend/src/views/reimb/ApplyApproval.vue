@@ -42,14 +42,28 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="250">
+        <el-table-column label="操作" width="380">
           <template slot-scope="scope">
             <el-button v-if="scope.row.status === 'PENDING'" size="mini" type="success" @click="handleApprove(scope.row)">通过</el-button>
             <el-button v-if="scope.row.status === 'PENDING'" size="mini" type="danger" @click="handleReject(scope.row)">驳回</el-button>
+            <el-button v-if="scope.row.status === 'PENDING'" size="mini" type="warning" @click="handleAddSign(scope.row)">加签</el-button>
+            <el-button size="mini" type="info" icon="el-icon-printer" @click="handlePrint(scope.row)">打印</el-button>
             <el-button size="mini" @click="handleView(scope.row)">查看</el-button>
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination-container" style="margin-top: 20px; text-align: right;">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="pagination.page"
+          :page-sizes="[10, 20, 50, 100]"
+          :page-size="pagination.size"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="pagination.total">
+        </el-pagination>
+      </div>
     </el-card>
 
     <!-- 审批对话框 -->
@@ -62,6 +76,33 @@
       <div slot="footer" class="dialog-footer">
         <el-button @click="approvalVisible = false">取消</el-button>
         <el-button type="primary" @click="handleConfirmApproval">确定</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 加签对话框 -->
+    <el-dialog title="加签" :visible.sync="addSignVisible" width="500px">
+      <el-form :model="addSignForm" :rules="addSignRules" ref="addSignForm" label-width="100px">
+        <el-form-item label="被加签人" prop="targetEmpCode">
+          <el-autocomplete
+            v-model="addSignForm.targetEmpCode"
+            :fetch-suggestions="searchEmployee"
+            placeholder="请输入工号或姓名搜索"
+            value-key="empCode"
+            @select="handleAddSignEmployeeSelect"
+            style="width: 100%"
+          >
+            <template slot-scope="{ item }">
+              <div>{{ item.empCode }} - {{ item.empName }}</div>
+            </template>
+          </el-autocomplete>
+        </el-form-item>
+        <el-form-item label="加签原因" prop="addsignReason">
+          <el-input type="textarea" v-model="addSignForm.addsignReason" :rows="4" placeholder="请输入加签原因"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="addSignVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleConfirmAddSign">确定</el-button>
       </div>
     </el-dialog>
 
@@ -134,9 +175,12 @@
 </template>
 
 <script>
-import { getMyApprovalPayouts, approvePayout, rejectPayout, getPayoutDetail, getPayoutApprovals } from '@/api/reimb'
+import { getPayoutsByStatusPage, approvePayout, rejectPayout, getPayoutDetail, getPayoutApprovals } from '@/api/reimb'
 import { getAttachmentsByBusiness } from '@/api/attachment'
 import { getCodeTypeOptions } from '@/utils/codeType'
+import { createAddSign, getProcessTaskByBusinessKey } from '@/api/process'
+import { getEmployeeList } from '@/api/user'
+import { getDefaultPrintTemplate, generatePrintContent } from '@/api/print'
 
 export default {
   name: 'ApplyApproval',
@@ -146,6 +190,11 @@ export default {
       activeTab: 'PENDING',
       detailActiveTab: 'basic',
       tableData: [],
+      pagination: {
+        page: 1,
+        size: 10,
+        total: 0
+      },
       payoutTypeOptions: [],
       applyStatusOptions: [],
       approvalVisible: false,
@@ -158,12 +207,26 @@ export default {
       detailVisible: false,
       currentDetail: null,
       attachments: [],
-      approvals: []
+      approvals: [],
+      addSignVisible: false,
+      addSignForm: {
+        parentTaskId: null,
+        targetUserId: '',
+        targetUserName: '',
+        targetEmpCode: '',
+        addsignReason: ''
+      },
+      addSignRules: {
+        targetEmpCode: [{ required: true, message: '请选择被加签人', trigger: 'change' }],
+        addsignReason: [{ required: true, message: '请输入加签原因', trigger: 'blur' }]
+      },
+      employeeList: []
     }
   },
   mounted() {
     this.loadCodeTypeOptions()
     this.loadData()
+    this.loadEmployeeList()
   },
   methods: {
     async loadCodeTypeOptions() {
@@ -172,27 +235,35 @@ export default {
     },
     loadData() {
       this.loading = true
-      const userId = this.$store.state.user.userInfo.userId || this.$store.state.user.userInfo.id
-      getMyApprovalPayouts(userId).then(response => {
-        if (response.code === 200) {
-          const allData = response.data || []
+      const status = this.activeTab === 'PENDING' ? 'PENDING' : (this.activeTab === 'APPROVED' ? 'APPROVED' : 'REJECTED')
+      getPayoutsByStatusPage(status, this.pagination.page, this.pagination.size).then(response => {
+        if (response.code === 200 && response.data) {
           // 只显示申请单
-          const applyData = allData.filter(item => item.billType === 'APPLY' || !item.billType)
-          // 根据当前tab过滤数据
-          if (this.activeTab === 'PENDING') {
-            this.tableData = applyData.filter(item => item.status === 'PENDING')
-          } else if (this.activeTab === 'APPROVED') {
-            this.tableData = applyData.filter(item => item.status === 'APPROVED')
-          } else if (this.activeTab === 'REJECTED') {
-            this.tableData = applyData.filter(item => item.status === 'REJECTED')
-          }
+          let records = (response.data.records || []).filter(item => item.billType === 'APPLY' || !item.billType)
+          this.tableData = records
+          this.pagination.total = records.length > 0 ? records.length : (response.data.total || 0)
+        } else {
+          this.tableData = []
+          this.pagination.total = 0
         }
         this.loading = false
       }).catch(() => {
+        this.tableData = []
+        this.pagination.total = 0
         this.loading = false
       })
     },
+    handleSizeChange(val) {
+      this.pagination.size = val
+      this.pagination.page = 1
+      this.loadData()
+    },
+    handleCurrentChange(val) {
+      this.pagination.page = val
+      this.loadData()
+    },
     handleTabClick() {
+      this.pagination.page = 1
       this.loadData()
     },
     handleApprove(row) {
@@ -220,11 +291,64 @@ export default {
         if (response.code === 200) {
           this.$message.success(this.approvalForm.approvalType === 'approve' ? '审批通过' : '已驳回')
           this.approvalVisible = false
+          this.pagination.page = 1
           this.loadData()
         } else {
           this.$message.error(response.message || '操作失败')
         }
       })
+    },
+    async handlePrint(row) {
+      try {
+        // 获取默认模板
+        const templateResponse = await getDefaultPrintTemplate('APPLY')
+        if (templateResponse.code !== 200 || !templateResponse.data) {
+          this.$message.warning('未找到打印模板，请先在系统设置中配置打印模板')
+          return
+        }
+        
+        const template = templateResponse.data
+        // 生成打印内容
+        const printResponse = await generatePrintContent({
+          templateId: template.templateId,
+          businessKey: row.payoutBillcode,
+          templateType: 'APPLY'
+        })
+        
+        if (printResponse.code === 200) {
+          // 打开打印窗口
+          const printWindow = window.open('', '_blank')
+          printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>打印 - ${row.payoutBillcode}</title>
+              <style>
+                body { margin: 0; padding: ${template.marginTop || 20}mm ${template.marginRight || 20}mm ${template.marginBottom || 20}mm ${template.marginLeft || 20}mm; }
+                @media print {
+                  @page { 
+                    size: ${template.pageSize || 'A4'} ${template.orientation || 'portrait'};
+                    margin: 0;
+                  }
+                }
+              </style>
+            </head>
+            <body>
+              ${printResponse.data}
+            </body>
+            </html>
+          `)
+          printWindow.document.close()
+          printWindow.focus()
+          setTimeout(() => {
+            printWindow.print()
+          }, 250)
+        } else {
+          this.$message.error(printResponse.message || '生成打印内容失败')
+        }
+      } catch (error) {
+        this.$message.error('打印失败：' + (error.message || '未知错误'))
+      }
     },
     async handleView(row) {
       try {

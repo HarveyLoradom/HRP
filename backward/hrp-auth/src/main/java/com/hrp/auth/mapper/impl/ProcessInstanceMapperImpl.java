@@ -48,6 +48,33 @@ public class ProcessInstanceMapperImpl implements ProcessInstanceMapper {
     }
 
     @Override
+    public List<ProcessInstance> selectAllPage(Long offset, Long size) {
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("offset", offset);
+        params.put("size", size);
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectAllPage", params);
+    }
+
+    @Override
+    public Long countAll() {
+        return sqlSessionTemplate.selectOne(NAMESPACE + ".countAll");
+    }
+
+    @Override
+    public List<ProcessInstance> selectByStatusPage(String processStatus, Long offset, Long size) {
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("processStatus", processStatus);
+        params.put("offset", offset);
+        params.put("size", size);
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectByStatusPage", params);
+    }
+
+    @Override
+    public Long countByStatus(String processStatus) {
+        return sqlSessionTemplate.selectOne(NAMESPACE + ".countByStatus", processStatus);
+    }
+
+    @Override
     public int insert(ProcessInstance instance) {
         return sqlSessionTemplate.insert(NAMESPACE + ".insert", instance);
     }

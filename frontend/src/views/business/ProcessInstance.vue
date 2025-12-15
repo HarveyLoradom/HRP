@@ -47,6 +47,18 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination-container" style="margin-top: 20px; text-align: right;">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="pagination.page"
+          :page-sizes="[10, 20, 50, 100]"
+          :page-size="pagination.size"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="pagination.total">
+        </el-pagination>
+      </div>
     </el-card>
 
     <!-- 查看变量对话框 -->
@@ -126,12 +138,14 @@
 </template>
 
 <script>
-import { getProcessInstanceList, getProcessInstanceByStatus, getProcessInstanceVariables } from '@/api/process'
+import { getProcessInstancePage, getProcessInstanceByStatusPage, getProcessInstanceVariables } from '@/api/process'
 import { getProcessDefinitionById } from '@/api/process'
 import { getCodeTypeOptions } from '@/utils/codeType'
+import { paginationMixin } from '@/mixins/pagination'
 
 export default {
   name: 'ProcessInstance',
+  mixins: [paginationMixin],
   data() {
     return {
       loading: false,
@@ -179,21 +193,40 @@ export default {
     },
     loadData() {
       this.loading = true
-      const api = this.searchForm.processStatus ? getProcessInstanceByStatus(this.searchForm.processStatus) : getProcessInstanceList()
+      const api = this.searchForm.processStatus 
+        ? getProcessInstanceByStatusPage(this.searchForm.processStatus, this.pagination.page, this.pagination.size)
+        : getProcessInstancePage(this.pagination.page, this.pagination.size)
       api.then(response => {
-        if (response.code === 200) {
-          this.tableData = response.data || []
+        if (response.code === 200 && response.data) {
+          this.tableData = response.data.records || []
+          this.pagination.total = response.data.total || 0
+        } else {
+          this.tableData = []
+          this.pagination.total = 0
         }
         this.loading = false
       }).catch(() => {
+        this.tableData = []
+        this.pagination.total = 0
         this.loading = false
       })
     },
     handleSearch() {
+      this.pagination.page = 1
       this.loadData()
     },
     handleReset() {
       this.searchForm.processStatus = ''
+      this.pagination.page = 1
+      this.loadData()
+    },
+    handleSizeChange(val) {
+      this.pagination.size = val
+      this.pagination.page = 1
+      this.loadData()
+    },
+    handleCurrentChange(val) {
+      this.pagination.page = val
       this.loadData()
     },
     handleViewVariables(row) {

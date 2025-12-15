@@ -50,17 +50,31 @@ export default {
 <style scoped>
 .el-menu-item,
 .el-submenu__title {
-  color: #bfcbd9;
+  color: #bfcbd9 !important;
 }
 
 .el-menu-item:hover,
 .el-submenu__title:hover {
   background-color: #263445 !important;
-  color: #fff;
+  color: #fff !important;
 }
 
 .el-menu-item.is-active {
   background-color: #409EFF !important;
-  color: #fff;
+  color: #fff !important;
+}
+
+.el-menu-item.is-active span,
+.el-menu-item.is-active i {
+  color: #fff !important;
+}
+
+.el-submenu__title:hover {
+  color: #fff !important;
+}
+
+.el-submenu__title:hover i,
+.el-submenu__title:hover span {
+  color: #fff !important;
 }
 </style>

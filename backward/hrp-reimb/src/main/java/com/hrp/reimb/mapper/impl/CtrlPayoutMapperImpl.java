@@ -30,8 +30,36 @@ public class CtrlPayoutMapperImpl implements CtrlPayoutMapper {
     }
 
     @Override
+    public List<CtrlPayout> selectByEmpIdPage(Long empId, Long offset, Long size) {
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("empId", empId);
+        params.put("offset", offset);
+        params.put("size", size);
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectByEmpIdPage", params);
+    }
+
+    @Override
+    public Long countByEmpId(Long empId) {
+        return sqlSessionTemplate.selectOne(NAMESPACE + ".countByEmpId", empId);
+    }
+
+    @Override
     public List<CtrlPayout> selectByStatus(String status) {
         return sqlSessionTemplate.selectList(NAMESPACE + ".selectByStatus", status);
+    }
+
+    @Override
+    public List<CtrlPayout> selectByStatusPage(String status, Long offset, Long size) {
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("status", status);
+        params.put("offset", offset);
+        params.put("size", size);
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectByStatusPage", params);
+    }
+
+    @Override
+    public Long countByStatus(String status) {
+        return sqlSessionTemplate.selectOne(NAMESPACE + ".countByStatus", status);
     }
 
     @Override
@@ -40,8 +68,35 @@ public class CtrlPayoutMapperImpl implements CtrlPayoutMapper {
     }
 
     @Override
+    public List<CtrlPayout> selectAllPage(Long offset, Long size) {
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("offset", offset);
+        params.put("size", size);
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectAllPage", params);
+    }
+
+    @Override
+    public Long countAll() {
+        return sqlSessionTemplate.selectOne(NAMESPACE + ".countAll");
+    }
+
+    @Override
     public List<CtrlPayout> selectByApprover(String userId) {
         return sqlSessionTemplate.selectList(NAMESPACE + ".selectByApprover", userId);
+    }
+
+    @Override
+    public List<CtrlPayout> selectByApproverPage(String userId, Long offset, Long size) {
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("userId", userId);
+        params.put("offset", offset);
+        params.put("size", size);
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectByApproverPage", params);
+    }
+
+    @Override
+    public Long countByApprover(String userId) {
+        return sqlSessionTemplate.selectOne(NAMESPACE + ".countByApprover", userId);
     }
 
     @Override

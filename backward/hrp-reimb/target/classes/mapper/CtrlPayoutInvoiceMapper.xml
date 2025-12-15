@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.reimb.mapper.CtrlPayoutInvoiceMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.CtrlPayoutInvoice">
+        <id column="invoice_id" property="invoiceId"/>
+        <result column="payout_id" property="payoutId"/>
+        <result column="invoice_code" property="invoiceCode"/>
+        <result column="invoice_number" property="invoiceNumber"/>
+        <result column="invoice_date" property="invoiceDate"/>
+        <result column="invoice_amount" property="invoiceAmount"/>
+        <result column="invoice_type" property="invoiceType"/>
+        <result column="tax_amount" property="taxAmount"/>
+        <result column="attachment_id" property="attachmentId"/>
+        <result column="remark" property="remark"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM ctrl_payout_invoice WHERE invoice_id = #{id}
+    </select>
+
+    <select id="selectByPayoutId" resultMap="BaseResultMap">
+        SELECT * FROM ctrl_payout_invoice WHERE payout_id = #{payoutId} ORDER BY invoice_id
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.CtrlPayoutInvoice">
+        INSERT INTO ctrl_payout_invoice (payout_id, invoice_code, invoice_number, invoice_date, invoice_amount,
+                                        invoice_type, tax_amount, attachment_id, remark)
+        VALUES (#{payoutId}, #{invoiceCode}, #{invoiceNumber}, #{invoiceDate}, #{invoiceAmount},
+                #{invoiceType}, #{taxAmount}, #{attachmentId}, #{remark})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.CtrlPayoutInvoice">
+        UPDATE ctrl_payout_invoice
+        <set>
+            <if test="invoiceCode != null">invoice_code = #{invoiceCode},</if>
+            <if test="invoiceNumber != null">invoice_number = #{invoiceNumber},</if>
+            <if test="invoiceDate != null">invoice_date = #{invoiceDate},</if>
+            <if test="invoiceAmount != null">invoice_amount = #{invoiceAmount},</if>
+            <if test="invoiceType != null">invoice_type = #{invoiceType},</if>
+            <if test="taxAmount != null">tax_amount = #{taxAmount},</if>
+            <if test="attachmentId != null">attachment_id = #{attachmentId},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE invoice_id = #{invoiceId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM ctrl_payout_invoice WHERE invoice_id = #{id}
+    </delete>
+
+    <delete id="deleteByPayoutId">
+        DELETE FROM ctrl_payout_invoice WHERE payout_id = #{payoutId}
+    </delete>
+
+</mapper>
+

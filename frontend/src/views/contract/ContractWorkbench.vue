@@ -58,6 +58,18 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination-container" style="margin-top: 20px; text-align: right;">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="pagination.page"
+          :page-sizes="[10, 20, 50, 100]"
+          :page-size="pagination.size"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="pagination.total">
+        </el-pagination>
+      </div>
     </el-card>
 
     <!-- 查看详情对话框 -->
@@ -119,18 +131,19 @@
 </template>
 
 <script>
-import { getAllContracts, getContractById } from '@/api/contract'
+import { getAllContractsPage, getContractById } from '@/api/contract'
 import { getProcessInstanceById, getProcessInstanceVariables } from '@/api/process'
 import { getProcessDefinitionById } from '@/api/process'
 import { getCodeTypeOptions } from '@/utils/codeType'
+import { paginationMixin } from '@/mixins/pagination'
 
 export default {
   name: 'ContractWorkbench',
+  mixins: [paginationMixin],
   data() {
     return {
       loading: false,
       tableData: [],
-      allData: [],
       contractTypeOptions: [],
       contractStatusOptions: [],
       searchForm: {
@@ -165,28 +178,30 @@ export default {
     },
     loadData() {
       this.loading = true
-      getAllContracts().then(response => {
-        if (response.code === 200) {
-          this.allData = response.data || []
-          this.handleSearch()
+      getAllContractsPage(this.pagination.page, this.pagination.size).then(response => {
+        if (response.code === 200 && response.data) {
+          this.tableData = response.data.records || []
+          this.pagination.total = response.data.total || 0
+          // 前端过滤（如果需要）
+          if (this.searchForm.contractNo || this.searchForm.contractName || this.searchForm.status) {
+            this.handleSearch()
+          }
+        } else {
+          this.tableData = []
+          this.pagination.total = 0
         }
         this.loading = false
       }).catch(() => {
+        this.tableData = []
+        this.pagination.total = 0
         this.loading = false
       })
     },
     handleSearch() {
-      let filtered = [...this.allData]
-      if (this.searchForm.contractNo) {
-        filtered = filtered.filter(item => item.contractNo && item.contractNo.includes(this.searchForm.contractNo))
-      }
-      if (this.searchForm.contractName) {
-        filtered = filtered.filter(item => item.contractName && item.contractName.includes(this.searchForm.contractName))
-      }
-      if (this.searchForm.status) {
-        filtered = filtered.filter(item => item.status === this.searchForm.status)
-      }
-      this.tableData = filtered
+      // 如果有搜索条件，重新加载数据（后端分页）
+      // 或者前端过滤（如果数据量不大）
+      this.pagination.page = 1
+      this.loadData()
     },
     handleReset() {
       this.searchForm = {
@@ -194,7 +209,17 @@ export default {
         contractName: '',
         status: ''
       }
-      this.tableData = this.allData
+      this.pagination.page = 1
+      this.handleSearch()
+    },
+    handleSizeChange(val) {
+      this.pagination.size = val
+      this.pagination.page = 1
+      this.loadData()
+    },
+    handleCurrentChange(val) {
+      this.pagination.page = val
+      this.loadData()
     },
     handleView(row) {
       getContractById(row.pactId).then(response => {
