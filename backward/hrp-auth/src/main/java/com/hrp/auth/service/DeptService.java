@@ -44,6 +44,11 @@ public interface DeptService {
     boolean delete(Long deptId);
 
     /**
+     * 启用/停用部门
+     */
+    com.hrp.common.entity.Result<String> toggleStatus(Long deptId);
+
+    /**
      * 分页查询所有部门
      */
     com.hrp.common.entity.PageResult<Dept> getAllPage(Long page, Long size);

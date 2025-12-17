@@ -48,6 +48,7 @@ export const getDeptByParent = (superDeptCode) => request.get(`/auth/dept/parent
 export const saveDept = (data) => request.post('/auth/dept/save', data)
 export const updateDept = (data) => request.put('/auth/dept/update', data)
 export const deleteDept = (deptId) => request.delete(`/auth/dept/${deptId}`)
+export const toggleDeptStatus = (deptId) => request.put(`/auth/dept/toggle-status/${deptId}`)
 
 // 用户管理
 export const getUserList = () => request.get('/auth/user/list')

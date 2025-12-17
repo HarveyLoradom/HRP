@@ -1,5 +1,5 @@
 <template>
-  <div class="dept-management">
+  <div class="dept-management" v-loading="importLoading">
     <el-card>
       <div slot="header" class="clearfix">
         <span>部门管理</span>
@@ -41,19 +41,33 @@
         row-key="deptId"
         :default-expand-all="false"
       >
-        <el-table-column prop="deptCode" label="部门编码" width="120"></el-table-column>
+        <el-table-column prop="deptCode" label="部门编码" width="150"></el-table-column>
         <el-table-column prop="deptName" label="部门名称" width="200" tree-node></el-table-column>
         <el-table-column prop="deptLevel" label="部门级别" width="100"></el-table-column>
         <el-table-column prop="deptPhone" label="部门电话" width="120"></el-table-column>
+        <el-table-column label="状态" width="100">
+          <template slot-scope="scope">
+            <el-tag :type="scope.row.isStop === 0 ? 'success' : 'danger'">
+              {{ scope.row.isStop === 0 ? '正常' : '停用' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="部门负责人" width="150">
           <template slot-scope="scope">
             <span v-if="scope.row.deptManagerName">{{ scope.row.deptManagerName }}({{ scope.row.deptManagerCode }})</span>
             <span v-else style="color: #999;">未设置</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200">
+        <el-table-column label="操作" width="260">
           <template slot-scope="scope">
             <el-button size="mini" @click="handleEdit(scope.row)">编辑</el-button>
+            <el-button
+              size="mini"
+              :type="scope.row.isStop === 0 ? 'warning' : 'success'"
+              @click="handleToggleStatus(scope.row)"
+            >
+              {{ scope.row.isStop === 0 ? '停用' : '启用' }}
+            </el-button>
             <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
@@ -102,7 +116,7 @@
 </template>
 
 <script>
-import { getDeptList, saveDept, updateDept, deleteDept, getEmployeeList, getEmployeeByCode } from '@/api/user'
+import { getDeptList, saveDept, updateDept, deleteDept, toggleDeptStatus, getEmployeeList, getEmployeeByCode } from '@/api/user'
 import Cookies from 'js-cookie'
 
 export default {
@@ -133,7 +147,8 @@ export default {
         deptName: [{ required: true, message: '请输入部门名称', trigger: 'blur' }]
       },
       uploadUrl: '/api/auth/dept/import',
-      uploadHeaders: {}
+      uploadHeaders: {},
+      importLoading: false
     }
   },
   mounted() {
@@ -253,16 +268,41 @@ export default {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(() => {
-        deleteDept(row.deptId).then(response => {
-          if (response.code === 200) {
-            this.$message.success('删除成功')
-            this.loadData()
-          } else {
-            this.$message.error(response.message || '删除失败')
-          }
-        })
       })
+        .then(() => {
+          deleteDept(row.deptId).then(response => {
+            if (response.code === 200) {
+              this.$message.success('删除成功')
+              this.loadData()
+            } else {
+              this.$message.error(response.message || '删除失败')
+            }
+          })
+        })
+        .catch(() => {
+          // 用户点击取消或关闭弹窗，不做任何处理，防止控制台报错
+        })
+    },
+    handleToggleStatus(row) {
+      const action = row.isStop === 0 ? '停用' : '启用'
+      this.$confirm(`确定要${action}该部门吗？`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+        .then(() => {
+          toggleDeptStatus(row.deptId).then(response => {
+            if (response.code === 200) {
+              this.$message.success(response.message || `${action}成功`)
+              this.loadData()
+            } else {
+              this.$message.error(response.message || `${action}失败`)
+            }
+          })
+        })
+        .catch(() => {
+          // 取消操作不做处理
+        })
     },
     handleSubmit() {
       this.$refs.form.validate(valid => {
@@ -296,18 +336,42 @@ export default {
         this.$message.error('文件大小不能超过10MB！')
         return false
       }
+      // 校验通过后开启导入加载动画
+      this.importLoading = true
       return true
     },
     handleUploadSuccess(response) {
-      if (response.code === 200) {
+      // 兼容多种返回格式（字符串 / 对象 / axios 包了一层 data）
+      let res = response
+
+      // 如果是字符串，尝试解析为 JSON
+      if (typeof res === 'string') {
+        try {
+          res = JSON.parse(res)
+        } catch (e) {
+          this.$message.error('导入失败：响应格式错误')
+          return
+        }
+      }
+
+      // 如果是 axios 响应，可能在 data 里再包一层
+      if (res && res.data && typeof res.data === 'object' && typeof res.code === 'undefined') {
+        res = res.data
+      }
+
+      if (res && res.code === 200) {
         this.$message.success('导入成功')
+        // 重新加载部门数据，保证导入结果立即体现在列表上
         this.loadData()
       } else {
-        this.$message.error(response.message || '导入失败')
+        this.$message.error((res && res.message) || '导入失败')
       }
+      // 无论成功失败，关闭加载动画
+      this.importLoading = false
     },
     handleUploadError(error) {
       this.$message.error('导入失败：' + (error.message || '未知错误'))
+      this.importLoading = false
     }
   }
 }

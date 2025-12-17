@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.budg.mapper.BudgetSubjectRelationMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.BudgetSubjectRelation">
+        <id column="relation_id" property="relationId"/>
+        <result column="subject_id" property="subjectId"/>
+        <result column="related_subject_id" property="relatedSubjectId"/>
+        <result column="related_subject_code" property="relatedSubjectCode"/>
+        <result column="related_subject_name" property="relatedSubjectName"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="selectBySubjectId" resultMap="BaseResultMap">
+        SELECT * FROM budget_subject_relation WHERE subject_id = #{subjectId}
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.BudgetSubjectRelation" useGeneratedKeys="true" keyProperty="relationId">
+        INSERT INTO budget_subject_relation (subject_id, related_subject_id, related_subject_code, related_subject_name, create_user, create_time)
+        VALUES (#{subjectId}, #{relatedSubjectId}, #{relatedSubjectCode}, #{relatedSubjectName}, #{createUser}, NOW())
+    </insert>
+
+    <delete id="deleteBySubjectId">
+        DELETE FROM budget_subject_relation WHERE subject_id = #{subjectId}
+    </delete>
+
+</mapper>
+

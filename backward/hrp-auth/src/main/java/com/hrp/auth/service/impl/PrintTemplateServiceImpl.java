@@ -15,6 +15,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -252,6 +253,14 @@ public class PrintTemplateServiceImpl implements PrintTemplateService {
     public List<String> getAllTableNames() {
         List<String> tableNames = new ArrayList<>();
         
+        // 需要过滤的系统表前缀（Flowable工作流引擎的表）
+        List<String> excludePrefixes = Arrays.asList(
+            "act_",           // Flowable/Activiti 工作流引擎表
+            "flw_",           // Flowable 其他表
+            "DATABASECHANGELOG",  // Liquibase 表
+            "DATABASECHANGELOGLOCK" // Liquibase 锁表
+        );
+        
         try (Connection connection = dataSource.getConnection()) {
             DatabaseMetaData metaData = connection.getMetaData();
             String catalog = connection.getCatalog();
@@ -262,7 +271,21 @@ public class PrintTemplateServiceImpl implements PrintTemplateService {
             
             while (tables.next()) {
                 String tableName = tables.getString("TABLE_NAME");
-                tableNames.add(tableName);
+                
+                // 过滤系统表
+                boolean isSystemTable = false;
+                String upperTableName = tableName.toUpperCase();
+                for (String prefix : excludePrefixes) {
+                    if (upperTableName.startsWith(prefix.toUpperCase())) {
+                        isSystemTable = true;
+                        break;
+                    }
+                }
+                
+                // 只添加业务表
+                if (!isSystemTable) {
+                    tableNames.add(tableName);
+                }
             }
             tables.close();
             

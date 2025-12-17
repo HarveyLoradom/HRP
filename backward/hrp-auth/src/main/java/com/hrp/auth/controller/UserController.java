@@ -247,7 +247,7 @@ public class UserController {
         headers.add("出生日期（YYYY-MM-DD）");
         headers.add("手机号");
         headers.add("邮箱");
-        headers.add("部门ID");
+        headers.add("部门编码*");
         headers.add("用户类型*(默认2)");
         headers.add("职工类型*(默认1)");
 
@@ -261,7 +261,8 @@ public class UserController {
         exampleRow.add("1990-01-01");
         exampleRow.add("13800138001");
         exampleRow.add("zhangsan@hospital.com");
-        exampleRow.add("1");
+        // 部门编码示例：院办 DEPT001
+        exampleRow.add("DEPT001");
         exampleRow.add("2");
         exampleRow.add("1");
         dataList.add(exampleRow);

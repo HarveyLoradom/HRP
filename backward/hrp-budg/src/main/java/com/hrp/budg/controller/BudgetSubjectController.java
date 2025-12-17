@@ -72,7 +72,30 @@ public class BudgetSubjectController {
         boolean success = budgetSubjectService.delete(id);
         return success ? Result.success() : Result.error("删除失败");
     }
+
+    @PostMapping("/stop/{id}")
+    public Result<Void> stop(@PathVariable Long id) {
+        boolean success = budgetSubjectService.stop(id);
+        return success ? Result.success() : Result.error("停用失败");
+    }
+
+    @PostMapping("/start/{id}")
+    public Result<Void> start(@PathVariable Long id) {
+        boolean success = budgetSubjectService.start(id);
+        return success ? Result.success() : Result.error("启用失败");
+    }
+
+    @GetMapping("/related-depts/{subjectId}")
+    public Result<List<com.hrp.common.entity.Dept>> getRelatedDepts(@PathVariable Long subjectId) {
+        List<com.hrp.common.entity.Dept> depts = budgetSubjectService.getRelatedDepts(subjectId);
+        return Result.success(depts);
+    }
 }
+
+
+
+
+
 
 
 

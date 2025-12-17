@@ -38,13 +38,12 @@
 
     <select id="selectByType" resultMap="BaseResultMap">
         SELECT * FROM sys_print_template 
-        WHERE template_type = #{templateType} AND is_active = 1
+        WHERE template_type = #{templateType}
         ORDER BY is_default DESC, create_time DESC
     </select>
 
     <select id="selectAll" resultMap="BaseResultMap">
         SELECT * FROM sys_print_template 
-        WHERE is_active = 1
         ORDER BY template_type, is_default DESC, create_time DESC
     </select>
 

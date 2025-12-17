@@ -47,7 +47,7 @@
             <span style="margin-left: 10px; color: #909399;">已选择 {{ selectedUsers.length }} 个用户</span>
           </div>
           <el-table 
-            :data="filteredUserTableData" 
+            :data="paginatedUserTableData" 
             border 
             style="width: 100%" 
             v-loading="userLoading"
@@ -74,6 +74,18 @@
               </template>
             </el-table-column>
           </el-table>
+
+          <div class="pagination-container" style="margin-top: 20px; text-align: right;">
+            <el-pagination
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+              :current-page="pagination.page"
+              :page-sizes="[10, 20, 50, 100]"
+              :page-size="pagination.size"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="pagination.total">
+            </el-pagination>
+          </div>
         </el-tab-pane>
       </el-tabs>
     </el-card>
@@ -125,9 +137,11 @@
 <script>
 import { getRoleList, getUserList, getUserById, getUserRoles, assignUserRoles, batchAssignUserRoles, getUserMenuIds, assignUserMenus, getCodeByType, getUserTypeMenus, assignUserTypeMenus, updateUser, getDeptList } from '@/api/user'
 import { getMenuTree } from '@/api/menu'
+import { paginationMixin } from '@/mixins/pagination'
 
 export default {
   name: 'PermissionManagement',
+  mixins: [paginationMixin],
   data() {
     return {
       activeTab: 'role',
@@ -176,6 +190,10 @@ export default {
       }
       
       return filtered
+    },
+    // 分页后的用户数据
+    paginatedUserTableData() {
+      return this.getPaginatedData(this.filteredUserTableData)
     }
   },
   mounted() {
@@ -208,6 +226,9 @@ export default {
       getUserList().then(response => {
         if (response.code === 200) {
           this.allUserTableData = response.data || []
+          // 初始化分页
+          this.pagination.total = this.filteredUserTableData.length
+          this.resetPagination()
         }
         this.userLoading = false
       }).catch(() => {
@@ -222,6 +243,17 @@ export default {
       }).catch(() => {
         this.deptOptions = []
       })
+    },
+    handleUserSearch() {
+      // 触发计算属性重新过滤，并重置分页
+      this.resetPagination()
+      this.pagination.total = this.filteredUserTableData.length
+    },
+    handleUserReset() {
+      this.userSearchForm.keyword = ''
+      this.userSearchForm.deptCode = ''
+      this.resetPagination()
+      this.pagination.total = this.filteredUserTableData.length
     },
     loadAllRoles() {
       return getRoleList().then(response => {

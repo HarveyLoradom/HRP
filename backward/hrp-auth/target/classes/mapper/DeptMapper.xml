@@ -19,7 +19,7 @@
     </resultMap>
 
     <select id="selectById" resultMap="BaseResultMap">
-        SELECT * FROM sys_dept WHERE dept_id = #{deptId} AND is_stop = 0
+        SELECT * FROM sys_dept WHERE dept_id = #{deptId}
     </select>
 
     <select id="selectByCode" resultMap="BaseResultMap">
@@ -30,7 +30,6 @@
         SELECT d.*, e.emp_name as dept_manager_name, e.emp_code as dept_manager_code
         FROM sys_dept d
         LEFT JOIN sys_emp e ON d.dept_manager_id = e.emp_id
-        WHERE d.is_stop = 0 
         ORDER BY d.dept_code ASC
     </select>
 
@@ -58,20 +57,19 @@
     </update>
 
     <delete id="deleteById">
-        UPDATE sys_dept SET is_stop = 1 WHERE dept_id = #{deptId}
+        DELETE FROM sys_dept WHERE dept_id = #{deptId}
     </delete>
 
     <select id="selectAllPage" resultMap="BaseResultMap">
         SELECT d.*, e.emp_name as dept_manager_name, e.emp_code as dept_manager_code
         FROM sys_dept d
         LEFT JOIN sys_emp e ON d.dept_manager_id = e.emp_id
-        WHERE d.is_stop = 0 
         ORDER BY d.dept_code ASC
         LIMIT #{offset}, #{size}
     </select>
 
     <select id="countAll" resultType="java.lang.Long">
-        SELECT COUNT(*) FROM sys_dept WHERE is_stop = 0
+        SELECT COUNT(*) FROM sys_dept
     </select>
 
 </mapper>

@@ -96,17 +96,20 @@
             <el-option
               v-for="option in businessTypeValueOptions"
               :key="option.codeValue"
-              :label="option.codeName"
+              :label="option.codeValue"
               :value="option.codeValue"
-            ></el-option>
+            >
+              <span style="float: left">{{ option.codeValue }}</span>
+              <span style="float: right; color: #8492a6; font-size: 13px">{{ option.codeName }}</span>
+            </el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="业务类型名称" prop="businessTypeName">
           <el-input v-model="form.businessTypeName" placeholder="自动填充，可手动修改"></el-input>
         </el-form-item>
-        <el-form-item label="打印模板" prop="printTemplateId">
+        <el-form-item label="打印模板" prop="printTemplateCode">
           <el-select 
-            v-model="form.printTemplateId" 
+            v-model="form.printTemplateCode" 
             placeholder="请选择打印模板" 
             filterable
             @change="handlePrintTemplateChange"
@@ -114,15 +117,15 @@
           >
             <el-option
               v-for="template in printTemplateOptions"
-              :key="template.templateId"
-              :label="template.templateName"
-              :value="template.templateId"
+              :key="template.templateCode"
+              :label="`${template.templateCode} - ${template.templateName}`"
+              :value="template.templateCode"
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="流程模板" prop="processDefinitionId">
+        <el-form-item label="流程模板" prop="processDefinitionCode">
           <el-select 
-            v-model="form.processDefinitionId" 
+            v-model="form.processDefinitionCode" 
             placeholder="请选择流程模板" 
             filterable
             @change="handleProcessDefinitionChange"
@@ -130,9 +133,9 @@
           >
             <el-option
               v-for="definition in processDefinitionOptions"
-              :key="definition.definitionId"
-              :label="definition.definitionName"
-              :value="definition.definitionId"
+              :key="definition.definitionCode || definition.definitionKey"
+              :label="`${definition.definitionCode || definition.definitionKey} - ${definition.definitionName}`"
+              :value="definition.definitionCode || definition.definitionKey"
             ></el-option>
           </el-select>
         </el-form-item>
@@ -186,9 +189,9 @@ export default {
         businessType: '',
         businessTypeValue: '',
         businessTypeName: '',
-        printTemplateId: null,
+        printTemplateCode: '',
         printTemplateName: '',
-        processDefinitionId: null,
+        processDefinitionCode: '',
         processDefinitionName: '',
         isActive: 1,
         remark: ''
@@ -243,24 +246,31 @@ export default {
         this.businessTypeValueOptions = []
         return
       }
-      // 根据业务类型获取对应的业务类型值（如：PAYOUT_TYPE下的专项资金、差旅费等）
-      getCodeByType(businessType).then(response => {
+      // 根据业务类型拼接业务类型 code_type（如：PAYOUT -> PAYOUT_TYPE）
+      const businessTypeCode = `${businessType}_TYPE`
+      // 根据业务类型获取对应的业务类型值（如：PAYOUT_TYPE下的餐费、差旅费等）
+      getCodeByType(businessTypeCode).then(response => {
         if (response.code === 200) {
           this.businessTypeValueOptions = response.data || []
         }
+      }).catch(error => {
+        console.error('加载业务类型值失败:', error)
+        this.businessTypeValueOptions = []
       })
     },
     loadPrintTemplates() {
       getPrintTemplateList().then(response => {
         if (response.code === 200) {
-          this.printTemplateOptions = (response.data || []).filter(t => t.isActive === 1)
+          // 显示所有打印模板，包括停用的
+          this.printTemplateOptions = response.data || []
         }
       })
     },
     loadProcessDefinitions() {
       getProcessDefinitionList().then(response => {
         if (response.code === 200) {
-          this.processDefinitionOptions = (response.data || []).filter(d => d.isActive === 1)
+          // 显示所有流程定义，包括停用的
+          this.processDefinitionOptions = response.data || []
         }
       })
     },
@@ -298,9 +308,9 @@ export default {
         businessType: '',
         businessTypeValue: '',
         businessTypeName: '',
-        printTemplateId: null,
+        printTemplateCode: '',
         printTemplateName: '',
-        processDefinitionId: null,
+        processDefinitionCode: '',
         processDefinitionName: '',
         isActive: 1,
         remark: ''
@@ -311,19 +321,25 @@ export default {
     handleEdit(row) {
       this.dialogTitle = '编辑配置'
       this.isEdit = true
+      // 处理业务类型：如果后端返回的是 PAYOUT_TYPE，需要转换为 PAYOUT
+      let businessType = row.businessType
+      if (businessType && businessType.endsWith('_TYPE')) {
+        businessType = businessType.replace('_TYPE', '')
+      }
       this.form = {
         configId: row.configId,
-        businessType: row.businessType,
-        businessTypeValue: row.businessTypeValue,
+        businessType: businessType,
+        businessTypeValue: row.businessTypeValue, // 这里保存的是 codeValue
         businessTypeName: row.businessTypeName,
-        printTemplateId: row.printTemplateId,
-        printTemplateName: row.printTemplateName,
-        processDefinitionId: row.processDefinitionId,
-        processDefinitionName: row.processDefinitionName,
+        printTemplateCode: row.printTemplateCode || '',
+        printTemplateName: row.printTemplateName || '',
+        processDefinitionCode: row.processDefinitionCode || row.processDefinitionKey || '',
+        processDefinitionName: row.processDefinitionName || '',
         isActive: row.isActive,
         remark: row.remark || ''
       }
-      this.loadBusinessTypeValues(row.businessType)
+      // 加载业务类型值选项
+      this.loadBusinessTypeValues(businessType)
       this.dialogVisible = true
     },
     handleBusinessTypeSelect(value) {
@@ -339,13 +355,13 @@ export default {
       }
     },
     handlePrintTemplateChange(value) {
-      const template = this.printTemplateOptions.find(t => t.templateId === value)
+      const template = this.printTemplateOptions.find(t => t.templateCode === value)
       if (template) {
         this.form.printTemplateName = template.templateName
       }
     },
     handleProcessDefinitionChange(value) {
-      const definition = this.processDefinitionOptions.find(d => d.definitionId === value)
+      const definition = this.processDefinitionOptions.find(d => (d.definitionCode || d.definitionKey) === value)
       if (definition) {
         this.form.processDefinitionName = definition.definitionName
       }
@@ -354,7 +370,15 @@ export default {
       this.$refs.form.validate(valid => {
         if (valid) {
           const api = this.isEdit ? updateTemplateConfig : saveTemplateConfig
-          api(this.form).then(response => {
+          // 确保 businessType 保存为完整的类型（如 PAYOUT_TYPE），businessTypeValue 保存的是 codeValue
+          const submitData = {
+            ...this.form,
+            businessType: this.form.businessType && !this.form.businessType.endsWith('_TYPE') 
+              ? `${this.form.businessType}_TYPE` 
+              : this.form.businessType
+            // businessTypeValue 已经是 codeValue，不需要修改
+          }
+          api(submitData).then(response => {
             if (response.code === 200) {
               this.$message.success(response.message || '操作成功')
               this.dialogVisible = false
@@ -404,9 +428,14 @@ export default {
       }).catch(() => {})
     },
     getBusinessTypeName(businessType) {
-      const option = this.businessTypeOptions.find(opt => opt.value === businessType)
+      // 处理 businessType 可能是 PAYOUT_TYPE 或 PAYOUT 的情况
+      let type = businessType
+      if (type && type.endsWith('_TYPE')) {
+        type = type.replace('_TYPE', '')
+      }
+      const option = this.businessTypeOptions.find(opt => opt.value === type)
       return option ? option.label : businessType
-    }
+    },
   }
 }
 </script>

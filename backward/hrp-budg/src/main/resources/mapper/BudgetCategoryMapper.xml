@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.budg.mapper.BudgetCategoryMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.BudgetCategory">
+        <id column="category_id" property="categoryId"/>
+        <result column="category_code" property="categoryCode"/>
+        <result column="category_name" property="categoryName"/>
+        <result column="budget_year" property="budgetYear"/>
+        <result column="category_type" property="categoryType"/>
+        <result column="parent_category_id" property="parentCategoryId"/>
+        <result column="parent_category_code" property="parentCategoryCode"/>
+        <result column="category_level" property="categoryLevel"/>
+        <result column="is_stop" property="isStop"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 查询一级分类 -->
+    <select id="selectLevel1ByConditions" resultMap="BaseResultMap">
+        SELECT * FROM budget_category
+        WHERE category_level = 1
+        <if test="budgetYear != null and budgetYear != ''">
+            AND budget_year = #{budgetYear}
+        </if>
+        <if test="categoryType != null and categoryType != ''">
+            AND category_type = #{categoryType}
+        </if>
+        ORDER BY category_code
+    </select>
+
+    <!-- 查询二级分类 -->
+    <select id="selectLevel2ByConditions" resultMap="BaseResultMap">
+        SELECT * FROM budget_category
+        WHERE category_level = 2
+        <if test="budgetYear != null and budgetYear != ''">
+            AND budget_year = #{budgetYear}
+        </if>
+        <if test="categoryType != null and categoryType != ''">
+            AND category_type = #{categoryType}
+        </if>
+        <if test="parentCategoryId != null">
+            AND parent_category_id = #{parentCategoryId}
+        </if>
+        ORDER BY category_code
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM budget_category WHERE category_id = #{id}
+    </select>
+
+    <select id="selectByCode" resultMap="BaseResultMap">
+        SELECT * FROM budget_category WHERE category_code = #{code}
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.BudgetCategory" useGeneratedKeys="true" keyProperty="categoryId">
+        INSERT INTO budget_category (category_code, category_name, budget_year, category_type,
+                                   parent_category_id, parent_category_code, category_level,
+                                   is_stop, create_user, create_time)
+        VALUES (#{categoryCode}, #{categoryName}, #{budgetYear}, #{categoryType},
+                #{parentCategoryId}, #{parentCategoryCode}, #{categoryLevel},
+                #{isStop}, #{createUser}, NOW())
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.BudgetCategory">
+        UPDATE budget_category
+        <set>
+            <if test="categoryName != null">category_name = #{categoryName},</if>
+            <if test="budgetYear != null">budget_year = #{budgetYear},</if>
+            <if test="categoryType != null">category_type = #{categoryType},</if>
+            <if test="parentCategoryId != null">parent_category_id = #{parentCategoryId},</if>
+            <if test="parentCategoryCode != null">parent_category_code = #{parentCategoryCode},</if>
+            <if test="isStop != null">is_stop = #{isStop},</if>
+            update_time = NOW()
+        </set>
+        WHERE category_id = #{categoryId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM budget_category WHERE category_id = #{id}
+    </delete>
+
+    <!-- 检查一级分类下是否有二级分类 -->
+    <select id="countLevel2ByParentId" resultType="int">
+        SELECT COUNT(*) FROM budget_category
+        WHERE parent_category_id = #{parentCategoryId} AND category_level = 2
+    </select>
+
+    <!-- 检查二级分类下是否有项目预算 -->
+    <select id="countItemsByCategoryId" resultType="int">
+        SELECT COUNT(*) FROM budget_item
+        WHERE category_id = #{categoryId}
+    </select>
+
+    <!-- 查询指定年度和分类类型的最大一级分类编码 -->
+    <select id="selectMaxLevel1Code" resultType="string">
+        SELECT MAX(category_code) FROM budget_category
+        WHERE category_level = 1
+          AND budget_year = #{budgetYear}
+          AND category_type = #{categoryType}
+    </select>
+
+    <!-- 查询指定父分类下的最大二级分类编码 -->
+    <select id="selectMaxLevel2Code" resultType="string">
+        SELECT MAX(category_code) FROM budget_category
+        WHERE category_level = 2
+          AND parent_category_code = #{parentCategoryCode}
+    </select>
+
+</mapper>
+

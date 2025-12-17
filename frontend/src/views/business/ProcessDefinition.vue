@@ -28,7 +28,11 @@
       </el-form>
       
       <el-table :data="tableData" border style="width: 100%" v-loading="loading">
-        <el-table-column prop="definitionKey" label="流程KEY" width="200"></el-table-column>
+        <el-table-column prop="definitionKey" label="流程编码" width="200">
+          <template slot-scope="scope">
+            {{ scope.row.definitionKey || scope.row.definitionCode }}
+          </template>
+        </el-table-column>
         <el-table-column prop="definitionName" label="流程名称" width="200"></el-table-column>
         <el-table-column prop="definitionType" label="流程类型" width="120">
           <template slot-scope="scope">
@@ -78,19 +82,19 @@
     <!-- 新增/编辑对话框 -->
     <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="600px" :modal="false">
       <el-form :model="form" :rules="rules" ref="form" label-width="100px">
-        <el-form-item label="流程KEY" prop="definitionKey">
-          <el-input v-model="form.definitionKey" :disabled="isEdit" placeholder="请输入流程KEY（如：PAYOUT_APPROVAL）"></el-input>
+        <el-form-item label="流程编码" prop="definitionCode">
+          <el-input v-model="form.definitionCode" :disabled="isEdit" placeholder="请输入流程编码（如：PAYOUT_APPROVAL）"></el-input>
         </el-form-item>
         <el-form-item label="流程名称" prop="definitionName">
           <el-input v-model="form.definitionName" placeholder="请输入流程名称"></el-input>
         </el-form-item>
-        <el-form-item label="流程类型" prop="definitionType">
-          <el-select v-model="form.definitionType" placeholder="请选择流程类型" @change="handleDefinitionTypeChange">
+        <el-form-item label="模板类型" prop="definitionType">
+          <el-select v-model="form.definitionType" placeholder="请选择模板类型" @change="handleDefinitionTypeChange">
             <el-option
               v-for="option in processTypeOptions"
-              :key="option.value"
-              :label="option.label"
-              :value="option.value"
+              :key="option.codeValue"
+              :label="option.codeName"
+              :value="option.codeValue"
             ></el-option>
           </el-select>
         </el-form-item>
@@ -123,28 +127,18 @@
       :modal="false"
       top="5vh"
       custom-class="process-design-dialog"
+      :before-close="handleCancelDesign"
     >
       <div class="process-designer-wrapper" style="height: 75vh;">
-        <el-tabs v-model="designerType" @tab-click="handleDesignerTypeChange">
-          <el-tab-pane label="BPMN设计器" name="bpmn">
-            <BpmnDesigner 
-              v-if="designerType === 'bpmn'"
-              :value="designForm.processXml"
-              :definition-id="designForm.definitionId"
-              @save="handleBpmnSave"
-            />
-          </el-tab-pane>
-          <el-tab-pane label="传统设计器" name="legacy">
-            <ProcessDesigner 
-              v-if="designerType === 'legacy'"
-              v-model="designForm.processJson"
-              @change="handleProcessChange"
-            />
-          </el-tab-pane>
-        </el-tabs>
+        <BpmnDesigner 
+          ref="bpmnDesigner"
+          :value="designForm.processXml"
+          :definition-id="designForm.definitionId"
+          @save="handleBpmnSave"
+        />
       </div>
       <div slot="footer" class="dialog-footer">
-        <el-button @click="designDialogVisible = false">取消</el-button>
+        <el-button @click="handleCancelDesign">取消</el-button>
         <el-button type="primary" @click="handleSaveDesign">保存</el-button>
       </div>
     </el-dialog>
@@ -154,7 +148,8 @@
 <script>
 import { 
   getProcessDefinitionPage, 
-  getProcessDefinitionByTypePage, 
+  getProcessDefinitionByTypePage,
+  getProcessDefinitionById,
   saveProcessDefinition, 
   updateProcessDefinition, 
   deleteProcessDefinition,
@@ -162,16 +157,13 @@ import {
   exportProcessDefinition,
   importProcessDefinition
 } from '@/api/process'
-import { getCodeTypeOptions } from '@/utils/codeType'
 import { getCodeByType } from '@/api/user'
-import ProcessDesigner from '@/components/ProcessDesigner.vue'
 import BpmnDesigner from '@/components/BpmnDesigner.vue'
 import { paginationMixin } from '@/mixins/pagination'
 
 export default {
   name: 'ProcessDefinition',
   components: {
-    ProcessDesigner,
     BpmnDesigner
   },
   mixins: [paginationMixin],
@@ -190,7 +182,7 @@ export default {
       isEdit: false,
       form: {
         definitionId: null,
-        definitionKey: '',
+        definitionCode: '',
         definitionName: '',
         definitionType: '',
         businessType: '', // 业务类型
@@ -200,15 +192,16 @@ export default {
         isActive: 1
       },
       rules: {
-        definitionKey: [{ required: true, message: '请输入流程KEY', trigger: 'blur' }],
+        definitionCode: [{ required: true, message: '请输入流程编码', trigger: 'blur' }],
         definitionName: [{ required: true, message: '请输入流程名称', trigger: 'blur' }],
-        definitionType: [{ required: true, message: '请选择流程类型', trigger: 'change' }]
+        definitionType: [{ required: true, message: '请选择模板类型', trigger: 'change' }]
       },
       designDialogVisible: false,
       designForm: {
         definitionId: null,
-        processJson: ''
-      }
+        processXml: ''
+      },
+      originalProcessXml: '' // 保存原始XML，用于取消时恢复
     }
   },
   computed: {
@@ -224,11 +217,16 @@ export default {
   },
   methods: {
     async loadProcessTypeOptions() {
-      this.processTypeOptions = await getCodeTypeOptions('PROCESS_TYPE')
+      // 从sys_code获取业务类型（BUSINESS_TYPE）作为模板类型
+      getCodeByType('BUSINESS_TYPE').then(response => {
+        if (response.code === 200) {
+          this.processTypeOptions = response.data || []
+        }
+      })
     },
     getProcessTypeName(codeValue) {
-      const option = this.processTypeOptions.find(item => item.value === codeValue)
-      return option ? option.label : codeValue
+      const option = this.processTypeOptions.find(item => item.codeValue === codeValue)
+      return option ? option.codeName : codeValue
     },
     // 根据流程类型加载业务类型选项
     handleDefinitionTypeChange(definitionType) {
@@ -295,7 +293,7 @@ export default {
       this.isEdit = false
       this.form = {
         definitionId: null,
-        definitionKey: '',
+        definitionCode: '',
         definitionName: '',
         definitionType: '',
         businessType: '',
@@ -312,7 +310,7 @@ export default {
       this.isEdit = true
       this.form = {
         definitionId: row.definitionId,
-        definitionKey: row.definitionKey,
+        definitionCode: row.definitionCode || row.definitionKey || '',
         definitionName: row.definitionName,
         definitionType: row.definitionType,
         businessType: row.businessType || '',
@@ -329,19 +327,37 @@ export default {
       }
       this.dialogVisible = true
     },
-    handleDesign(row) {
-      this.designForm = {
-        definitionId: row.definitionId,
-        processJson: row.processJson || '{"nodes":[],"edges":[],"version":"1.0"}',
-        processXml: row.processXml || ''
+    async handleDesign(row) {
+      // 从后端重新获取最新数据，确保显示的是最新版本
+      try {
+        const response = await getProcessDefinitionById(row.definitionId)
+        if (response.code === 200 && response.data) {
+          const latestData = response.data
+          // 保存原始XML，用于取消时恢复
+          this.originalProcessXml = latestData.processXml || ''
+          this.designForm = {
+            definitionId: latestData.definitionId,
+            processXml: latestData.processXml || ''
+          }
+        } else {
+          // 如果获取失败，使用表格中的数据
+          this.originalProcessXml = row.processXml || ''
+          this.designForm = {
+            definitionId: row.definitionId,
+            processXml: row.processXml || ''
+          }
+        }
+        this.designDialogVisible = true
+      } catch (error) {
+        console.error('获取流程定义详情失败:', error)
+        // 如果获取失败，使用表格中的数据
+        this.originalProcessXml = row.processXml || ''
+        this.designForm = {
+          definitionId: row.definitionId,
+          processXml: row.processXml || ''
+        }
+        this.designDialogVisible = true
       }
-      // 如果有processXml，默认使用BPMN设计器
-      this.designerType = row.processXml ? 'bpmn' : 'legacy'
-      this.designDialogVisible = true
-    },
-    
-    handleDesignerTypeChange(tab) {
-      // 切换设计器类型时的处理
     },
     
     handleBpmnSave(data) {
@@ -353,25 +369,38 @@ export default {
       updateProcessDefinition({
         definitionId: this.designForm.definitionId,
         processXml: data.xml,
-        processJson: JSON.stringify(data.json)
+        processJson: data.json ? JSON.stringify(data.json) : ''
       }).then(response => {
         if (response.code === 200) {
           this.$message.success('保存成功')
-          this.designDialogVisible = false
+          // 更新本地数据，确保下次打开时显示最新内容
+          this.designForm.processXml = data.xml
+          this.originalProcessXml = data.xml
+          // 更新表格中对应行的数据
+          const row = this.tableData.find(item => item.definitionId === this.designForm.definitionId)
+          if (row) {
+            row.processXml = data.xml
+          }
+          // 重新加载列表数据
           this.loadData()
         } else {
           this.$message.error(response.message || '保存失败')
         }
+      }).catch(error => {
+        console.error('保存失败:', error)
+        this.$message.error('保存失败，请重试')
       })
-    },
-    handleProcessChange(jsonStr) {
-      this.designForm.processJson = jsonStr
     },
     handleSubmit() {
       this.$refs.form.validate(valid => {
         if (valid) {
           const api = this.isEdit ? updateProcessDefinition : saveProcessDefinition
-          api(this.form).then(response => {
+          // 将 definitionCode 映射为 definitionKey 以兼容后端
+          const submitData = {
+            ...this.form,
+            definitionKey: this.form.definitionCode
+          }
+          api(submitData).then(response => {
             if (response.code === 200) {
               this.$message.success(response.message || '操作成功')
               this.dialogVisible = false
@@ -384,27 +413,22 @@ export default {
       })
     },
     handleSaveDesign() {
-      if (!this.designForm.definitionId) {
-        this.$message.error('流程定义ID不能为空')
-        return
+      // 调用设计器的保存方法
+      if (this.$refs.bpmnDesigner && typeof this.$refs.bpmnDesigner.handleSave === 'function') {
+        this.$refs.bpmnDesigner.handleSave()
+      } else {
+        this.$message.warning('设计器未初始化，请稍候再试')
       }
-      // 根据设计器类型保存不同的数据
-      if (this.designerType === 'bpmn') {
-        // BPMN设计器通过@save事件处理
-        return
+    },
+    handleCancelDesign() {
+      // 取消时恢复原始XML并关闭对话框
+      if (this.$refs.bpmnDesigner && this.originalProcessXml !== undefined) {
+        // 重新加载原始XML，撤销所有未保存的更改
+        this.$refs.bpmnDesigner.loadBpmnXml(this.originalProcessXml)
       }
-      updateProcessDefinition({
-        definitionId: this.designForm.definitionId,
-        processJson: this.designForm.processJson
-      }).then(response => {
-        if (response.code === 200) {
-          this.$message.success('保存成功')
-          this.designDialogVisible = false
-          this.loadData()
-        } else {
-          this.$message.error(response.message || '保存失败')
-        }
-      })
+      this.designDialogVisible = false
+      // 清空原始XML
+      this.originalProcessXml = ''
     },
     handleDelete(row) {
       this.$confirm('确定要删除该流程定义吗？', '提示', {
@@ -419,6 +443,78 @@ export default {
           } else {
             this.$message.error(response.message || '删除失败')
           }
+        })
+      }).catch(() => {})
+    },
+    handleImport() {
+      // 创建文件输入元素
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = '.xml,.bpmn'
+      input.onchange = (e) => {
+        const file = e.target.files[0]
+        if (!file) {
+          return
+        }
+        
+        const reader = new FileReader()
+        reader.onload = (event) => {
+          const xml = event.target.result
+          
+          // 调用导入API
+          importProcessDefinition({ processXml: xml }).then(response => {
+            if (response.code === 200) {
+              this.$message.success('导入成功')
+              this.loadData()
+            } else {
+              this.$message.error(response.message || '导入失败')
+            }
+          }).catch(error => {
+            console.error('导入失败:', error)
+            this.$message.error('导入失败，请检查文件格式')
+          })
+        }
+        reader.readAsText(file)
+      }
+      input.click()
+    },
+    handleExport(row) {
+      if (!row.processXml) {
+        this.$message.warning('该流程定义没有流程XML，无法导出')
+        return
+      }
+      
+      // 创建Blob对象并下载
+      const blob = new Blob([row.processXml], { type: 'application/xml' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${row.definitionName || row.definitionCode || 'process'}.bpmn`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
+      this.$message.success('导出成功')
+    },
+    handleToggleActive(row) {
+      const action = row.isActive === 1 ? '停用' : '启用'
+      const newIsActive = row.isActive === 1 ? 0 : 1
+      this.$confirm(`确定要${action}该流程定义吗？`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        toggleProcessDefinitionActive(row.definitionId, newIsActive).then(response => {
+          if (response.code === 200) {
+            this.$message.success(`${action}成功`)
+            this.loadData()
+          } else {
+            this.$message.error(response.message || `${action}失败`)
+          }
+        }).catch(error => {
+          console.error('启用/停用失败:', error)
+          this.$message.error(`${action}失败: ` + (error.message || '未知错误'))
         })
       }).catch(() => {})
     }

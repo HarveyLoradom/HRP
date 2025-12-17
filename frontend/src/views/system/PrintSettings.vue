@@ -234,8 +234,8 @@ export default {
   },
   methods: {
     loadTemplateTypeOptions() {
-      // 从sys_code获取模板类型（PRINT_TEMPLATE_TYPE）
-      getCodeByType('PRINT_TEMPLATE_TYPE').then(response => {
+      // 从sys_code获取业务类型（BUSINESS_TYPE）作为模板类型
+      getCodeByType('BUSINESS_TYPE').then(response => {
         if (response.code === 200) {
           this.templateTypeOptions = response.data || []
         }

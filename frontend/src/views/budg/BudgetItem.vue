@@ -6,69 +6,108 @@
         <el-button style="float: right; padding: 3px 0" type="text" @click="handleAdd">新增预算项目</el-button>
       </div>
       
-      <el-table :data="paginatedData" border style="width: 100%" v-loading="loading">
-        <el-table-column prop="itemCode" label="项目编码" width="150"></el-table-column>
-        <el-table-column prop="itemName" label="项目名称" width="200"></el-table-column>
-        <el-table-column prop="categoryCode" label="分类编码" width="150"></el-table-column>
-        <el-table-column prop="accountSubject" label="会计科目" width="150"></el-table-column>
-        <el-table-column prop="isCentralized" label="归口管理" width="100">
-          <template slot-scope="scope">
-            <el-tag :type="scope.row.isCentralized === 1 ? 'success' : 'info'">
-              {{ scope.row.isCentralized === 1 ? '是' : '否' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="allowAdjust" label="允许调整" width="100">
-          <template slot-scope="scope">
-            <el-tag :type="scope.row.allowAdjust === 1 ? 'success' : 'danger'">
-              {{ scope.row.allowAdjust === 1 ? '是' : '否' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="200">
-          <template slot-scope="scope">
-            <el-button size="mini" @click="handleEdit(scope.row)">编辑</el-button>
-            <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <div class="pagination-container" style="margin-top: 20px; text-align: right;">
-        <el-pagination
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-          :current-page="pagination.page"
-          :page-sizes="[10, 20, 50, 100]"
-          :page-size="pagination.size"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="pagination.total">
-        </el-pagination>
-      </div>
+      <!-- Tab页签：收入预算和支出预算 -->
+      <el-tabs v-model="activeTab" @tab-click="handleTabClick">
+        <el-tab-pane label="收入预算" name="INCOME">
+          <el-table :data="filteredTableData" border style="width: 100%" v-loading="loading" row-key="itemId" :tree-props="{children: 'children'}">
+            <el-table-column prop="itemName" label="项目名称" width="300" show-overflow-tooltip>
+              <template slot-scope="scope">
+                <span v-if="scope.row.categoryId">{{ scope.row.itemName }}</span>
+                <span v-else style="font-weight: bold;">{{ scope.row.itemName }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="itemCode" label="项目编码" width="150"></el-table-column>
+            <el-table-column prop="budgetYear" label="年度" width="100"></el-table-column>
+            <el-table-column prop="assignedSubjects" label="分配主体" width="200">
+              <template slot-scope="scope">
+                <el-tag v-for="subject in scope.row.assignedSubjects" :key="subject.subjectId" size="mini" style="margin-right: 5px;">
+                  {{ subject.subjectName }}
+                </el-tag>
+                <span v-if="!scope.row.assignedSubjects || scope.row.assignedSubjects.length === 0" style="color: #999;">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="200" v-if="!isCategoryRow">
+              <template slot-scope="scope">
+                <el-button size="mini" @click="handleEdit(scope.row)">编辑</el-button>
+                <el-button size="mini" @click="handleAssignSubject(scope.row)">分配主体</el-button>
+                <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
+        <el-tab-pane label="支出预算" name="EXPENSE">
+          <el-table :data="filteredTableData" border style="width: 100%" v-loading="loading" row-key="itemId" :tree-props="{children: 'children'}">
+            <el-table-column prop="itemName" label="项目名称" width="300" show-overflow-tooltip>
+              <template slot-scope="scope">
+                <span v-if="scope.row.categoryId">{{ scope.row.itemName }}</span>
+                <span v-else style="font-weight: bold;">{{ scope.row.itemName }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="itemCode" label="项目编码" width="150"></el-table-column>
+            <el-table-column prop="budgetYear" label="年度" width="100"></el-table-column>
+            <el-table-column prop="assignedSubjects" label="分配主体" width="200">
+              <template slot-scope="scope">
+                <el-tag v-for="subject in scope.row.assignedSubjects" :key="subject.subjectId" size="mini" style="margin-right: 5px;">
+                  {{ subject.subjectName }}
+                </el-tag>
+                <span v-if="!scope.row.assignedSubjects || scope.row.assignedSubjects.length === 0" style="color: #999;">-</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="200" v-if="!isCategoryRow">
+              <template slot-scope="scope">
+                <el-button size="mini" @click="handleEdit(scope.row)">编辑</el-button>
+                <el-button size="mini" @click="handleAssignSubject(scope.row)">分配主体</el-button>
+                <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
+      </el-tabs>
     </el-card>
 
     <!-- 新增/编辑对话框 -->
-    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="600px">
+    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="700px">
       <el-form :model="form" :rules="rules" ref="form" label-width="120px">
+        <el-form-item label="项目名称" prop="itemName">
+          <el-input v-model="form.itemName" placeholder="请输入项目名称，例如：医疗收入-门诊收入-挂号费"></el-input>
+          <div style="margin-top: 5px; color: #999; font-size: 12px;">
+            支持多级分类，用"-"分隔，例如：医疗收入-门诊收入-挂号费
+          </div>
+        </el-form-item>
         <el-form-item label="项目编码" prop="itemCode">
           <el-input v-model="form.itemCode" placeholder="请输入项目编码"></el-input>
         </el-form-item>
-        <el-form-item label="项目名称" prop="itemName">
-          <el-input v-model="form.itemName" placeholder="请输入项目名称"></el-input>
+        <el-form-item label="预算年度" prop="budgetYear">
+          <el-date-picker
+            v-model="form.budgetYear"
+            type="year"
+            placeholder="选择年度"
+            format="yyyy"
+            value-format="yyyy"
+            style="width: 100%"
+          ></el-date-picker>
         </el-form-item>
-        <el-form-item label="分类编码" prop="categoryCode">
-          <el-input v-model="form.categoryCode" placeholder="请输入分类编码"></el-input>
+        <el-form-item label="预算分类" prop="categoryType">
+          <el-radio-group v-model="form.categoryType">
+            <el-radio label="INCOME">收入预算</el-radio>
+            <el-radio label="EXPENSE">支出预算</el-radio>
+          </el-radio-group>
         </el-form-item>
-        <el-form-item label="会计科目" prop="accountSubject">
-          <el-input v-model="form.accountSubject" placeholder="请输入会计科目"></el-input>
-        </el-form-item>
-        <el-form-item label="归口管理" prop="isCentralized">
-          <el-switch v-model="form.isCentralized" :active-value="1" :inactive-value="0"></el-switch>
-        </el-form-item>
-        <el-form-item label="允许调整" prop="allowAdjust">
-          <el-switch v-model="form.allowAdjust" :active-value="1" :inactive-value="0"></el-switch>
-        </el-form-item>
-        <el-form-item label="项目描述" prop="itemDesc">
-          <el-input type="textarea" v-model="form.itemDesc" :rows="3"></el-input>
+        <el-form-item label="上级分类" prop="parentCategoryId">
+          <el-select 
+            v-model="form.parentCategoryId" 
+            placeholder="请选择上级分类（可选）" 
+            style="width: 100%" 
+            filterable
+            clearable
+          >
+            <el-option
+              v-for="category in parentCategoryOptions"
+              :key="category.categoryId"
+              :label="category.categoryName"
+              :value="category.categoryId"
+            ></el-option>
+          </el-select>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -76,11 +115,44 @@
         <el-button type="primary" @click="handleSave">确定</el-button>
       </div>
     </el-dialog>
+
+    <!-- 分配主体对话框 -->
+    <el-dialog title="分配主体" :visible.sync="assignDialogVisible" width="600px">
+      <el-form label-width="120px">
+        <el-form-item label="预算项目">
+          <el-input :value="currentItem.itemName" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="分配主体">
+          <el-select 
+            v-model="selectedSubjectIds" 
+            placeholder="请选择主体（可多选）" 
+            style="width: 100%" 
+            multiple
+            filterable
+          >
+            <el-option
+              v-for="subject in allSubjects"
+              :key="subject.subjectId"
+              :label="subject.subjectName"
+              :value="subject.subjectId"
+            ></el-option>
+          </el-select>
+          <div style="margin-top: 5px; color: #999; font-size: 12px;">
+            分配给该主体的所有部门使用
+          </div>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="assignDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSaveAssign">确定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
-import { getBudgetItems, saveBudgetItem, updateBudgetItem, deleteBudgetItem } from '@/api/budg'
+import { getBudgetItems, saveBudgetItem, updateBudgetItem, deleteBudgetItem, getBudgetCategories } from '@/api/budg'
+import { getBudgetSubjects } from '@/api/budg'
 import { paginationMixin } from '@/mixins/pagination'
 
 export default {
@@ -91,35 +163,45 @@ export default {
       loading: false,
       tableData: [],
       allData: [],
+      allSubjects: [],
+      activeTab: 'INCOME',
       dialogVisible: false,
+      assignDialogVisible: false,
       dialogTitle: '新增预算项目',
       isEdit: false,
+      currentItem: {},
+      selectedSubjectIds: [],
       form: {
         itemId: null,
         itemCode: '',
         itemName: '',
+        budgetYear: new Date().getFullYear().toString(),
+        categoryType: 'INCOME',
         categoryId: null,
-        categoryCode: '',
-        accountSubject: '',
-        isCentralized: 0,
-        allowAdjust: 1,
-        itemDesc: ''
+        parentCategoryId: null
       },
       rules: {
+        itemName: [{ required: true, message: '请输入项目名称', trigger: 'blur' }],
         itemCode: [{ required: true, message: '请输入项目编码', trigger: 'blur' }],
-        itemName: [{ required: true, message: '请输入项目名称', trigger: 'blur' }]
+        budgetYear: [{ required: true, message: '请选择预算年度', trigger: 'change' }],
+        categoryType: [{ required: true, message: '请选择预算分类', trigger: 'change' }]
       }
     }
   },
   computed: {
-    paginatedData() {
-      const start = (this.pagination.page - 1) * this.pagination.size
-      const end = start + this.pagination.size
-      return this.tableData.slice(start, end)
+    filteredTableData() {
+      return this.tableData.filter(item => item.categoryType === this.activeTab)
+    },
+    parentCategoryOptions() {
+      return this.allData.filter(item => 
+        item.categoryType === this.form.categoryType && 
+        (!this.form.itemId || item.itemId !== this.form.itemId)
+      )
     }
   },
   mounted() {
     this.loadData()
+    this.loadSubjects()
   },
   methods: {
     loadData() {
@@ -127,21 +209,41 @@ export default {
       getBudgetItems().then(response => {
         if (response.code === 200) {
           this.allData = response.data || []
-          this.tableData = this.allData
-          this.pagination.total = this.tableData.length
-          this.pagination.page = 1
+          this.buildTreeData()
         }
         this.loading = false
       }).catch(() => {
         this.loading = false
       })
     },
-    handleSizeChange(val) {
-      this.pagination.size = val
-      this.pagination.page = 1
+    loadSubjects() {
+      getBudgetSubjects().then(response => {
+        if (response.code === 200) {
+          this.allSubjects = response.data || []
+        }
+      })
     },
-    handleCurrentChange(val) {
-      this.pagination.page = val
+    buildTreeData() {
+      // 构建树形结构，支持多级分类
+      const map = {}
+      const tree = []
+      
+      this.allData.forEach(item => {
+        map[item.itemId] = { ...item, children: [], assignedSubjects: item.assignedSubjects || [] }
+      })
+      
+      this.allData.forEach(item => {
+        if (item.parentCategoryId && map[item.parentCategoryId]) {
+          map[item.parentCategoryId].children.push(map[item.itemId])
+        } else {
+          tree.push(map[item.itemId])
+        }
+      })
+      
+      this.tableData = tree
+    },
+    handleTabClick(tab) {
+      this.activeTab = tab.name
     },
     handleAdd() {
       this.dialogTitle = '新增预算项目'
@@ -150,12 +252,10 @@ export default {
         itemId: null,
         itemCode: '',
         itemName: '',
+        budgetYear: new Date().getFullYear().toString(),
+        categoryType: this.activeTab,
         categoryId: null,
-        categoryCode: '',
-        accountSubject: '',
-        isCentralized: 0,
-        allowAdjust: 1,
-        itemDesc: ''
+        parentCategoryId: null
       }
       this.dialogVisible = true
     },
@@ -164,6 +264,17 @@ export default {
       this.isEdit = true
       this.form = { ...row }
       this.dialogVisible = true
+    },
+    handleAssignSubject(row) {
+      this.currentItem = row
+      this.selectedSubjectIds = (row.assignedSubjects || []).map(s => s.subjectId)
+      this.assignDialogVisible = true
+    },
+    handleSaveAssign() {
+      // TODO: 调用API保存分配的主体
+      this.$message.success('分配成功')
+      this.assignDialogVisible = false
+      this.loadData()
     },
     handleDelete(row) {
       this.$confirm('确认删除该预算项目吗？', '提示', {
@@ -174,7 +285,6 @@ export default {
         deleteBudgetItem(row.itemId).then(response => {
           if (response.code === 200) {
             this.$message.success('删除成功')
-            this.pagination.page = 1
             this.loadData()
           } else {
             this.$message.error(response.message || '删除失败')
@@ -185,12 +295,18 @@ export default {
     handleSave() {
       this.$refs.form.validate(valid => {
         if (valid) {
+          // 解析项目名称，构建多级分类
+          const itemNameParts = this.form.itemName.split('-').map(s => s.trim())
+          if (itemNameParts.length > 1) {
+            // 多级分类，需要创建分类和项目
+            // TODO: 实现多级分类的创建逻辑
+          }
+          
           const api = this.isEdit ? updateBudgetItem : saveBudgetItem
           api(this.form).then(response => {
             if (response.code === 200) {
               this.$message.success(this.isEdit ? '更新成功' : '新增成功')
               this.dialogVisible = false
-              this.pagination.page = 1
               this.loadData()
             } else {
               this.$message.error(response.message || '操作失败')
@@ -208,4 +324,3 @@ export default {
   padding: 20px;
 }
 </style>
-

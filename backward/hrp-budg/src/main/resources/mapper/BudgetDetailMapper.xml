@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.budg.mapper.BudgetDetailMapper">
+
+    <resultMap id="BudgetDetailResultMap" type="com.hrp.common.entity.BudgetDetail">
+        <result column="item_id" property="itemId"/>
+        <result column="item_code" property="itemCode"/>
+        <result column="item_name" property="itemName"/>
+        <result column="budget_year" property="budgetYear"/>
+        <result column="category_type" property="categoryType"/>
+        <result column="subject_id" property="subjectId"/>
+        <result column="subject_code" property="subjectCode"/>
+        <result column="subject_name" property="subjectName"/>
+        <result column="budget_amount" property="budgetAmount"/>
+        <result column="executed_amount" property="executedAmount"/>
+        <result column="applied_amount" property="appliedAmount"/>
+        <result column="remaining_amount" property="remainingAmount"/>
+    </resultMap>
+
+    <resultMap id="BudgetExecutionDetailResultMap" type="com.hrp.common.entity.BudgetExecutionDetail">
+        <result column="payout_billcode" property="payoutBillcode"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="emp_id" property="empId"/>
+        <result column="emp_name" property="empName"/>
+        <result column="execution_amount" property="executionAmount"/>
+        <result column="execution_date" property="executionDate"/>
+    </resultMap>
+
+    <resultMap id="BudgetApplyDetailResultMap" type="com.hrp.common.entity.BudgetApplyDetail">
+        <result column="apply_no" property="applyNo"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="applicant_id" property="applicantId"/>
+        <result column="applicant_name" property="applicantName"/>
+        <result column="apply_amount" property="applyAmount"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <!-- 查询预算明细 -->
+    <select id="selectPage" resultMap="BudgetDetailResultMap" parameterType="map">
+        SELECT 
+            bi.item_id, bi.item_code, bi.item_name, 
+            COALESCE(bi.budget_year, b.budget_year) as budget_year,
+            bc.category_type,
+            bs.subject_id, bs.subject_code, bs.subject_name,
+            COALESCE(SUM(b.budget_amount), 0) as budget_amount,
+            COALESCE(SUM(be.execution_amount), 0) as executed_amount,
+            COALESCE(SUM(ba.apply_amount), 0) as applied_amount,
+            COALESCE(SUM(b.budget_amount), 0) - COALESCE(SUM(be.execution_amount), 0) - COALESCE(SUM(ba.apply_amount), 0) as remaining_amount
+        FROM budget_item bi
+        LEFT JOIN budget_category bc ON bi.category_id = bc.category_id
+        LEFT JOIN budget_item_subject bis ON bi.item_id = bis.item_id
+        LEFT JOIN budget_subject bs ON bis.subject_id = bs.subject_id
+        LEFT JOIN budget b ON bi.item_id = b.item_id AND bs.subject_id = b.subject_id
+        LEFT JOIN budget_execution be ON b.budget_id = be.budget_id AND be.status = 'APPROVED'
+        LEFT JOIN budget_apply ba ON bi.item_id = ba.item_id AND bs.subject_id = ba.subject_id AND ba.status = 'APPROVED'
+        WHERE 1=1
+        <if test="deptId != null">
+            AND bs.subject_id = #{deptId}
+        </if>
+        <if test="budgetYear != null and budgetYear != ''">
+            AND (bi.budget_year = #{budgetYear} OR b.budget_year = #{budgetYear})
+        </if>
+        <if test="categoryType != null and categoryType != ''">
+            AND bc.category_type = #{categoryType}
+        </if>
+        <if test="itemName != null and itemName != ''">
+            AND bi.item_name LIKE CONCAT('%', #{itemName}, '%')
+        </if>
+        GROUP BY bi.item_id, bi.item_code, bi.item_name, bi.budget_year, b.budget_year, bc.category_type,
+                 bs.subject_id, bs.subject_code, bs.subject_name
+        ORDER BY COALESCE(bi.budget_year, b.budget_year) DESC, bi.item_name
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByParams" resultType="long" parameterType="map">
+        SELECT COUNT(DISTINCT CONCAT(bi.item_id, '_', bs.subject_id))
+        FROM budget_item bi
+        LEFT JOIN budget_category bc ON bi.category_id = bc.category_id
+        LEFT JOIN budget_item_subject bis ON bi.item_id = bis.item_id
+        LEFT JOIN budget_subject bs ON bis.subject_id = bs.subject_id
+        LEFT JOIN budget b ON bi.item_id = b.item_id AND bs.subject_id = b.subject_id
+        WHERE 1=1
+        <if test="deptId != null">
+            AND bs.subject_id = #{deptId}
+        </if>
+        <if test="budgetYear != null and budgetYear != ''">
+            AND (bi.budget_year = #{budgetYear} OR b.budget_year = #{budgetYear})
+        </if>
+        <if test="categoryType != null and categoryType != ''">
+            AND bc.category_type = #{categoryType}
+        </if>
+        <if test="itemName != null and itemName != ''">
+            AND bi.item_name LIKE CONCAT('%', #{itemName}, '%')
+        </if>
+    </select>
+
+    <!-- 查询执行金额明细（根据payout_billcode） -->
+    <select id="selectExecutionDetails" resultMap="BudgetExecutionDetailResultMap">
+        SELECT 
+            cp.payout_billcode,
+            cp.dept_id,
+            d.dept_name,
+            cp.emp_id,
+            cp.emp_name,
+            be.execution_amount,
+            be.execution_date
+        FROM budget_execution be
+        INNER JOIN ctrl_payout cp ON be.business_no = cp.payout_billcode
+        LEFT JOIN sys_dept d ON cp.dept_id = d.dept_id
+        WHERE be.item_id = #{itemId} 
+          AND be.subject_id = #{subjectId}
+          AND be.status = 'APPROVED'
+        ORDER BY be.execution_date DESC
+    </select>
+
+    <!-- 查询申请金额明细 -->
+    <select id="selectApplyDetails" resultMap="BudgetApplyDetailResultMap">
+        SELECT 
+            ba.apply_no,
+            ba.dept_id,
+            ba.dept_name,
+            ba.applicant_id,
+            ba.applicant_name,
+            ba.apply_amount,
+            ba.status,
+            ba.create_time
+        FROM budget_apply ba
+        WHERE ba.item_id = #{itemId} 
+          AND ba.subject_id = #{subjectId}
+        ORDER BY ba.create_time DESC
+    </select>
+
+</mapper>
+

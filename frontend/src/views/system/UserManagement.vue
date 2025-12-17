@@ -1,5 +1,5 @@
 <template>
-  <div class="user-management">
+  <div class="user-management" v-loading="loading || importLoading">
     <el-card>
       <div slot="header" class="clearfix">
         <span>用户管理</span>
@@ -25,10 +25,22 @@
       <!-- 搜索条件 -->
       <el-form :inline="true" :model="searchForm" class="search-form">
         <el-form-item label="工号/姓名">
-          <el-input v-model="searchForm.keyword" placeholder="请输入工号或姓名" clearable @keyup.enter.native="handleSearch"></el-input>
+          <el-input
+            v-model="searchForm.keyword"
+            placeholder="请输入工号或姓名"
+            clearable
+            @keyup.enter.native="handleSearch"
+            @input="handleSearch"
+          ></el-input>
         </el-form-item>
         <el-form-item label="部门">
-          <el-select v-model="searchForm.deptCode" placeholder="请选择部门" clearable style="width: 200px;">
+          <el-select
+            v-model="searchForm.deptCode"
+            placeholder="请选择部门"
+            clearable
+            style="width: 200px;"
+            @change="handleSearch"
+          >
             <el-option
               v-for="dept in deptOptions"
               :key="dept.deptCode"
@@ -43,7 +55,7 @@
         </el-form-item>
       </el-form>
       
-      <el-table :data="tableData" border style="width: 100%" v-loading="loading">
+      <el-table :data="paginatedData" border style="width: 100%" v-loading="loading">
         <el-table-column prop="empCode" label="工号" width="120">
           <template slot-scope="scope">
             <el-button 
@@ -87,6 +99,18 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="pagination-container" style="margin-top: 20px; text-align: right;">
+        <el-pagination
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="pagination.page"
+          :page-sizes="[10, 20, 50, 100]"
+          :page-size="pagination.size"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="pagination.total">
+        </el-pagination>
+      </div>
     </el-card>
 
     <!-- 查看员工信息对话框 -->
@@ -290,9 +314,11 @@ import { getUserList, getUserById, saveUser, updateUser, deleteUser, toggleUserS
 import { getCodeTypeOptions } from '@/utils/codeType'
 import request from '@/api/request'
 import Cookies from 'js-cookie'
+import { paginationMixin } from '@/mixins/pagination'
 
 export default {
   name: 'UserManagement',
+  mixins: [paginationMixin],
   data() {
     return {
       loading: false,
@@ -347,7 +373,14 @@ export default {
       empTypeOptions: [],
       deptList: [],
       uploadUrl: '/api/auth/user/import',
-      uploadHeaders: {}
+      uploadHeaders: {},
+      importLoading: false
+    }
+  },
+  computed: {
+    // 分页后的用户数据
+    paginatedData() {
+      return this.getPaginatedData(this.tableData)
     }
   },
   mounted() {
@@ -367,6 +400,9 @@ export default {
         if (response.code === 200) {
           this.allEmployees = response.data || []
           this.handleSearch()
+          // 初始化分页总数
+          this.pagination.total = this.tableData.length
+          this.resetPagination()
         }
         this.loading = false
       }).catch(() => {
@@ -432,11 +468,16 @@ export default {
       }
       
       this.tableData = filtered
+      // 更新分页信息
+      this.pagination.total = this.tableData.length
+      this.resetPagination()
     },
     handleReset() {
       this.searchForm.keyword = ''
       this.searchForm.deptCode = ''
       this.tableData = this.allEmployees
+      this.pagination.total = this.tableData.length
+      this.resetPagination()
     },
     handleViewEmployee(empCode) {
       if (!empCode) {
@@ -887,18 +928,42 @@ export default {
         this.$message.error('文件大小不能超过10MB！')
         return false
       }
+      // 校验通过后开启导入加载动画
+      this.importLoading = true
       return true
     },
     handleUploadSuccess(response) {
-      if (response.code === 200) {
+      // 兼容多种返回格式（字符串 / 对象 / axios 包了一层 data）
+      let res = response
+
+      // 如果是字符串，尝试解析为 JSON
+      if (typeof res === 'string') {
+        try {
+          res = JSON.parse(res)
+        } catch (e) {
+          this.$message.error('导入失败：响应格式错误')
+          return
+        }
+      }
+
+      // 如果是 axios 响应，可能在 data 里再包一层
+      if (res && res.data && typeof res.data === 'object' && typeof res.code === 'undefined') {
+        res = res.data
+      }
+
+      if (res && res.code === 200) {
         this.$message.success('导入成功')
+        // 重新加载员工+用户数据，保证导入结果立即体现在列表上
         this.loadData()
       } else {
-        this.$message.error(response.message || '导入失败')
+        this.$message.error((res && res.message) || '导入失败')
       }
+      // 无论成功失败，关闭加载动画
+      this.importLoading = false
     },
     handleUploadError(error) {
       this.$message.error('导入失败：' + (error.message || '未知错误'))
+      this.importLoading = false
     }
   }
 }

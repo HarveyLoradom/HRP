@@ -291,41 +291,26 @@ INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `pat
 VALUES ('BUDG_ITEM', '预算项目与分类管理', @budg_basic_menu_id, 2, 'item', 'budg/BudgetItem', 'el-icon-menu', 2, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
--- 预算流程配置
+-- 预算综合管理（二级菜单）
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('BUDG_PROCESS', '预算流程配置', @budg_basic_menu_id, 2, 'process', 'budg/BudgetProcess', 'el-icon-connection', 3, 1)
+VALUES ('BUDG_COMPREHENSIVE', '预算综合管理', @budg_menu_id, 1, 'comprehensive', 'Layout', 'el-icon-s-data', 2, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
--- 基础参数设置
+SET @budg_comprehensive_menu_id = (SELECT id FROM sys_menu WHERE menu_code = 'BUDG_COMPREHENSIVE');
+
+-- 预算申请
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('BUDG_PARAM', '基础参数设置', @budg_basic_menu_id, 2, 'param', 'budg/BudgetParam', 'el-icon-tools', 4, 1)
+VALUES ('BUDG_APPLY', '预算申请', @budg_comprehensive_menu_id, 2, 'apply', 'budg/BudgetApply', 'el-icon-edit-outline', 1, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
--- 预算执行与控制（二级菜单）
+-- 预算审批
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('BUDG_EXECUTION', '预算执行与控制', @budg_menu_id, 1, 'execution', 'Layout', 'el-icon-data-line', 2, 1)
+VALUES ('BUDG_APPROVAL', '预算审批', @budg_comprehensive_menu_id, 2, 'approval', 'budg/BudgetApproval', 'el-icon-check', 2, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
-SET @budg_execution_menu_id = (SELECT id FROM sys_menu WHERE menu_code = 'BUDG_EXECUTION');
-
--- 执行数据采集
+-- 预算明细
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('BUDG_EXECUTION_DATA', '执行数据采集', @budg_execution_menu_id, 2, 'execution-data', 'budg/BudgetExecutionData', 'el-icon-upload', 1, 1)
-ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
-
--- 实时额度控制
-INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('BUDG_AMOUNT_CONTROL', '实时额度控制', @budg_execution_menu_id, 2, 'amount-control', 'budg/BudgetAmountControl', 'el-icon-warning', 2, 1)
-ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
-
--- 执行进度跟踪与查询
-INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('BUDG_EXECUTION_TRACK', '执行进度跟踪与查询', @budg_execution_menu_id, 2, 'execution-track', 'budg/BudgetExecutionTrack', 'el-icon-data-analysis', 3, 1)
-ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
-
--- 执行单管理
-INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('BUDG_EXECUTION_MANAGE', '执行单管理', @budg_execution_menu_id, 2, 'execution-manage', 'budg/BudgetExecutionManage', 'el-icon-tickets', 4, 1)
+VALUES ('BUDG_DETAIL', '预算明细', @budg_comprehensive_menu_id, 2, 'detail', 'budg/BudgetDetail', 'el-icon-document', 3, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 -- 预算调整与分析（二级菜单）
@@ -390,44 +375,51 @@ SET @budget_basic_menu_id = (SELECT id FROM sys_menu WHERE menu_code = 'BUDGET_B
 
 -- 预算主体管理
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('BUDGET_SUBJECT', '预算主体管理', @budget_basic_menu_id, 2, 'subject', 'budget/BudgetSubject', 'el-icon-s-custom', 1, 1)
+VALUES ('BUDGET_SUBJECT', '预算主体管理', @budget_basic_menu_id, 2, 'subject', 'budg/BudgetSubject', 'el-icon-s-custom', 1, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
--- 预算项目与分类管理
+-- 预算项目与分类管理（目录）
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('BUDGET_ITEM', '预算项目与分类管理', @budget_basic_menu_id, 2, 'item', 'budget/BudgetItem', 'el-icon-menu', 2, 1)
+VALUES ('BUDGET_ITEM', '预算项目与分类管理', @budget_basic_menu_id, 1, 'item', 'Layout', 'el-icon-menu', 2, 1)
+ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name), menu_type = VALUES(menu_type), component = VALUES(component);
+
+SET @budget_item_menu_id = (SELECT id FROM sys_menu WHERE menu_code = 'BUDGET_ITEM');
+
+-- 分类管理
+INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
+VALUES ('BUDGET_ITEM_CATEGORY', '分类管理', @budget_item_menu_id, 2, 'category', 'budg/BudgetCategory', 'el-icon-collection', 1, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
--- 预算流程配置
+-- 项目预算
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('BUDGET_PROCESS', '预算流程配置', @budget_basic_menu_id, 2, 'process', 'budget/BudgetProcess', 'el-icon-s-order', 3, 1)
+VALUES ('BUDGET_ITEM_PROJECT', '项目预算', @budget_item_menu_id, 2, 'project', 'budg/BudgetProject', 'el-icon-s-order', 2, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
--- 基础参数设置
+-- 预算综合管理（二级菜单）
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('BUDGET_PARAM', '基础参数设置', @budget_basic_menu_id, 2, 'param', 'budget/BudgetParam', 'el-icon-setting', 4, 1)
+VALUES ('BUDGET_COMPREHENSIVE', '预算综合管理', @budget_menu_id, 1, 'comprehensive', 'Layout', 'el-icon-s-data', 2, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
--- 预算执行与控制
+SET @budget_comprehensive_menu_id = (SELECT id FROM sys_menu WHERE menu_code = 'BUDGET_COMPREHENSIVE');
+
+-- 预算申请
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('BUDGET_EXECUTION', '预算执行与控制', @budget_menu_id, 1, 'execution', 'Layout', 'el-icon-s-marketing', 2, 1)
+VALUES ('BUDGET_APPLY', '预算申请', @budget_comprehensive_menu_id, 2, 'apply', 'budg/BudgetApply', 'el-icon-edit-outline', 1, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
-SET @budget_execution_menu_id = (SELECT id FROM sys_menu WHERE menu_code = 'BUDGET_EXECUTION');
-
--- 执行数据采集
+-- 预算审批
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('BUDGET_EXECUTION_COLLECT', '执行数据采集', @budget_execution_menu_id, 2, 'collect', 'budget/BudgetExecutionCollect', 'el-icon-upload', 1, 1)
+VALUES ('BUDGET_APPROVAL', '预算审批', @budget_comprehensive_menu_id, 2, 'approval', 'budg/BudgetApproval', 'el-icon-check', 2, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
--- 执行进度跟踪
+-- 预算明细
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('BUDGET_EXECUTION_TRACK', '执行进度跟踪', @budget_execution_menu_id, 2, 'track', 'budget/BudgetExecutionTrack', 'el-icon-data-line', 2, 1)
+VALUES ('BUDGET_DETAIL', '预算明细', @budget_comprehensive_menu_id, 2, 'detail', 'budg/BudgetDetail', 'el-icon-document', 3, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 -- 执行单管理
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('BUDGET_EXECUTION_MANAGE', '执行单管理', @budget_execution_menu_id, 2, 'manage', 'budget/BudgetExecutionManage', 'el-icon-s-order', 3, 1)
+VALUES ('BUDGET_EXECUTION_MANAGE', '执行单管理', @budget_execution_menu_id, 2, 'manage', 'budg/BudgetExecutionManage', 'el-icon-s-order', 3, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 -- 预算调整与分析
@@ -439,12 +431,12 @@ SET @budget_analysis_menu_id = (SELECT id FROM sys_menu WHERE menu_code = 'BUDGE
 
 -- 预算调整管理
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('BUDGET_ADJUSTMENT', '预算调整管理', @budget_analysis_menu_id, 2, 'adjustment', 'budget/BudgetAdjustment', 'el-icon-edit', 1, 1)
+VALUES ('BUDGET_ADJUSTMENT', '预算调整管理', @budget_analysis_menu_id, 2, 'adjustment', 'budg/BudgetAdjustment', 'el-icon-edit', 1, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 -- 预算执行分析
 INSERT INTO `sys_menu` (`menu_code`, `menu_name`, `parent_id`, `menu_type`, `path`, `component`, `icon`, `sort`, `status`) 
-VALUES ('BUDGET_ANALYSIS_REPORT', '预算执行分析', @budget_analysis_menu_id, 2, 'report', 'budget/BudgetAnalysisReport', 'el-icon-s-data', 2, 1)
+VALUES ('BUDGET_ANALYSIS_REPORT', '预算执行分析', @budget_analysis_menu_id, 2, 'report', 'budg/BudgetAnalysisReport', 'el-icon-s-data', 2, 1)
 ON DUPLICATE KEY UPDATE menu_name = VALUES(menu_name);
 
 -- ==================== 固定资产模块菜单 ====================

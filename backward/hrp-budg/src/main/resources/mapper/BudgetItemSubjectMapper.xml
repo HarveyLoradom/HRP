@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.budg.mapper.BudgetItemSubjectMapper">
+
+    <resultMap id="BudgetSubjectResultMap" type="com.hrp.common.entity.BudgetSubject">
+        <id column="subject_id" property="subjectId"/>
+        <result column="subject_code" property="subjectCode"/>
+        <result column="subject_name" property="subjectName"/>
+        <result column="subject_type" property="subjectType"/>
+        <result column="manage_dept_id" property="manageDeptId"/>
+        <result column="manage_dept_code" property="manageDeptCode"/>
+        <result column="manage_dept_name" property="manageDeptName"/>
+        <result column="manage_emp_id" property="manageEmpId"/>
+        <result column="manage_emp_code" property="manageEmpCode"/>
+        <result column="manage_emp_name" property="manageEmpName"/>
+        <result column="is_stop" property="isStop"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 根据项目ID查询分配的主体列表 -->
+    <select id="selectSubjectsByItemId" resultMap="BudgetSubjectResultMap">
+        SELECT bs.*
+        FROM budget_subject bs
+        INNER JOIN budget_item_subject bis ON bs.subject_id = bis.subject_id
+        WHERE bis.item_id = #{itemId}
+        ORDER BY bs.subject_code
+    </select>
+
+    <!-- 根据项目ID删除所有分配关系 -->
+    <delete id="deleteByItemId">
+        DELETE FROM budget_item_subject WHERE item_id = #{itemId}
+    </delete>
+
+    <!-- 插入分配关系 -->
+    <insert id="insert" parameterType="com.hrp.common.entity.BudgetItemSubject">
+        INSERT INTO budget_item_subject (item_id, subject_id, subject_code, subject_name, create_user)
+        VALUES (#{itemId}, #{subjectId}, #{subjectCode}, #{subjectName}, #{createUser})
+    </insert>
+
+    <!-- 批量插入分配关系 -->
+    <insert id="insertBatch" parameterType="java.util.List">
+        INSERT INTO budget_item_subject (item_id, subject_id, subject_code, subject_name, create_user)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.itemId}, #{item.subjectId}, #{item.subjectCode}, #{item.subjectName}, #{item.createUser})
+        </foreach>
+    </insert>
+
+</mapper>
+

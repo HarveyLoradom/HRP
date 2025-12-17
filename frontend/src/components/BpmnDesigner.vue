@@ -68,6 +68,25 @@ import ElementProperties from './BpmnElementProperties.vue'
 // 如果该路径不存在，请检查 node_modules/bpmn-js 目录结构
 import BpmnModeler from 'bpmn-js/lib/Modeler'
 
+// 导入 bpmn-js 样式文件（必需，否则组件无法显示）
+import 'bpmn-js/dist/assets/diagram-js.css'
+import 'bpmn-js/dist/assets/bpmn-js.css'
+// 尝试导入 bpmn-js 字体文件（如果路径存在）
+// 注意：bpmn-js v14 的字体文件路径可能不同，如果导入失败，请检查实际路径
+try {
+  require('bpmn-js/dist/assets/bpmn-font/css/bpmn.css')
+  require('bpmn-js/dist/assets/bpmn-font/css/bpmn-codes.css')
+  require('bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css')
+} catch (e) {
+  console.warn('bpmn-font CSS 文件导入失败，图标可能无法显示:', e)
+  // 尝试其他可能的路径
+  try {
+    require('bpmn-js/dist/assets/bpmn-font/bpmn.css')
+  } catch (e2) {
+    console.warn('备用路径也失败:', e2)
+  }
+}
+
 export default {
   name: 'BpmnDesigner',
   components: {
@@ -96,12 +115,17 @@ export default {
     }
   },
   mounted() {
-    this.initBpmnModeler()
-    if (this.value) {
-      this.loadBpmnXml(this.value)
-    } else {
-      this.createNewDiagram()
-    }
+    // 等待 DOM 渲染完成后再初始化
+    this.$nextTick(() => {
+      setTimeout(() => {
+        this.initBpmnModeler()
+        if (this.value) {
+          this.loadBpmnXml(this.value)
+        } else {
+          this.createNewDiagram()
+        }
+      }, 100) // 延迟一点确保容器完全渲染
+    })
   },
   beforeDestroy() {
     if (this.bpmnModeler) {
@@ -118,14 +142,53 @@ export default {
       }
       
       try {
+        // 确保容器元素存在
+        if (!this.$refs.bpmnCanvas) {
+          console.error('画布容器元素不存在')
+          this.$message.error('画布容器未找到，请刷新页面重试')
+          return
+        }
+        
         this.bpmnModeler = new BpmnModeler({
           container: this.$refs.bpmnCanvas,
           additionalModules: [],
           moddleExtensions: {}
         })
+        
+        // 监听错误事件
+        this.bpmnModeler.on('error', (e) => {
+          console.error('BPMN 设计器错误:', e)
+          if (e.error) {
+            this.$message.error('设计器错误: ' + (e.error.message || e.error))
+          }
+        })
+        
+        // 监听导入完成事件，确保 palette 正确显示
+        this.bpmnModeler.on('import.done', () => {
+          console.log('BPMN 导入完成')
+          this.$nextTick(() => {
+            // 确保 palette 可见
+            const palette = this.bpmnModeler.get('palette')
+            if (palette) {
+              console.log('Palette 已初始化')
+              // 强制显示 palette
+              const paletteElement = document.querySelector('.djs-palette')
+              if (paletteElement) {
+                paletteElement.style.display = 'block'
+                paletteElement.style.visibility = 'visible'
+                paletteElement.style.opacity = '1'
+              }
+            } else {
+              console.warn('Palette 未找到')
+            }
+            
+            // 在导入完成后初始化 commandStack 监听
+            this.initCommandStackListener()
+          })
+        })
       } catch (e) {
         console.error('初始化 BPMN 设计器失败:', e)
-        this.$message.error('初始化流程设计器失败，请检查 bpmn-js 是否正确安装')
+        this.$message.error('初始化流程设计器失败: ' + (e.message || '未知错误'))
         return
       }
 
@@ -137,19 +200,38 @@ export default {
       this.bpmnModeler.on('selection.changed', (e) => {
         const newElement = e.newSelection[0] || null
         this.selectedElement = newElement
+        // 确保属性面板能正确更新
+        this.$nextTick(() => {
+          if (newElement) {
+            console.log('选中元素:', newElement.id, newElement.type)
+          }
+        })
       })
 
       // 监听元素变化
       this.bpmnModeler.on('element.changed', (e) => {
         this.emitChange()
       })
-
-      // 监听命令栈变化（撤销/重做）
-      const commandStack = this.bpmnModeler.get('commandStack')
-      commandStack.on('changed', () => {
-        this.canUndo = commandStack.canUndo()
-        this.canRedo = commandStack.canRedo()
-      })
+    },
+    
+    // 初始化命令栈监听（需要在导入完成后调用）
+    initCommandStackListener() {
+      try {
+        const commandStack = this.bpmnModeler.get('commandStack')
+        if (commandStack && typeof commandStack.on === 'function') {
+          commandStack.on('changed', () => {
+            this.canUndo = commandStack.canUndo()
+            this.canRedo = commandStack.canRedo()
+          })
+          // 初始化当前状态
+          this.canUndo = commandStack.canUndo()
+          this.canRedo = commandStack.canRedo()
+        } else {
+          console.warn('commandStack 不可用或 API 不同')
+        }
+      } catch (e) {
+        console.error('初始化 commandStack 监听失败:', e)
+      }
     },
 
     // 创建新流程图
@@ -175,14 +257,43 @@ export default {
       this.loadBpmnXml(xml)
     },
 
-    // 加载BPMN XML
+    // 加载BPMN XML（公开方法，供外部调用）
     async loadBpmnXml(xml) {
       try {
         await this.bpmnModeler.importXML(xml)
-        this.$message.success('加载成功')
+        // 确保画布正确显示
+        this.$nextTick(() => {
+          setTimeout(() => {
+            try {
+              const canvas = this.bpmnModeler.get('canvas')
+              if (canvas) {
+                // 检查画布尺寸是否有效
+                const container = canvas._container
+                if (container && container.clientWidth > 0 && container.clientHeight > 0) {
+                  canvas.zoom('fit-viewport')
+                } else {
+                  // 如果容器尺寸无效，延迟重试
+                  setTimeout(() => {
+                    if (canvas && canvas._container && canvas._container.clientWidth > 0) {
+                      canvas.zoom('fit-viewport')
+                    }
+                  }, 200)
+                }
+              }
+            } catch (zoomError) {
+              console.warn('缩放失败，但继续执行:', zoomError)
+            }
+            // 加载完成后初始化 commandStack 监听
+            this.initCommandStackListener()
+          }, 100)
+        })
       } catch (err) {
         console.error('加载BPMN XML失败:', err)
-        this.$message.error('加载失败: ' + err.message)
+        this.$message.error('加载失败: ' + (err.message || '未知错误'))
+        // 如果加载失败，尝试创建新图表
+        if (!this.value) {
+          this.createNewDiagram()
+        }
       }
     },
 
@@ -224,22 +335,46 @@ export default {
 
     // 放大
     handleZoomIn() {
-      const canvas = this.bpmnModeler.get('canvas')
-      const zoom = canvas.zoom()
-      canvas.zoom(zoom + 0.1)
+      try {
+        const canvas = this.bpmnModeler.get('canvas')
+        if (!canvas) return
+        const zoom = canvas.zoom()
+        if (isFinite(zoom) && zoom > 0) {
+          const newZoom = Math.min(3, zoom + 0.1)
+          canvas.zoom(newZoom)
+        }
+      } catch (e) {
+        console.error('放大失败:', e)
+      }
     },
 
     // 缩小
     handleZoomOut() {
-      const canvas = this.bpmnModeler.get('canvas')
-      const zoom = canvas.zoom()
-      canvas.zoom(Math.max(0.1, zoom - 0.1))
+      try {
+        const canvas = this.bpmnModeler.get('canvas')
+        if (!canvas) return
+        const zoom = canvas.zoom()
+        if (isFinite(zoom) && zoom > 0) {
+          const newZoom = Math.max(0.1, zoom - 0.1)
+          canvas.zoom(newZoom)
+        }
+      } catch (e) {
+        console.error('缩小失败:', e)
+      }
     },
 
     // 重置缩放
     handleZoomReset() {
-      const canvas = this.bpmnModeler.get('canvas')
-      canvas.zoom('fit-viewport')
+      try {
+        const canvas = this.bpmnModeler.get('canvas')
+        if (!canvas) return
+        const container = canvas._container
+        if (container && container.clientWidth > 0 && container.clientHeight > 0) {
+          canvas.zoom('fit-viewport')
+        }
+      } catch (e) {
+        console.error('重置缩放失败:', e)
+      }
     },
 
     // 预览XML
@@ -274,47 +409,150 @@ export default {
 
     // 属性更新
     handlePropertyUpdate(updates) {
-      if (!this.selectedElement) return
-
-      const modeling = this.bpmnModeler.get('modeling')
-      const elementRegistry = this.bpmnModeler.get('elementRegistry')
-      const element = elementRegistry.get(this.selectedElement.id)
-
-      // 更新元素属性
-      if (updates.name !== undefined) {
-        modeling.updateLabel(element, updates.name)
+      if (!this.selectedElement) {
+        console.warn('没有选中的元素，无法更新属性')
+        return
       }
 
-      // 更新业务对象属性
-      const businessObject = element.businessObject
-      if (businessObject) {
+      try {
+        const modeling = this.bpmnModeler.get('modeling')
+        const elementRegistry = this.bpmnModeler.get('elementRegistry')
+        const moddle = this.bpmnModeler.get('moddle')
+        const element = elementRegistry.get(this.selectedElement.id)
+
+        if (!element) {
+          console.warn('无法找到元素:', this.selectedElement.id)
+          return
+        }
+
+        // 更新名称（标签）
+        if (updates.name !== undefined && updates.name !== null) {
+          modeling.updateLabel(element, updates.name)
+        }
+
+        // 准备要更新的属性对象
+        const propertiesToUpdate = {}
+
+      // 用户任务节点属性
+      if (element.type && element.type.includes('UserTask')) {
+        if (updates.approvalType !== undefined) {
+          propertiesToUpdate.approvalType = updates.approvalType
+        }
         if (updates.assigneeType !== undefined) {
-          businessObject.assigneeType = updates.assigneeType
+          propertiesToUpdate.assigneeType = updates.assigneeType
         }
         if (updates.assigneeId !== undefined) {
-          businessObject.assigneeId = updates.assigneeId
+          propertiesToUpdate.assigneeId = updates.assigneeId
         }
         if (updates.assigneeName !== undefined) {
-          businessObject.assigneeName = updates.assigneeName
+          propertiesToUpdate.assigneeName = updates.assigneeName
         }
-        if (updates.approvalType !== undefined) {
-          businessObject.approvalType = updates.approvalType
+        if (updates.positionCode !== undefined) {
+          propertiesToUpdate.positionCode = updates.positionCode
         }
+        if (updates.deptCode !== undefined) {
+          propertiesToUpdate.deptCode = updates.deptCode
+        }
+        // 会签配置
+        if (updates.multiInstanceType !== undefined) {
+          propertiesToUpdate.multiInstanceType = updates.multiInstanceType
+        }
+        if (updates.multiInstanceCount !== undefined) {
+          propertiesToUpdate.multiInstanceCount = updates.multiInstanceCount
+        }
+        if (updates.completionCondition !== undefined) {
+          propertiesToUpdate.completionCondition = updates.completionCondition
+        }
+        // 高级配置
         if (updates.allowAddsign !== undefined) {
-          businessObject.allowAddsign = updates.allowAddsign
+          propertiesToUpdate.allowAddsign = updates.allowAddsign
+        }
+        if (updates.allowReduceSign !== undefined) {
+          propertiesToUpdate.allowReduceSign = updates.allowReduceSign
+        }
+        if (updates.allowTransfer !== undefined) {
+          propertiesToUpdate.allowTransfer = updates.allowTransfer
+        }
+        if (updates.allowReject !== undefined) {
+          propertiesToUpdate.allowReject = updates.allowReject
+        }
+        if (updates.rejectStrategy !== undefined) {
+          propertiesToUpdate.rejectStrategy = updates.rejectStrategy
         }
         if (updates.needPrint !== undefined) {
-          businessObject.needPrint = updates.needPrint
+          propertiesToUpdate.needPrint = updates.needPrint
         }
         if (updates.printOrder !== undefined) {
-          businessObject.printOrder = updates.printOrder
+          propertiesToUpdate.printOrder = updates.printOrder
         }
-        if (updates.conditionExpression !== undefined) {
-          businessObject.conditionExpression = updates.conditionExpression
+        // 超时设置
+        if (updates.enableTimeout !== undefined) {
+          propertiesToUpdate.enableTimeout = updates.enableTimeout
+        }
+        if (updates.timeoutHours !== undefined) {
+          propertiesToUpdate.timeoutHours = updates.timeoutHours
+        }
+        if (updates.timeoutAction !== undefined) {
+          propertiesToUpdate.timeoutAction = updates.timeoutAction
+        }
+        if (updates.description !== undefined) {
+          propertiesToUpdate.description = updates.description
         }
       }
 
-      this.emitChange()
+      // 网关节点属性
+      if (element.type && (element.type.includes('Gateway') || element.type.includes('ExclusiveGateway') || element.type.includes('ParallelGateway'))) {
+        if (updates.gatewayType !== undefined) {
+          propertiesToUpdate.gatewayType = updates.gatewayType
+        }
+        if (updates.description !== undefined) {
+          propertiesToUpdate.description = updates.description
+        }
+      }
+
+      // 连线条件属性
+      if (element.type && element.type.includes('SequenceFlow')) {
+        if (updates.conditionType !== undefined) {
+          propertiesToUpdate.conditionType = updates.conditionType
+        }
+        if (updates.conditionExpression !== undefined) {
+          // 如果有条件表达式，需要创建 FormalExpression 对象
+          if (updates.conditionExpression && updates.conditionType !== 'none') {
+            const conditionExpression = moddle.create('bpmn:FormalExpression', {
+              body: updates.conditionExpression
+            })
+            propertiesToUpdate.conditionExpression = conditionExpression
+          } else if (updates.conditionType === 'none') {
+            // 移除条件表达式
+            propertiesToUpdate.conditionExpression = null
+          }
+        }
+      }
+
+      // 通用属性
+      if (updates.description !== undefined && !propertiesToUpdate.description) {
+        propertiesToUpdate.description = updates.description
+      }
+
+      // 使用 modeling.updateProperties 更新属性
+      if (Object.keys(propertiesToUpdate).length > 0) {
+        try {
+          modeling.updateProperties(element, propertiesToUpdate)
+          console.log('属性更新成功:', propertiesToUpdate)
+        } catch (error) {
+          console.error('属性更新失败:', error)
+          this.$message.error('属性更新失败: ' + (error.message || '未知错误'))
+        }
+      }
+
+      // 触发变化事件
+      this.$nextTick(() => {
+        this.emitChange()
+      })
+      } catch (error) {
+        console.error('属性更新处理失败:', error)
+        this.$message.error('属性更新失败: ' + (error.message || '未知错误'))
+      }
     },
 
     // 触发变化事件
@@ -350,6 +588,7 @@ export default {
   display: flex;
   flex: 1;
   overflow: hidden;
+  position: relative;
 }
 
 .bpmn-properties-panel {
@@ -384,16 +623,32 @@ export default {
 .bpmn-canvas {
   flex: 1;
   position: relative;
+  min-height: 500px;
+  width: 100%;
+  height: 100%;
 }
 
 /* BPMN.js 样式覆盖 */
 .bpmn-canvas ::v-deep .djs-container {
   background: #fafafa;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .bpmn-canvas ::v-deep .djs-palette {
-  left: 20px;
-  top: 20px;
+  left: 20px !important;
+  top: 20px !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 1000;
+  position: absolute !important;
+}
+
+/* 确保画布区域可见 */
+.bpmn-canvas ::v-deep .djs-canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .bpmn-canvas ::v-deep .djs-palette .entry {
@@ -401,10 +656,46 @@ export default {
   border: 1px solid #ddd;
   border-radius: 4px;
   margin-bottom: 5px;
+  width: 46px;
+  height: 46px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  cursor: grab !important;
+  pointer-events: auto !important;
+  user-select: none;
+  font-size: 20px !important;
+  color: #333 !important;
 }
 
 .bpmn-canvas ::v-deep .djs-palette .entry:hover {
   background: #f0f0f0;
+}
+
+.bpmn-canvas ::v-deep .djs-palette .entry:active {
+  cursor: grabbing !important;
+}
+
+/* 确保图标字体正确加载 */
+.bpmn-canvas ::v-deep .djs-palette .entry .djs-icon {
+  font-family: 'bpmn', 'bpmn-codes', 'bpmn-embedded' !important;
+  font-size: 20px !important;
+  line-height: 1 !important;
+}
+
+.bpmn-canvas ::v-deep .djs-palette .entry .djs-palette-icon {
+  width: 24px;
+  height: 24px;
+}
+
+/* 确保画布可以接收拖放 */
+.bpmn-canvas ::v-deep .djs-element {
+  pointer-events: auto !important;
+}
+
+.bpmn-canvas ::v-deep .djs-canvas {
+  position: relative !important;
+  pointer-events: auto !important;
 }
 </style>
 

@@ -6,8 +6,14 @@
         <id column="item_id" property="itemId"/>
         <result column="item_code" property="itemCode"/>
         <result column="item_name" property="itemName"/>
+        <result column="budget_year" property="budgetYear"/>
         <result column="category_id" property="categoryId"/>
         <result column="category_code" property="categoryCode"/>
+        <result column="category_type" property="categoryType"/>
+        <result column="parent_category_id" property="parentCategoryId"/>
+        <result column="parent_category_code" property="parentCategoryCode"/>
+        <result column="level1_category_name" property="level1CategoryName"/>
+        <result column="level2_category_name" property="level2CategoryName"/>
         <result column="account_subject" property="accountSubject"/>
         <result column="is_centralized" property="isCentralized"/>
         <result column="allow_adjust" property="allowAdjust"/>
@@ -34,19 +40,83 @@
         SELECT * FROM budget_item WHERE category_id = #{categoryId} AND is_stop = 0 ORDER BY item_code
     </select>
 
+    <!-- 分页查询项目预算（带筛选条件，关联查询一级和二级分类名称） -->
+    <select id="selectPageByConditions" resultMap="BaseResultMap">
+        SELECT 
+            bi.item_id,
+            bi.item_code,
+            bi.item_name,
+            bi.budget_year,
+            bi.category_id,
+            bi.category_code,
+            bi.category_type,
+            bi.parent_category_id,
+            bi.parent_category_code,
+            bc1.category_name AS level1_category_name,
+            bc2.category_name AS level2_category_name,
+            bi.account_subject,
+            bi.is_centralized,
+            bi.allow_adjust,
+            bi.item_desc,
+            bi.is_stop,
+            bi.create_user,
+            bi.create_time,
+            bi.update_time
+        FROM budget_item bi
+        LEFT JOIN budget_category bc2 ON bi.parent_category_id = bc2.category_id
+        LEFT JOIN budget_category bc1 ON bc2.parent_category_id = bc1.category_id
+        WHERE 1=1
+        <if test="budgetYear != null and budgetYear != ''">
+            AND bi.budget_year = #{budgetYear}
+        </if>
+        <if test="categoryType != null and categoryType != ''">
+            AND bi.category_type = #{categoryType}
+        </if>
+        <if test="level1CategoryId != null">
+            AND bc1.category_id = #{level1CategoryId}
+        </if>
+        <if test="level2CategoryId != null">
+            AND bi.parent_category_id = #{level2CategoryId}
+        </if>
+        <if test="itemName != null and itemName != ''">
+            AND bi.item_name LIKE CONCAT('%', #{itemName}, '%')
+        </if>
+        ORDER BY bi.budget_year DESC, bi.item_code
+    </select>
+
+    <!-- 根据二级分类编码查询最大项目编码 -->
+    <select id="selectMaxItemCodeByCategoryCode" resultType="String">
+        SELECT MAX(item_code) 
+        FROM budget_item 
+        WHERE parent_category_code = #{categoryCode}
+    </select>
+
+    <!-- 检查项目是否有预算编制或执行记录 -->
+    <select id="countBudgetsByItemId" resultType="int">
+        SELECT 
+            (SELECT COUNT(*) FROM budget WHERE item_id = #{itemId}) +
+            (SELECT COUNT(*) FROM budget_execution WHERE item_id = #{itemId})
+    </select>
+
     <insert id="insert" parameterType="com.hrp.common.entity.BudgetItem">
-        INSERT INTO budget_item (item_code, item_name, category_id, category_code, account_subject,
-                               is_centralized, allow_adjust, item_desc, is_stop, create_user)
-        VALUES (#{itemCode}, #{itemName}, #{categoryId}, #{categoryCode}, #{accountSubject},
-                #{isCentralized}, #{allowAdjust}, #{itemDesc}, #{isStop}, #{createUser})
+        INSERT INTO budget_item (item_code, item_name, budget_year, category_id, category_code, 
+                               category_type, parent_category_id, parent_category_code,
+                               account_subject, is_centralized, allow_adjust, item_desc, is_stop, create_user)
+        VALUES (#{itemCode}, #{itemName}, #{budgetYear}, #{categoryId}, #{categoryCode},
+                #{categoryType}, #{parentCategoryId}, #{parentCategoryCode},
+                #{accountSubject}, #{isCentralized}, #{allowAdjust}, #{itemDesc}, #{isStop}, #{createUser})
     </insert>
 
     <update id="updateById" parameterType="com.hrp.common.entity.BudgetItem">
         UPDATE budget_item
         <set>
             <if test="itemName != null">item_name = #{itemName},</if>
+            <if test="budgetYear != null">budget_year = #{budgetYear},</if>
             <if test="categoryId != null">category_id = #{categoryId},</if>
             <if test="categoryCode != null">category_code = #{categoryCode},</if>
+            <if test="categoryType != null">category_type = #{categoryType},</if>
+            <if test="parentCategoryId != null">parent_category_id = #{parentCategoryId},</if>
+            <if test="parentCategoryCode != null">parent_category_code = #{parentCategoryCode},</if>
             <if test="accountSubject != null">account_subject = #{accountSubject},</if>
             <if test="isCentralized != null">is_centralized = #{isCentralized},</if>
             <if test="allowAdjust != null">allow_adjust = #{allowAdjust},</if>
@@ -61,6 +131,11 @@
     </delete>
 
 </mapper>
+
+
+
+
+
 
 
 

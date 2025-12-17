@@ -1,6 +1,7 @@
 package com.hrp.budg.service;
 
 import com.hrp.common.entity.BudgetSubject;
+import com.hrp.common.entity.Dept;
 
 import java.util.List;
 
@@ -17,7 +18,15 @@ public interface BudgetSubjectService {
     boolean save(BudgetSubject budgetSubject);
     boolean update(BudgetSubject budgetSubject);
     boolean delete(Long id);
+    boolean stop(Long id);
+    boolean start(Long id);
+    List<Dept> getRelatedDepts(Long subjectId);
 }
+
+
+
+
+
 
 
 

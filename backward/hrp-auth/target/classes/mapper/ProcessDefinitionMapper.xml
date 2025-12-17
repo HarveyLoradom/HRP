@@ -7,6 +7,7 @@
         <result column="definition_key" property="definitionKey"/>
         <result column="definition_name" property="definitionName"/>
         <result column="definition_type" property="definitionType"/>
+        <result column="business_type" property="businessType"/>
         <result column="process_xml" property="processXml"/>
         <result column="process_json" property="processJson"/>
         <result column="version" property="version"/>
@@ -22,43 +23,43 @@
     </select>
 
     <select id="selectByKey" resultMap="BaseResultMap">
-        SELECT * FROM wf_process_definition WHERE definition_key = #{definitionKey} AND is_active = 1
+        SELECT * FROM wf_process_definition WHERE definition_key = #{definitionKey}
         ORDER BY version DESC LIMIT 1
     </select>
 
     <select id="selectByType" resultMap="BaseResultMap">
-        SELECT * FROM wf_process_definition WHERE definition_type = #{definitionType} AND is_active = 1
+        SELECT * FROM wf_process_definition WHERE definition_type = #{definitionType}
         ORDER BY version DESC
     </select>
 
     <select id="selectAll" resultMap="BaseResultMap">
-        SELECT * FROM wf_process_definition WHERE is_active = 1
+        SELECT * FROM wf_process_definition
         ORDER BY definition_type, version DESC
     </select>
 
     <select id="selectAllPage" resultMap="BaseResultMap">
-        SELECT * FROM wf_process_definition WHERE is_active = 1
+        SELECT * FROM wf_process_definition
         ORDER BY definition_type, version DESC
         LIMIT #{offset}, #{size}
     </select>
 
     <select id="countAll" resultType="java.lang.Long">
-        SELECT COUNT(*) FROM wf_process_definition WHERE is_active = 1
+        SELECT COUNT(*) FROM wf_process_definition
     </select>
 
     <select id="selectByTypePage" resultMap="BaseResultMap">
-        SELECT * FROM wf_process_definition WHERE definition_type = #{definitionType} AND is_active = 1
+        SELECT * FROM wf_process_definition WHERE definition_type = #{definitionType}
         ORDER BY version DESC
         LIMIT #{offset}, #{size}
     </select>
 
     <select id="countByType" resultType="java.lang.Long">
-        SELECT COUNT(*) FROM wf_process_definition WHERE definition_type = #{definitionType} AND is_active = 1
+        SELECT COUNT(*) FROM wf_process_definition WHERE definition_type = #{definitionType}
     </select>
 
     <insert id="insert" parameterType="com.hrp.common.entity.ProcessDefinition">
-        INSERT INTO wf_process_definition (definition_key, definition_name, definition_type, process_xml, process_json, version, is_active, description, create_user, create_time)
-        VALUES (#{definitionKey}, #{definitionName}, #{definitionType}, #{processXml}, #{processJson}, #{version}, #{isActive}, #{description}, #{createUser}, NOW())
+        INSERT INTO wf_process_definition (definition_key, definition_name, definition_type, business_type, process_xml, process_json, version, is_active, description, create_user, create_time)
+        VALUES (#{definitionKey}, #{definitionName}, #{definitionType}, #{businessType}, #{processXml}, #{processJson}, #{version}, #{isActive}, #{description}, #{createUser}, NOW())
     </insert>
 
     <update id="updateById" parameterType="com.hrp.common.entity.ProcessDefinition">
@@ -66,6 +67,7 @@
         <set>
             <if test="definitionName != null">definition_name = #{definitionName},</if>
             <if test="definitionType != null">definition_type = #{definitionType},</if>
+            <if test="businessType != null">business_type = #{businessType},</if>
             <if test="processXml != null">process_xml = #{processXml},</if>
             <if test="processJson != null">process_json = #{processJson},</if>
             <if test="version != null">version = #{version},</if>

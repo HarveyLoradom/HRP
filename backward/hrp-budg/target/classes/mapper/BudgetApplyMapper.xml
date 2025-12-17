@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.budg.mapper.BudgetApplyMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.BudgetApply">
+        <id column="apply_id" property="applyId"/>
+        <result column="apply_no" property="applyNo"/>
+        <result column="budget_year" property="budgetYear"/>
+        <result column="item_id" property="itemId"/>
+        <result column="item_code" property="itemCode"/>
+        <result column="item_name" property="itemName"/>
+        <result column="subject_id" property="subjectId"/>
+        <result column="subject_code" property="subjectCode"/>
+        <result column="subject_name" property="subjectName"/>
+        <result column="apply_amount" property="applyAmount"/>
+        <result column="apply_reason" property="applyReason"/>
+        <result column="status" property="status"/>
+        <result column="process_definition_id" property="processDefinitionId"/>
+        <result column="process_instance_id" property="processInstanceId"/>
+        <result column="applicant_id" property="applicantId"/>
+        <result column="applicant_code" property="applicantCode"/>
+        <result column="applicant_name" property="applicantName"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_code" property="deptCode"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM budget_apply WHERE apply_id = #{id}
+    </select>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT * FROM budget_apply ORDER BY create_time DESC LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countAll" resultType="long">
+        SELECT COUNT(*) FROM budget_apply
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.BudgetApply" useGeneratedKeys="true" keyProperty="applyId">
+        INSERT INTO budget_apply (apply_no, budget_year, item_id, item_code, item_name,
+                                 subject_id, subject_code, subject_name, apply_amount, apply_reason,
+                                 status, process_definition_id, process_instance_id,
+                                 applicant_id, applicant_code, applicant_name,
+                                 dept_id, dept_code, dept_name, create_user, create_time, update_time)
+        VALUES (#{applyNo}, #{budgetYear}, #{itemId}, #{itemCode}, #{itemName},
+                #{subjectId}, #{subjectCode}, #{subjectName}, #{applyAmount}, #{applyReason},
+                #{status}, #{processDefinitionId}, #{processInstanceId},
+                #{applicantId}, #{applicantCode}, #{applicantName},
+                #{deptId}, #{deptCode}, #{deptName}, #{createUser}, #{createTime}, #{updateTime})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.BudgetApply">
+        UPDATE budget_apply
+        <set>
+            <if test="applyNo != null">apply_no = #{applyNo},</if>
+            <if test="budgetYear != null">budget_year = #{budgetYear},</if>
+            <if test="itemId != null">item_id = #{itemId},</if>
+            <if test="itemCode != null">item_code = #{itemCode},</if>
+            <if test="itemName != null">item_name = #{itemName},</if>
+            <if test="subjectId != null">subject_id = #{subjectId},</if>
+            <if test="subjectCode != null">subject_code = #{subjectCode},</if>
+            <if test="subjectName != null">subject_name = #{subjectName},</if>
+            <if test="applyAmount != null">apply_amount = #{applyAmount},</if>
+            <if test="applyReason != null">apply_reason = #{applyReason},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="processDefinitionId != null">process_definition_id = #{processDefinitionId},</if>
+            <if test="processInstanceId != null">process_instance_id = #{processInstanceId},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </set>
+        WHERE apply_id = #{applyId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM budget_apply WHERE apply_id = #{id}
+    </delete>
+
+</mapper>
+

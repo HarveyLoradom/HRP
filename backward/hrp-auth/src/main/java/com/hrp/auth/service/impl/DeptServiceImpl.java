@@ -62,10 +62,8 @@ public class DeptServiceImpl implements DeptService {
     @Override
     @Transactional
     public boolean delete(Long deptId) {
-        Dept dept = new Dept();
-        dept.setDeptId(deptId);
-        dept.setIsStop(1L);
-        return deptMapper.updateById(dept) > 0;
+        // 物理删除部门
+        return deptMapper.deleteById(deptId) > 0;
     }
 
     @Override
@@ -80,6 +78,29 @@ public class DeptServiceImpl implements DeptService {
         List<Dept> records = deptMapper.selectAllPage(offset, size);
         Long total = deptMapper.countAll();
         return PageResult.of(records, total, size, page);
+    }
+
+    @Override
+    @Transactional
+    public com.hrp.common.entity.Result<String> toggleStatus(Long deptId) {
+        Dept dept = deptMapper.selectById(deptId);
+        if (dept == null) {
+            return com.hrp.common.entity.Result.error("部门不存在");
+        }
+        Long current = dept.getIsStop() == null ? 0L : dept.getIsStop();
+        Long target = current != null && current == 1L ? 0L : 1L;
+
+        Dept update = new Dept();
+        update.setDeptId(deptId);
+        update.setIsStop(target);
+        update.setUpdateTime(LocalDateTime.now());
+
+        boolean success = deptMapper.updateById(update) > 0;
+        if (!success) {
+            return com.hrp.common.entity.Result.error("更新状态失败");
+        }
+        String msg = target == 0L ? "启用成功" : "停用成功";
+        return com.hrp.common.entity.Result.success(msg);
     }
 
     @Override

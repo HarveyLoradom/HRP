@@ -111,6 +111,18 @@ public class DeptController {
     }
 
     /**
+     * 启用/停用部门
+     */
+    @PutMapping("/toggle-status/{deptId}")
+    public Result<String> toggleStatus(@PathVariable Long deptId) {
+        com.hrp.common.entity.Result<String> result = deptService.toggleStatus(deptId);
+        if (result.getCode() != 200) {
+            throw new BusinessException(result.getCode(), result.getMessage());
+        }
+        return Result.success(result.getMessage());
+    }
+
+    /**
      * 下载部门导入模板
      */
     @GetMapping("/template")

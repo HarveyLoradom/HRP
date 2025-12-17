@@ -515,7 +515,7 @@ public class UserServiceImpl implements UserService {
             }
 
             try {
-                // Excel列顺序：工号、姓名、性别、身份证号、出生日期、手机号、邮箱、部门ID、部门编码、用户类型、职工类型
+                // Excel列顺序：工号、姓名、性别、身份证号、出生日期、手机号、邮箱、部门编码、用户类型、职工类型
                 if (row.size() < 10) {
                     failCount++;
                     errorMsg.append("第").append(i + 1).append("行：数据列数不足，请检查Excel格式\n");
@@ -529,7 +529,7 @@ public class UserServiceImpl implements UserService {
                 String empBirthdayStr = row.get(4) != null ? row.get(4).trim() : "";
                 String phone = row.get(5) != null ? row.get(5).trim() : "";
                 String email = row.get(6) != null ? row.get(6).trim() : "";
-                String deptIdStr = row.get(7) != null ? row.get(7).trim() : "";
+                String deptCodeStr = row.get(7) != null ? row.get(7).trim() : "";
                 String typeStr = row.get(8) != null ? row.get(8).trim() : "";
                 String empTypeIdStr = row.get(9) != null ? row.get(9).trim() : "";
 
@@ -602,26 +602,18 @@ public class UserServiceImpl implements UserService {
                 employee.setEmpBirthday(empBirthday);
                 employee.setEmpPhone(phone.isEmpty() ? null : phone);
                 employee.setEmpEmail(email.isEmpty() ? null : email);
-                // 解析部门ID
+                // 解析部门编码，查询出部门ID和编码，一并写入 sys_emp / sys_user
                 Long deptId = null;
                 String deptCode = null;
-                if (!deptIdStr.isEmpty()) {
-                    try {
-                        deptId = Long.parseLong(deptIdStr);
-                        // 根据部门ID查询部门信息
-                        Dept dept = deptService.getById(deptId);
-                        if (dept != null) {
-                            deptCode = dept.getDeptCode();
-                        } else {
-                            failCount++;
-                            errorMsg.append("第").append(i + 1).append("行：部门ID").append(deptId).append("不存在\n");
-                            continue;
-                        }
-                    } catch (NumberFormatException e) {
+                if (!deptCodeStr.isEmpty()) {
+                    Dept dept = deptService.getByCode(deptCodeStr);
+                    if (dept == null) {
                         failCount++;
-                        errorMsg.append("第").append(i + 1).append("行：部门ID格式错误\n");
+                        errorMsg.append("第").append(i + 1).append("行：部门编码").append(deptCodeStr).append("不存在\n");
                         continue;
                     }
+                    deptId = dept.getDeptId();
+                    deptCode = dept.getDeptCode();
                 }
                 employee.setDeptId(deptId);
                 employee.setDeptCode(deptCode);

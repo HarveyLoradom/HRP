@@ -35,6 +35,30 @@ public class BudgetItemMapperImpl implements BudgetItemMapper {
     }
 
     @Override
+    public List<BudgetItem> selectPageByConditions(String budgetYear, String categoryType, 
+                                                   Long level1CategoryId, Long level2CategoryId, String itemName) {
+        return sqlSessionTemplate.selectList(NAMESPACE + ".selectPageByConditions", 
+            new java.util.HashMap<String, Object>() {{
+                put("budgetYear", budgetYear);
+                put("categoryType", categoryType);
+                put("level1CategoryId", level1CategoryId);
+                put("level2CategoryId", level2CategoryId);
+                put("itemName", itemName);
+            }});
+    }
+
+    @Override
+    public String selectMaxItemCodeByCategoryCode(String categoryCode) {
+        return sqlSessionTemplate.selectOne(NAMESPACE + ".selectMaxItemCodeByCategoryCode", categoryCode);
+    }
+
+    @Override
+    public int countBudgetsByItemId(Long itemId) {
+        Integer count = sqlSessionTemplate.selectOne(NAMESPACE + ".countBudgetsByItemId", itemId);
+        return count != null ? count : 0;
+    }
+
+    @Override
     public int insert(BudgetItem budgetItem) {
         return sqlSessionTemplate.insert(NAMESPACE + ".insert", budgetItem);
     }
@@ -49,6 +73,11 @@ public class BudgetItemMapperImpl implements BudgetItemMapper {
         return sqlSessionTemplate.delete(NAMESPACE + ".deleteById", id);
     }
 }
+
+
+
+
+
 
 
 

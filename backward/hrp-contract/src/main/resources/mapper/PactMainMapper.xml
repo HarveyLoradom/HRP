@@ -85,7 +85,7 @@
     <select id="selectByApprover" resultMap="BaseResultMap">
         SELECT DISTINCT p.* FROM pact_main p
         INNER JOIN wf_process_instance pi ON p.process_instance_id = pi.instance_id
-        INNER JOIN wf_process_task pt ON pi.instance_id = pt.instance_id
+        INNER JOIN wf_process_task pt ON pi.instance_id = pt.process_instance_id
         WHERE pt.assignee_user_id = #{userId}
         AND pt.task_status = 'PENDING'
         AND p.status = 'PENDING'

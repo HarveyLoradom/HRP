@@ -153,6 +153,59 @@ const routes = [
         name: 'BudgetItem',
         component: () => import('../views/budg/BudgetItem.vue')
       },
+      {
+        path: '/hrp/budg/category',
+        name: 'BudgetCategory',
+        component: () => import('../views/budg/BudgetCategory.vue')
+      },
+      {
+        path: '/hrp/budg/project',
+        name: 'BudgetProject',
+        component: () => import('../views/budg/BudgetProject.vue')
+      },
+      // 预算综合管理
+      {
+        path: '/hrp/budg/apply',
+        name: 'BudgetApply',
+        component: () => import('../views/budg/BudgetApply.vue')
+      },
+      {
+        path: '/hrp/budg/approval',
+        name: 'BudgetApproval',
+        component: () => import('../views/budg/BudgetApproval.vue')
+      },
+      {
+        path: '/hrp/budg/detail',
+        name: 'BudgetDetail',
+        component: () => import('../views/budg/BudgetDetail.vue')
+      },
+      // 预算管理 - 预算流程配置与参数设置
+      {
+        path: '/hrp/budg/process',
+        name: 'BudgetProcess',
+        component: () => import('../views/budg/BudgetProcess.vue')
+      },
+      {
+        path: '/hrp/budg/param',
+        name: 'BudgetParam',
+        component: () => import('../views/budg/BudgetParam.vue')
+      },
+      // 预算管理 - 预算执行与控制、调整与分析
+      {
+        path: '/hrp/budg/execution',
+        name: 'BudgetExecution',
+        component: () => import('../views/budg/BudgetExecution.vue')
+      },
+      {
+        path: '/hrp/budg/adjustment-manage',
+        name: 'BudgetAdjustmentManage',
+        component: () => import('../views/budg/BudgetAdjustmentManage.vue')
+      },
+      {
+        path: '/hrp/budg/analysis',
+        name: 'BudgetAnalysis',
+        component: () => import('../views/budg/BudgetAnalysis.vue')
+      },
       // 固定资产
       {
         path: '/hrp/asset/approval',
