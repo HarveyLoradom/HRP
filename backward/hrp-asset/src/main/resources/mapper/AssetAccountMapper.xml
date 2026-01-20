@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.asset.mapper.AssetAccountMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.AssetAccount">
+        <id column="id" property="id" />
+        <result column="asset_code" property="assetCode" />
+        <result column="asset_name" property="assetName" />
+        <result column="spec" property="spec" />
+        <result column="unit" property="unit" />
+        <result column="stock_num" property="stockNum" />
+        <result column="price" property="price" />
+        <result column="manufacturer" property="manufacturer" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <!-- 根据资产编码查询资产台账 -->
+    <select id="selectByAssetCode" resultMap="BaseResultMap">
+        SELECT id, asset_code, asset_name, spec, unit, stock_num, price, manufacturer, update_time
+        FROM asset_account
+        WHERE asset_code = #{assetCode}
+    </select>
+
+    <!-- 插入资产台账 -->
+    <insert id="insert" parameterType="com.hrp.common.entity.AssetAccount" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO asset_account (asset_code, asset_name, spec, unit, stock_num, price, manufacturer)
+        VALUES (#{assetCode}, #{assetName}, #{spec}, #{unit}, #{stockNum}, #{price}, #{manufacturer})
+    </insert>
+
+    <!-- 根据资产编码更新资产台账 -->
+    <update id="updateByAssetCode" parameterType="com.hrp.common.entity.AssetAccount">
+        UPDATE asset_account
+        <set>
+            <if test="assetName != null">asset_name = #{assetName},</if>
+            <if test="spec != null">spec = #{spec},</if>
+            <if test="unit != null">unit = #{unit},</if>
+            <if test="stockNum != null">stock_num = #{stockNum},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="manufacturer != null">manufacturer = #{manufacturer},</if>
+        </set>
+        WHERE asset_code = #{assetCode}
+    </update>
+
+    <!-- 根据资产编码删除资产台账 -->
+    <delete id="deleteByAssetCode">
+        DELETE FROM asset_account WHERE asset_code = #{assetCode}
+    </delete>
+
+    <!-- 分页查询资产台账（支持多条件查询，关联资产信息维护的查询条件） -->
+    <select id="selectByConditions" resultMap="BaseResultMap">
+        SELECT 
+            aa.id, aa.asset_code, aa.asset_name, aa.spec, aa.unit, 
+            aa.stock_num, aa.price, aa.manufacturer, aa.update_time
+        FROM asset_account aa
+        LEFT JOIN asset_item ai ON aa.asset_code = ai.asset_code
+        LEFT JOIN asset_category ac ON ai.category_id = ac.id
+        LEFT JOIN asset_category ac2 ON ac.parent_id = ac2.id
+        LEFT JOIN asset_category ac1 ON ac2.parent_id = ac1.id
+        WHERE 1=1
+        <if test="assetCode != null and assetCode != ''">
+            AND aa.asset_code LIKE CONCAT('%', #{assetCode}, '%')
+        </if>
+        <if test="assetName != null and assetName != ''">
+            AND aa.asset_name LIKE CONCAT('%', #{assetName}, '%')
+        </if>
+        <if test="spec != null and spec != ''">
+            AND aa.spec LIKE CONCAT('%', #{spec}, '%')
+        </if>
+        <if test="manufacturer != null and manufacturer != ''">
+            AND aa.manufacturer LIKE CONCAT('%', #{manufacturer}, '%')
+        </if>
+        <if test="level1Id != null">
+            AND ac1.id = #{level1Id}
+        </if>
+        <if test="level2Id != null">
+            AND ac2.id = #{level2Id}
+        </if>
+        <if test="categoryId != null">
+            AND ac.id = #{categoryId}
+        </if>
+        <if test="hasStock != null">
+            <if test="hasStock == true">
+                AND aa.stock_num > 0
+            </if>
+            <if test="hasStock == false">
+                AND (aa.stock_num = 0 OR aa.stock_num IS NULL)
+            </if>
+        </if>
+        ORDER BY aa.asset_code
+    </select>
+
+    <!-- 根据资产编码查询对应的入库单号、采购单号、申请单号（用于点击数量查看） -->
+    <select id="selectStorageInfoByAssetCode" resultType="java.util.HashMap">
+        SELECT
+            s.storage_no AS storageNo,
+            COALESCE(s.order_no, '') AS orderNo,
+            COALESCE(s.apply_no, '') AS applyNo,
+            MAX(s.create_time) AS createTime,
+            SUM(sd.storage_quantity) AS storageQuantity
+        FROM asset_in_storage_detail sd
+        INNER JOIN asset_in_storage s ON sd.storage_id = s.id
+        WHERE sd.asset_code = #{assetCode}
+          AND sd.storage_quantity > 0
+        GROUP BY s.storage_no, s.order_no, s.apply_no
+        ORDER BY MAX(s.create_time) DESC
+    </select>
+
+    <!-- 根据资产编码查询对应的领用单号和领用数量（用于点击数量查看出库信息） -->
+    <select id="selectReceiveInfoByAssetCode" resultType="java.util.HashMap">
+        SELECT
+            rm.receive_no AS receiveNo,
+            MAX(rd.create_time) AS createTime,
+            SUM(rd.receive_num) AS receiveQuantity
+        FROM asset_receive_detail rd
+        INNER JOIN asset_receive_main rm ON rd.receive_id = rm.id
+        WHERE rd.asset_code = #{assetCode}
+          AND rd.receive_num > 0
+        GROUP BY rm.receive_no
+        ORDER BY MAX(rd.create_time) DESC
+    </select>
+
+</mapper>
+

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.reimb.mapper.SupplierMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.Supplier">
+        <id column="supplier_id" property="supplierId"/>
+        <result column="supplier_code" property="supplierCode"/>
+        <result column="supplier_name" property="supplierName"/>
+        <result column="contact_person" property="contactPerson"/>
+        <result column="contact_phone" property="contactPhone"/>
+        <result column="contact_email" property="contactEmail"/>
+        <result column="address" property="address"/>
+        <result column="bank_name" property="bankName"/>
+        <result column="bank_account" property="bankAccount"/>
+        <result column="account_name" property="accountName"/>
+        <result column="tax_number" property="taxNumber"/>
+        <result column="is_stop" property="isStop"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM supplier WHERE supplier_id = #{id}
+    </select>
+
+    <select id="selectByCode" resultMap="BaseResultMap">
+        SELECT * FROM supplier WHERE supplier_code = #{code}
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM supplier ORDER BY supplier_code
+    </select>
+
+    <select id="selectByConditions" resultMap="BaseResultMap">
+        SELECT * FROM supplier
+        WHERE 1=1
+        <if test="supplierCode != null and supplierCode != ''">
+            AND supplier_code LIKE CONCAT('%', #{supplierCode}, '%')
+        </if>
+        <if test="supplierName != null and supplierName != ''">
+            AND supplier_name LIKE CONCAT('%', #{supplierName}, '%')
+        </if>
+        <if test="isStop != null">
+            AND is_stop = #{isStop}
+        </if>
+        ORDER BY supplier_code
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.Supplier" useGeneratedKeys="true" keyProperty="supplierId">
+        INSERT INTO supplier (supplier_code, supplier_name, contact_person, contact_phone, contact_email,
+                           address, bank_name, bank_account, account_name, tax_number, is_stop, create_user, create_time)
+        VALUES (#{supplierCode}, #{supplierName}, #{contactPerson}, #{contactPhone}, #{contactEmail},
+                #{address}, #{bankName}, #{bankAccount}, #{accountName}, #{taxNumber}, #{isStop}, #{createUser}, NOW())
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.Supplier">
+        UPDATE supplier
+        <set>
+            <if test="supplierCode != null">supplier_code = #{supplierCode},</if>
+            <if test="supplierName != null">supplier_name = #{supplierName},</if>
+            <if test="contactPerson != null">contact_person = #{contactPerson},</if>
+            <if test="contactPhone != null">contact_phone = #{contactPhone},</if>
+            <if test="contactEmail != null">contact_email = #{contactEmail},</if>
+            <if test="address != null">address = #{address},</if>
+            <if test="bankName != null">bank_name = #{bankName},</if>
+            <if test="bankAccount != null">bank_account = #{bankAccount},</if>
+            <if test="accountName != null">account_name = #{accountName},</if>
+            <if test="taxNumber != null">tax_number = #{taxNumber},</if>
+            <if test="isStop != null">is_stop = #{isStop},</if>
+            update_time = NOW()
+        </set>
+        WHERE supplier_id = #{supplierId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM supplier WHERE supplier_id = #{id}
+    </delete>
+
+</mapper>
+

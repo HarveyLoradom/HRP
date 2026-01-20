@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.budg.mapper.BudgetExecutionMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.BudgetExecution">
+        <id column="execution_id" property="executionId"/>
+        <result column="execution_no" property="executionNo"/>
+        <result column="budget_id" property="budgetId"/>
+        <result column="budget_no" property="budgetNo"/>
+        <result column="subject_id" property="subjectId"/>
+        <result column="item_id" property="itemId"/>
+        <result column="execution_type" property="executionType"/>
+        <result column="execution_amount" property="executionAmount"/>
+        <result column="execution_date" property="executionDate"/>
+        <result column="business_type" property="businessType"/>
+        <result column="business_id" property="businessId"/>
+        <result column="business_no" property="businessNo"/>
+        <result column="execution_reason" property="executionReason"/>
+        <result column="status" property="status"/>
+        <result column="audit_user" property="auditUser"/>
+        <result column="audit_time" property="auditTime"/>
+        <result column="audit_opinion" property="auditOpinion"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <resultMap id="DetailResultMap" type="com.hrp.common.entity.BudgetExecution" extends="BaseResultMap">
+        <result column="subject_name" property="subjectName"/>
+        <result column="item_name" property="itemName"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="DetailResultMap">
+        SELECT e.*, s.subject_name, i.item_name
+        FROM budget_execution e
+        LEFT JOIN budget_subject s ON e.subject_id = s.subject_id
+        LEFT JOIN budget_item i ON e.item_id = i.item_id
+        WHERE e.execution_id = #{id}
+    </select>
+
+    <select id="selectByNo" resultMap="DetailResultMap">
+        SELECT e.*, s.subject_name, i.item_name
+        FROM budget_execution e
+        LEFT JOIN budget_subject s ON e.subject_id = s.subject_id
+        LEFT JOIN budget_item i ON e.item_id = i.item_id
+        WHERE e.execution_no = #{no}
+    </select>
+
+    <select id="selectAll" resultMap="DetailResultMap">
+        SELECT e.*, s.subject_name, i.item_name
+        FROM budget_execution e
+        LEFT JOIN budget_subject s ON e.subject_id = s.subject_id
+        LEFT JOIN budget_item i ON e.item_id = i.item_id
+        ORDER BY e.execution_date DESC, e.execution_no
+    </select>
+
+    <select id="selectByBudgetId" resultMap="DetailResultMap">
+        SELECT e.*, s.subject_name, i.item_name
+        FROM budget_execution e
+        LEFT JOIN budget_subject s ON e.subject_id = s.subject_id
+        LEFT JOIN budget_item i ON e.item_id = i.item_id
+        WHERE e.budget_id = #{budgetId}
+        ORDER BY e.execution_date DESC
+    </select>
+
+    <select id="selectByBusinessId" resultMap="DetailResultMap">
+        SELECT e.*, s.subject_name, i.item_name
+        FROM budget_execution e
+        LEFT JOIN budget_subject s ON e.subject_id = s.subject_id
+        LEFT JOIN budget_item i ON e.item_id = i.item_id
+        WHERE e.business_type = #{businessType} AND e.business_id = #{businessId}
+        ORDER BY e.execution_date DESC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.BudgetExecution">
+        INSERT INTO budget_execution (execution_no, budget_id, budget_no, subject_id, item_id, execution_type,
+                                     execution_amount, execution_date, business_type, business_id, business_no,
+                                     execution_reason, status, create_user)
+        VALUES (#{executionNo}, #{budgetId}, #{budgetNo}, #{subjectId}, #{itemId}, #{executionType},
+                #{executionAmount}, #{executionDate}, #{businessType}, #{businessId}, #{businessNo},
+                #{executionReason}, #{status}, #{createUser})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.BudgetExecution">
+        UPDATE budget_execution
+        <set>
+            <if test="executionAmount != null">execution_amount = #{executionAmount},</if>
+            <if test="executionDate != null">execution_date = #{executionDate},</if>
+            <if test="executionReason != null">execution_reason = #{executionReason},</if>
+            <if test="attachment != null">attachment = #{attachment},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="auditUser != null">audit_user = #{auditUser},</if>
+            <if test="auditTime != null">audit_time = #{auditTime},</if>
+            <if test="auditOpinion != null">audit_opinion = #{auditOpinion},</if>
+        </set>
+        WHERE execution_id = #{executionId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM budget_execution WHERE execution_id = #{id}
+    </delete>
+
+</mapper>
+

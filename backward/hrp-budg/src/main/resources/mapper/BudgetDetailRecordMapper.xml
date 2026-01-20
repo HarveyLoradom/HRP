@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.budg.mapper.BudgetDetailRecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.BudgetDetailRecord">
+        <id column="detail_id" property="detailId"/>
+        <result column="budget_year" property="budgetYear"/>
+        <result column="subject_id" property="subjectId"/>
+        <result column="subject_code" property="subjectCode"/>
+        <result column="subject_name" property="subjectName"/>
+        <result column="item_id" property="itemId"/>
+        <result column="item_code" property="itemCode"/>
+        <result column="item_name" property="itemName"/>
+        <result column="amount" property="amount"/>
+        <result column="detail_type" property="detailType"/>
+        <result column="business_id" property="businessId"/>
+        <result column="business_no" property="businessNo"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_code" property="deptCode"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="emp_id" property="empId"/>
+        <result column="emp_code" property="empCode"/>
+        <result column="emp_name" property="empName"/>
+        <result column="remark" property="remark"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM budget_detail WHERE detail_id = #{id}
+    </select>
+
+    <resultMap id="BaseResultMapWithRemaining" type="com.hrp.common.entity.BudgetDetailRecord" extends="BaseResultMap">
+        <result column="remaining_amount" property="remainingAmount" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <select id="selectByBusinessNo" resultMap="BaseResultMapWithRemaining">
+        SELECT 
+            bd.*,
+            -- 计算剩余可执行金额：预算总额 - 申请金额 - (执行金额 - 来自引用申请单的报账单的执行金额)
+            COALESCE((
+                SELECT 
+                    COALESCE(MAX(b.budget_amount), 0) 
+                    - COALESCE(SUM(CASE WHEN bdr.detail_type = 'APPLY' THEN bdr.amount ELSE 0 END), 0)
+                    - COALESCE(SUM(CASE 
+                        WHEN bdr.detail_type = 'PAYOUT' 
+                        AND (p.source_apply_no IS NULL OR p.source_apply_no = '')
+                        THEN bdr.amount 
+                        ELSE 0 
+                    END), 0)
+                FROM budget b
+                LEFT JOIN budget_detail bdr ON b.subject_id = bdr.subject_id AND b.item_id = bdr.item_id
+                LEFT JOIN ctrl_payout p ON p.payout_billcode = bdr.business_no
+                WHERE b.subject_id = bd.subject_id 
+                  AND b.item_id = bd.item_id
+                  AND (b.budget_year = bd.budget_year OR bd.budget_year IS NULL OR b.budget_year IS NULL)
+                GROUP BY b.subject_id, b.item_id
+            ), 0) as remaining_amount
+        FROM budget_detail bd
+        WHERE bd.business_no = #{businessNo} AND bd.amount > 0
+    </select>
+
+    <select id="selectAppliesBySubjectAndItem" resultMap="BaseResultMap">
+        SELECT DISTINCT business_no, business_id, amount, create_time
+        FROM budget_detail 
+        WHERE subject_code = #{subjectCode} 
+          AND item_code = #{itemCode}
+          AND detail_type = 'APPLY'
+          AND amount > 0
+        ORDER BY create_time DESC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.BudgetDetailRecord" useGeneratedKeys="true" keyProperty="detailId">
+        INSERT INTO budget_detail (
+            budget_year, subject_id, subject_code, subject_name,
+            item_id, item_code, item_name, amount, detail_type,
+            business_id, business_no,
+            dept_id, dept_code, dept_name, emp_id, emp_code, emp_name,
+            remark, create_user
+        )
+        VALUES (
+            #{budgetYear}, #{subjectId}, #{subjectCode}, #{subjectName},
+            #{itemId}, #{itemCode}, #{itemName}, #{amount}, #{detailType},
+            #{businessId}, #{businessNo},
+            #{deptId}, #{deptCode}, #{deptName}, #{empId}, #{empCode}, #{empName},
+            #{remark}, #{createUser}
+        )
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.BudgetDetailRecord">
+        UPDATE budget_detail
+        <set>
+            <if test="budgetYear != null">budget_year = #{budgetYear},</if>
+            <if test="subjectId != null">subject_id = #{subjectId},</if>
+            <if test="subjectCode != null">subject_code = #{subjectCode},</if>
+            <if test="subjectName != null">subject_name = #{subjectName},</if>
+            <if test="itemId != null">item_id = #{itemId},</if>
+            <if test="itemCode != null">item_code = #{itemCode},</if>
+            <if test="itemName != null">item_name = #{itemName},</if>
+            <if test="amount != null">amount = #{amount},</if>
+            <if test="detailType != null">detail_type = #{detailType},</if>
+            <if test="businessId != null">business_id = #{businessId},</if>
+            <if test="businessNo != null">business_no = #{businessNo},</if>
+            <if test="deptId != null">dept_id = #{deptId},</if>
+            <if test="deptCode != null">dept_code = #{deptCode},</if>
+            <if test="deptName != null">dept_name = #{deptName},</if>
+            <if test="empId != null">emp_id = #{empId},</if>
+            <if test="empCode != null">emp_code = #{empCode},</if>
+            <if test="empName != null">emp_name = #{empName},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE detail_id = #{detailId}
+    </update>
+
+    <delete id="cancelByBusinessNo">
+        DELETE FROM budget_detail
+        WHERE business_no = #{businessNo}
+    </delete>
+    
+    <delete id="cancelByBusinessId">
+        DELETE FROM budget_detail
+        WHERE business_id = #{businessId}
+    </delete>
+
+    <select id="selectByBusinessNoAndSubjectItemAndAmount" resultMap="BaseResultMap">
+        SELECT * FROM budget_detail
+        WHERE business_no = #{businessNo}
+          AND subject_id = #{subjectId}
+          AND item_id = #{itemId}
+          AND amount = #{amount}
+          AND detail_type = 'APPLY'
+        ORDER BY create_time DESC
+        LIMIT 1
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM budget_detail WHERE detail_id = #{id}
+    </delete>
+
+</mapper>
+

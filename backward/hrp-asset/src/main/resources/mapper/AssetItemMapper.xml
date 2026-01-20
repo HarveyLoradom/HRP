@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.asset.mapper.AssetItemMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.AssetItem">
+        <id column="id" property="id" />
+        <result column="asset_code" property="assetCode" />
+        <result column="category_id" property="categoryId" />
+        <result column="asset_name" property="assetName" />
+        <result column="spec" property="spec" />
+        <result column="manufacturer" property="manufacturer" />
+        <result column="unit" property="unit" />
+        <result column="price" property="price" />
+        <result column="status" property="status" />
+        <result column="create_user" property="createUser" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="category_name" property="categoryName" />
+    </resultMap>
+
+    <!-- 根据条件查询资产信息列表 -->
+    <select id="selectByConditions" resultMap="BaseResultMap">
+        SELECT 
+            ai.id,
+            ai.asset_code,
+            ai.category_id,
+            ai.asset_name,
+            ai.spec,
+            ai.manufacturer,
+            ai.unit,
+            ai.price,
+            ai.status,
+            ai.create_user,
+            ai.create_time,
+            ai.update_time,
+            ac3.category_name
+        FROM asset_item ai
+        LEFT JOIN asset_category ac3 ON ai.category_id = ac3.id
+        LEFT JOIN asset_category ac2 ON ac3.parent_id = ac2.id
+        LEFT JOIN asset_category ac1 ON ac2.parent_id = ac1.id
+        WHERE 1=1
+        <if test="assetCode != null and assetCode != ''">
+            AND ai.asset_code LIKE CONCAT('%', #{assetCode}, '%')
+        </if>
+        <if test="assetName != null and assetName != ''">
+            AND ai.asset_name LIKE CONCAT('%', #{assetName}, '%')
+        </if>
+        <choose>
+            <when test="categoryId != null">
+                <!-- 如果指定了三级分类ID，直接查询该三级分类下的资产 -->
+                AND ai.category_id = #{categoryId}
+            </when>
+            <when test="level2Id != null">
+                <!-- 如果指定了二级分类ID（且没有指定三级分类ID），查询该二级分类下所有三级分类的资产 -->
+                AND ac3.parent_id = #{level2Id}
+            </when>
+            <when test="level1Id != null">
+                <!-- 如果指定了一级分类ID（且没有指定二级、三级分类ID），查询该一级分类下所有二级分类的三级分类的资产 -->
+                AND ac2.parent_id = #{level1Id}
+            </when>
+        </choose>
+        <if test="status != null">
+            AND ai.status = #{status}
+        </if>
+        ORDER BY ai.asset_code
+    </select>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT 
+            ai.id,
+            ai.asset_code,
+            ai.category_id,
+            ai.asset_name,
+            ai.spec,
+            ai.manufacturer,
+            ai.unit,
+            ai.price,
+            ai.status,
+            ai.create_user,
+            ai.create_time,
+            ai.update_time,
+            ac.category_name
+        FROM asset_item ai
+        LEFT JOIN asset_category ac ON ai.category_id = ac.id
+        WHERE ai.id = #{id}
+    </select>
+
+    <!-- 根据编码查询 -->
+    <select id="selectByCode" resultMap="BaseResultMap">
+        SELECT * FROM asset_item WHERE asset_code = #{code}
+    </select>
+
+    <!-- 新增 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO asset_item (
+            asset_code, category_id, asset_name, spec, manufacturer, unit, price, status, create_user, create_time, update_time
+        ) VALUES (
+            #{assetCode}, #{categoryId}, #{assetName}, #{spec}, #{manufacturer}, #{unit}, #{price}, #{status}, #{createUser}, NOW(), NOW()
+        )
+    </insert>
+
+    <!-- 更新 -->
+    <update id="updateById">
+        UPDATE asset_item
+        <set>
+            <if test="assetCode != null">asset_code = #{assetCode},</if>
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="assetName != null">asset_name = #{assetName},</if>
+            <if test="spec != null">spec = #{spec},</if>
+            <if test="manufacturer != null">manufacturer = #{manufacturer},</if>
+            <if test="unit != null">unit = #{unit},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="status != null">status = #{status},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="deleteById">
+        DELETE FROM asset_item WHERE id = #{id}
+    </delete>
+
+    <!-- 查询指定分类下最大的编码 -->
+    <select id="selectMaxCodeByCategoryId" resultType="java.lang.String">
+        SELECT MAX(asset_code) FROM asset_item
+        WHERE category_id = #{categoryId}
+    </select>
+
+</mapper>
+

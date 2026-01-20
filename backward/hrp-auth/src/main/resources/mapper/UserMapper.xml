@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.auth.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.User">
+        <id column="id" property="id"/>
+        <result column="account" property="account"/>
+        <result column="name" property="name"/>
+        <result column="type" property="type"/>
+        <result column="phone" property="phone"/>
+        <result column="password" property="password"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="is_stop" property="isStop"/>
+        <result column="locked" property="locked"/>
+        <result column="emp_id" property="empId"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_code" property="deptCode"/>
+        <result column="dept_name" property="deptName"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT u.id, u.account, u.name, u.type, u.phone, TRIM(u.password) as password, 
+               u.create_user, u.create_time, u.update_time, u.is_stop,
+               COALESCE(ul.locked, 0) as locked,
+               e.emp_id,
+               COALESCE(e.dept_id, d.dept_id) as dept_id,
+               COALESCE(e.dept_code, d.dept_code, '') as dept_code, 
+               COALESCE(d.dept_name, '') as dept_name
+        FROM sys_user u
+        LEFT JOIN sys_user_login ul ON u.id = ul.user_id
+        INNER JOIN sys_emp e ON u.account = e.emp_code
+        LEFT JOIN sys_dept d ON (e.dept_id = d.dept_id OR (e.dept_code IS NOT NULL AND e.dept_code = d.dept_code))
+        WHERE u.id = #{id}
+    </select>
+
+    <select id="selectByAccount" resultMap="BaseResultMap">
+        SELECT u.id, u.account, u.name, u.type, u.phone, TRIM(u.password) as password, 
+               u.create_user, u.create_time, u.update_time, u.is_stop,
+               COALESCE(ul.locked, 0) as locked,
+               e.emp_id,
+               COALESCE(e.dept_id, d.dept_id) as dept_id,
+               COALESCE(e.dept_code, d.dept_code, '') as dept_code, 
+               COALESCE(d.dept_name, '') as dept_name
+        FROM sys_user u
+        LEFT JOIN sys_user_login ul ON u.id = ul.user_id
+        INNER JOIN sys_emp e ON u.account = e.emp_code
+        LEFT JOIN sys_dept d ON (e.dept_id = d.dept_id OR (e.dept_code IS NOT NULL AND e.dept_code = d.dept_code))
+        WHERE u.account = #{account}
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT u.id, u.account, u.name, u.type, u.phone, TRIM(u.password) as password, 
+               u.create_user, u.create_time, u.update_time, u.is_stop,
+               COALESCE(ul.locked, 0) as locked,
+               e.emp_id,
+               COALESCE(e.dept_id, d.dept_id) as dept_id,
+               COALESCE(e.dept_code, d.dept_code, '') as dept_code, 
+               COALESCE(d.dept_name, '') as dept_name
+        FROM sys_user u
+        LEFT JOIN sys_user_login ul ON u.id = ul.user_id
+        INNER JOIN sys_emp e ON u.account = e.emp_code
+        LEFT JOIN sys_dept d ON (e.dept_id = d.dept_id OR (e.dept_code IS NOT NULL AND e.dept_code = d.dept_code))
+        WHERE 1=1
+        <if test="isStop != null">
+            AND (u.is_stop = #{isStop} OR (u.is_stop IS NULL AND #{isStop} = 0))
+        </if>
+        <if test="isStop == null">
+            AND (u.is_stop = 0 OR u.is_stop IS NULL)
+        </if>
+        ORDER BY u.create_time DESC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.User">
+        INSERT INTO sys_user (id, account, name, type, phone, password, create_user, is_stop)
+        VALUES (#{id}, #{account}, #{name}, #{type}, #{phone}, #{password}, #{createUser}, #{isStop})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.User">
+        UPDATE sys_user
+        <set>
+            <if test="account != null">account = #{account},</if>
+            <if test="name != null">name = #{name},</if>
+            <if test="type != null">type = #{type},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="isStop != null">is_stop = #{isStop},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM sys_user WHERE id = #{id}
+    </delete>
+
+</mapper>
+

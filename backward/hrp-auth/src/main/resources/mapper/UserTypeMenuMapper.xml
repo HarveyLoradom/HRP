@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.auth.mapper.UserTypeMenuMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.UserTypeMenu">
+        <id column="id" property="id"/>
+        <result column="user_type" property="userType"/>
+        <result column="menu_id" property="menuId"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="selectByUserType" resultMap="BaseResultMap">
+        SELECT * FROM sys_user_type_menu WHERE user_type = #{userType}
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.UserTypeMenu">
+        INSERT INTO sys_user_type_menu (user_type, menu_id)
+        VALUES (#{userType}, #{menuId})
+    </insert>
+
+    <delete id="deleteByUserType">
+        DELETE FROM sys_user_type_menu WHERE user_type = #{userType}
+    </delete>
+
+    <delete id="deleteByUserTypeAndMenuId">
+        DELETE FROM sys_user_type_menu WHERE user_type = #{userType} AND menu_id = #{menuId}
+    </delete>
+
+</mapper>
+

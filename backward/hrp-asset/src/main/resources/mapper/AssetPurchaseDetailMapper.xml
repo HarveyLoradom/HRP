@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.asset.mapper.AssetPurchaseDetailMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.AssetPurchaseDetail">
+        <id column="id" property="id"/>
+        <result column="purchase_id" property="purchaseId"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="apply_detail_id" property="applyDetailId"/>
+        <result column="asset_code" property="assetCode"/>
+        <result column="asset_name" property="assetName"/>
+        <result column="spec" property="spec"/>
+        <result column="manufacturer" property="manufacturer"/>
+        <result column="unit" property="unit"/>
+        <result column="apply_quantity" property="applyQuantity"/>
+        <result column="purchase_quantity" property="purchaseQuantity"/>
+        <result column="price" property="price"/>
+        <result column="total_price" property="totalPrice"/>
+        <result column="remark" property="remark"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectByPurchaseId" resultMap="BaseResultMap">
+        SELECT id, purchase_id, order_no, apply_detail_id, asset_code, asset_name, spec, manufacturer, unit,
+               apply_quantity, purchase_quantity, price, total_price, remark, create_time, update_time
+        FROM asset_purchase_detail
+        WHERE purchase_id = #{purchaseId}
+        ORDER BY id ASC
+    </select>
+
+    <select id="selectByOrderNo" resultMap="BaseResultMap">
+        SELECT id, purchase_id, order_no, apply_detail_id, asset_code, asset_name, spec, manufacturer, unit,
+               apply_quantity, purchase_quantity, price, total_price, remark, create_time, update_time
+        FROM asset_purchase_detail
+        WHERE order_no = #{orderNo}
+        ORDER BY id ASC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.AssetPurchaseDetail" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO asset_purchase_detail (purchase_id, order_no, apply_detail_id, asset_code, asset_name, spec, manufacturer, unit,
+                                          apply_quantity, purchase_quantity, price, total_price, remark)
+        VALUES (#{purchaseId}, #{orderNo}, #{applyDetailId}, #{assetCode}, #{assetName}, #{spec}, #{manufacturer}, #{unit},
+                #{applyQuantity}, #{purchaseQuantity}, #{price}, #{totalPrice}, #{remark})
+    </insert>
+
+    <insert id="insertBatch" parameterType="java.util.List">
+        INSERT INTO asset_purchase_detail (purchase_id, order_no, apply_detail_id, asset_code, asset_name, spec, manufacturer, unit,
+                                          apply_quantity, purchase_quantity, price, total_price, remark)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.purchaseId}, #{item.orderNo}, #{item.applyDetailId}, #{item.assetCode}, #{item.assetName}, #{item.spec}, #{item.manufacturer}, #{item.unit},
+             #{item.applyQuantity}, #{item.purchaseQuantity}, #{item.price}, #{item.totalPrice}, #{item.remark})
+        </foreach>
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.AssetPurchaseDetail">
+        UPDATE asset_purchase_detail
+        <set>
+            <if test="assetCode != null">asset_code = #{assetCode},</if>
+            <if test="assetName != null">asset_name = #{assetName},</if>
+            <if test="spec != null">spec = #{spec},</if>
+            <if test="manufacturer != null">manufacturer = #{manufacturer},</if>
+            <if test="unit != null">unit = #{unit},</if>
+            <if test="applyQuantity != null">apply_quantity = #{applyQuantity},</if>
+            <if test="purchaseQuantity != null">purchase_quantity = #{purchaseQuantity},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="totalPrice != null">total_price = #{totalPrice},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteByPurchaseId">
+        DELETE FROM asset_purchase_detail WHERE purchase_id = #{purchaseId}
+    </delete>
+
+    <delete id="deleteById">
+        DELETE FROM asset_purchase_detail WHERE id = #{id}
+    </delete>
+
+</mapper>
+

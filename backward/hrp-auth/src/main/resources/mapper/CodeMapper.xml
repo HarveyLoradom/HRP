@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.auth.mapper.CodeMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.Code">
+        <id column="id" property="id"/>
+        <result column="code_value" property="codeValue"/>
+        <result column="code_name" property="codeName"/>
+        <result column="code_type" property="codeType"/>
+        <result column="code_type_name" property="codeTypeName"/>
+        <result column="is_stop" property="isStop"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM sys_code WHERE id = #{id}
+    </select>
+
+    <select id="selectByCodeName" resultMap="BaseResultMap">
+        SELECT * FROM sys_code WHERE code_name = #{codeName} LIMIT 1
+    </select>
+
+    <select id="selectByType" resultMap="BaseResultMap">
+        SELECT * FROM sys_code
+        WHERE code_type = #{codeType}
+        <if test="isStop != null">
+            AND (is_stop = #{isStop} OR (is_stop IS NULL AND #{isStop} = 0))
+        </if>
+        <if test="isStop == null">
+            AND (is_stop = 0 OR is_stop IS NULL)
+        </if>
+        ORDER BY code_value ASC
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM sys_code
+        WHERE 1=1
+        <if test="isStop != null">
+            AND (is_stop = #{isStop} OR (is_stop IS NULL AND #{isStop} = 0))
+        </if>
+        <if test="isStop == null">
+            AND (is_stop = 0 OR is_stop IS NULL)
+        </if>
+        ORDER BY code_type, code_value ASC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.Code">
+        INSERT INTO sys_code (id, code_value, code_name, code_type, code_type_name, is_stop, create_user, create_time)
+        VALUES (#{id}, #{codeValue}, #{codeName}, #{codeType}, #{codeTypeName}, #{isStop}, #{createUser}, NOW())
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.Code">
+        UPDATE sys_code
+        <set>
+            <if test="codeValue != null">code_value = #{codeValue},</if>
+            <if test="codeName != null">code_name = #{codeName},</if>
+            <if test="codeType != null">code_type = #{codeType},</if>
+            <if test="codeTypeName != null">code_type_name = #{codeTypeName},</if>
+            <if test="isStop != null">is_stop = #{isStop},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM sys_code WHERE id = #{id}
+    </delete>
+
+    <select id="selectAllPage" resultMap="BaseResultMap">
+        SELECT * FROM sys_code
+        WHERE 1=1
+        <if test="isStop != null">
+            AND (is_stop = #{isStop} OR (is_stop IS NULL AND #{isStop} = 0))
+        </if>
+        <if test="isStop == null">
+            AND (is_stop = 0 OR is_stop IS NULL)
+        </if>
+        ORDER BY code_type, code_value ASC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="selectByTypePage" resultMap="BaseResultMap">
+        SELECT * FROM sys_code
+        WHERE code_type = #{codeType}
+        <if test="isStop != null">
+            AND (is_stop = #{isStop} OR (is_stop IS NULL AND #{isStop} = 0))
+        </if>
+        <if test="isStop == null">
+            AND (is_stop = 0 OR is_stop IS NULL)
+        </if>
+        ORDER BY code_value ASC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countAll" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM sys_code
+        WHERE 1=1
+        <if test="isStop != null">
+            AND (is_stop = #{isStop} OR (is_stop IS NULL AND #{isStop} = 0))
+        </if>
+        <if test="isStop == null">
+            AND (is_stop = 0 OR is_stop IS NULL)
+        </if>
+    </select>
+
+    <select id="countByType" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM sys_code
+        WHERE code_type = #{codeType}
+        <if test="isStop != null">
+            AND (is_stop = #{isStop} OR (is_stop IS NULL AND #{isStop} = 0))
+        </if>
+        <if test="isStop == null">
+            AND (is_stop = 0 OR is_stop IS NULL)
+        </if>
+    </select>
+
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+

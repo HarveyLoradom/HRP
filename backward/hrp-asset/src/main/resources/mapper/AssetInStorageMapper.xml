@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.asset.mapper.AssetInStorageMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.AssetInStorage">
+        <id column="id" property="id"/>
+        <result column="storage_no" property="storageNo"/>
+        <result column="purchase_id" property="purchaseId"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="apply_no" property="applyNo"/>
+        <result column="storage_date" property="storageDate"/>
+        <result column="storage_status" property="storageStatus"/>
+        <result column="operator_id" property="operatorId"/>
+        <result column="operator_name" property="operatorName"/>
+        <result column="total_amount" property="totalAmount"/>
+        <result column="remark" property="remark"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT id, storage_no, purchase_id, order_no, apply_no, storage_date, storage_status,
+               operator_id, operator_name, total_amount, remark, create_user, create_time, update_time
+        FROM asset_in_storage
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByStorageNo" resultMap="BaseResultMap">
+        SELECT id, storage_no, purchase_id, order_no, apply_no, storage_date, storage_status,
+               operator_id, operator_name, total_amount, remark, create_user, create_time, update_time
+        FROM asset_in_storage
+        WHERE storage_no = #{storageNo}
+    </select>
+
+    <select id="selectByPurchaseId" resultMap="BaseResultMap">
+        SELECT id, storage_no, purchase_id, order_no, apply_no, storage_date, storage_status,
+               operator_id, operator_name, total_amount, remark, create_user, create_time, update_time
+        FROM asset_in_storage
+        WHERE purchase_id = #{purchaseId}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByOrderNo" resultMap="BaseResultMap">
+        SELECT id, storage_no, purchase_id, order_no, apply_no, storage_date, storage_status,
+               operator_id, operator_name, total_amount, remark, create_user, create_time, update_time
+        FROM asset_in_storage
+        WHERE order_no = #{orderNo}
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectByConditions" resultMap="BaseResultMap">
+        SELECT id, storage_no, purchase_id, order_no, apply_no, storage_date, storage_status,
+               operator_id, operator_name, total_amount, remark, create_user, create_time, update_time
+        FROM asset_in_storage
+        WHERE 1=1
+        <if test="storageNo != null and storageNo != ''">
+            AND storage_no LIKE CONCAT('%', #{storageNo}, '%')
+        </if>
+        <if test="orderNo != null and orderNo != ''">
+            AND order_no LIKE CONCAT('%', #{orderNo}, '%')
+        </if>
+        <if test="applyNo != null and applyNo != ''">
+            AND apply_no LIKE CONCAT('%', #{applyNo}, '%')
+        </if>
+        <if test="storageStatus != null and storageStatus != ''">
+            AND storage_status = #{storageStatus}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND DATE(storage_date) &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND DATE(storage_date) &lt;= #{endDate}
+        </if>
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="selectMaxStorageNoByPrefix" resultType="java.lang.String">
+        SELECT MAX(storage_no) 
+        FROM asset_in_storage 
+        WHERE storage_no LIKE CONCAT(#{prefix}, '%')
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.AssetInStorage" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO asset_in_storage (storage_no, purchase_id, order_no, apply_no, storage_date, storage_status,
+                                     operator_id, operator_name, total_amount, remark, create_user)
+        VALUES (#{storageNo}, #{purchaseId}, #{orderNo}, #{applyNo}, #{storageDate}, #{storageStatus},
+                #{operatorId}, #{operatorName}, #{totalAmount}, #{remark}, #{createUser})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.AssetInStorage">
+        UPDATE asset_in_storage
+        <set>
+            <if test="storageDate != null">storage_date = #{storageDate},</if>
+            <if test="storageStatus != null">storage_status = #{storageStatus},</if>
+            <if test="operatorId != null">operator_id = #{operatorId},</if>
+            <if test="operatorName != null">operator_name = #{operatorName},</if>
+            <if test="totalAmount != null">total_amount = #{totalAmount},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM asset_in_storage WHERE id = #{id}
+    </delete>
+
+</mapper>
+

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.hr.mapper.HrAttLedgerMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.HrAttLedger">
+        <id column="ledger_id" property="ledgerId"/>
+        <result column="emp_id" property="empId"/>
+        <result column="emp_code" property="empCode"/>
+        <result column="emp_name" property="empName"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="att_month" property="attMonth"/>
+        <result column="month_work_days" property="monthWorkDays"/>
+        <result column="att_days" property="attDays"/>
+        <result column="leave_days" property="leaveDays"/>
+        <result column="overtime_days" property="overtimeDays"/>
+        <result column="absent_days" property="absentDays"/>
+        <result column="ledger_status" property="ledgerStatus"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT l.ledger_id, l.emp_id, l.att_month, l.month_work_days, l.att_days, l.leave_days, l.overtime_days,
+               l.absent_days, l.ledger_status, l.create_time, l.update_time,
+               COALESCE(e.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, '') AS emp_name,
+               e.dept_id AS dept_id,
+               COALESCE(d.dept_name, '') AS dept_name
+        FROM hr_att_ledger l
+        LEFT JOIN sys_emp e ON l.emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON e.dept_id = d.dept_id
+        WHERE l.ledger_id = #{ledgerId}
+    </select>
+
+    <select id="selectByEmpIdAndMonth" resultMap="BaseResultMap">
+        SELECT l.ledger_id, l.emp_id, l.att_month, l.month_work_days, l.att_days, l.leave_days, l.overtime_days,
+               l.absent_days, l.ledger_status, l.create_time, l.update_time,
+               COALESCE(e.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, '') AS emp_name,
+               e.dept_id AS dept_id,
+               COALESCE(d.dept_name, '') AS dept_name
+        FROM hr_att_ledger l
+        LEFT JOIN sys_emp e ON l.emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON e.dept_id = d.dept_id
+        WHERE l.emp_id = #{empId} AND l.att_month = #{attMonth}
+    </select>
+
+    <select id="selectByConditions" resultMap="BaseResultMap">
+        SELECT l.ledger_id, l.emp_id, l.att_month, l.month_work_days, l.att_days, l.leave_days, l.overtime_days,
+               l.absent_days, l.ledger_status, l.create_time, l.update_time,
+               COALESCE(e.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, '') AS emp_name,
+               e.dept_id AS dept_id,
+               COALESCE(d.dept_name, '') AS dept_name
+        FROM hr_att_ledger l
+        LEFT JOIN sys_emp e ON l.emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON e.dept_id = d.dept_id
+        WHERE 1=1
+        <if test="empId != null">
+            AND l.emp_id = #{empId}
+        </if>
+        <if test="attMonth != null and attMonth != ''">
+            AND l.att_month = #{attMonth}
+        </if>
+        <if test="ledgerStatus != null and ledgerStatus != ''">
+            AND l.ledger_status = #{ledgerStatus}
+        </if>
+        <if test="empCode != null and empCode != ''">
+            AND e.emp_code = #{empCode}
+        </if>
+        <if test="empName != null and empName != ''">
+            AND e.emp_name LIKE CONCAT('%', #{empName}, '%')
+        </if>
+        <if test="deptId != null">
+            AND e.dept_id = #{deptId}
+        </if>
+        ORDER BY l.att_month DESC, l.create_time DESC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.HrAttLedger" useGeneratedKeys="true" keyProperty="ledgerId">
+        INSERT INTO hr_att_ledger (emp_id, att_month, month_work_days, att_days, leave_days, overtime_days, absent_days, ledger_status)
+        VALUES (#{empId}, #{attMonth}, #{monthWorkDays}, #{attDays}, #{leaveDays}, #{overtimeDays}, #{absentDays}, #{ledgerStatus})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.HrAttLedger">
+        UPDATE hr_att_ledger
+        <set>
+            <if test="monthWorkDays != null">month_work_days = #{monthWorkDays},</if>
+            <if test="attDays != null">att_days = #{attDays},</if>
+            <if test="leaveDays != null">leave_days = #{leaveDays},</if>
+            <if test="overtimeDays != null">overtime_days = #{overtimeDays},</if>
+            <if test="absentDays != null">absent_days = #{absentDays},</if>
+            <if test="ledgerStatus != null">ledger_status = #{ledgerStatus},</if>
+        </set>
+        WHERE ledger_id = #{ledgerId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM hr_att_ledger WHERE ledger_id = #{ledgerId}
+    </delete>
+
+</mapper>

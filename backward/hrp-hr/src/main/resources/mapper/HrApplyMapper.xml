@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.hr.mapper.HrApplyMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.HrApply">
+        <id column="apply_id" property="applyId"/>
+        <result column="apply_no" property="applyNo"/>
+        <result column="emp_id" property="empId"/>
+        <result column="emp_code" property="empCode"/>
+        <result column="emp_name" property="empName"/>
+        <result column="emp_phone" property="empPhone"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="hr_apply_type" property="hrApplyType"/>
+        <result column="hr_apply_sub_type" property="hrApplySubType"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="supplement_id" property="supplementId"/>
+        <result column="apply_day" property="applyDay"/>
+        <result column="apply_reason" property="applyReason"/>
+        <result column="main_attach_id" property="mainAttachId"/>
+        <result column="is_nurse" property="isNurse"/>
+        <result column="status" property="status"/>
+        <result column="template_config_id" property="templateConfigId"/>
+        <result column="process_definition_id" property="processDefinitionId"/>
+        <result column="process_instance_id" property="processInstanceId"/>
+        <result column="remark" property="remark"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT a.apply_id, a.apply_no, a.emp_id, a.hr_apply_type, a.hr_apply_sub_type,
+               a.start_time, a.end_time, a.supplement_id, a.apply_day,
+               a.apply_reason, a.main_attach_id, a.is_nurse, a.status, 
+               a.template_config_id, a.process_definition_id, a.process_instance_id,
+               a.remark, a.create_user, a.create_time, a.update_time,
+               COALESCE(e.emp_code, a.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, a.emp_name, '') AS emp_name,
+               COALESCE(e.emp_phone, a.emp_phone, '') AS emp_phone,
+               COALESCE(e.dept_id, a.dept_id) AS dept_id,
+               COALESCE(d.dept_name, a.dept_name, '') AS dept_name
+        FROM hr_apply a
+        LEFT JOIN sys_emp e ON a.emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON COALESCE(e.dept_id, a.dept_id) = d.dept_id
+        WHERE a.apply_id = #{applyId}
+    </select>
+
+    <select id="selectByApplyNo" resultMap="BaseResultMap">
+        SELECT a.apply_id, a.apply_no, a.emp_id, a.hr_apply_type, a.hr_apply_sub_type,
+               a.start_time, a.end_time, a.supplement_id, a.apply_day,
+               a.apply_reason, a.main_attach_id, a.is_nurse, a.status,
+               a.template_config_id, a.process_definition_id, a.process_instance_id,
+               a.remark, a.create_user, a.create_time, a.update_time,
+               COALESCE(e.emp_code, a.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, a.emp_name, '') AS emp_name,
+               COALESCE(e.emp_phone, a.emp_phone, '') AS emp_phone,
+               COALESCE(e.dept_id, a.dept_id) AS dept_id,
+               COALESCE(d.dept_name, a.dept_name, '') AS dept_name
+        FROM hr_apply a
+        LEFT JOIN sys_emp e ON a.emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON COALESCE(e.dept_id, a.dept_id) = d.dept_id
+        WHERE a.apply_no = #{applyNo}
+    </select>
+
+    <select id="selectByEmpId" resultMap="BaseResultMap">
+        SELECT a.apply_id, a.apply_no, a.emp_id, a.hr_apply_type, a.hr_apply_sub_type,
+               a.start_time, a.end_time, a.supplement_id, a.apply_day,
+               a.apply_reason, a.main_attach_id, a.is_nurse, a.status,
+               a.template_config_id, a.process_definition_id, a.process_instance_id,
+               a.remark, a.create_user, a.create_time, a.update_time,
+               COALESCE(e.emp_code, a.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, a.emp_name, '') AS emp_name,
+               COALESCE(e.emp_phone, a.emp_phone, '') AS emp_phone,
+               COALESCE(e.dept_id, a.dept_id) AS dept_id,
+               COALESCE(d.dept_name, a.dept_name, '') AS dept_name
+        FROM hr_apply a
+        LEFT JOIN sys_emp e ON a.emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON COALESCE(e.dept_id, a.dept_id) = d.dept_id
+        WHERE a.emp_id = #{empId} ORDER BY a.create_time DESC
+    </select>
+
+    <select id="selectByEmpIdPage" resultMap="BaseResultMap">
+        SELECT a.apply_id, a.apply_no, a.emp_id, a.hr_apply_type, a.hr_apply_sub_type,
+               a.start_time, a.end_time, a.supplement_id, a.apply_day,
+               a.apply_reason, a.main_attach_id, a.is_nurse, a.status,
+               a.template_config_id, a.process_definition_id, a.process_instance_id,
+               a.remark, a.create_user, a.create_time, a.update_time,
+               COALESCE(e.emp_code, a.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, a.emp_name, '') AS emp_name,
+               COALESCE(e.emp_phone, a.emp_phone, '') AS emp_phone,
+               COALESCE(e.dept_id, a.dept_id) AS dept_id,
+               COALESCE(d.dept_name, a.dept_name, '') AS dept_name
+        FROM hr_apply a
+        LEFT JOIN sys_emp e ON a.emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON COALESCE(e.dept_id, a.dept_id) = d.dept_id
+        WHERE a.emp_id = #{empId} ORDER BY a.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByEmpId" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM hr_apply WHERE emp_id = #{empId}
+    </select>
+
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT a.apply_id, a.apply_no, a.emp_id, a.hr_apply_type, a.hr_apply_sub_type,
+               a.start_time, a.end_time, a.supplement_id, a.apply_day,
+               a.apply_reason, a.main_attach_id, a.is_nurse, a.status,
+               a.template_config_id, a.process_definition_id, a.process_instance_id,
+               a.remark, a.create_user, a.create_time, a.update_time,
+               COALESCE(e.emp_code, a.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, a.emp_name, '') AS emp_name,
+               COALESCE(e.emp_phone, a.emp_phone, '') AS emp_phone,
+               COALESCE(e.dept_id, a.dept_id) AS dept_id,
+               COALESCE(d.dept_name, a.dept_name, '') AS dept_name
+        FROM hr_apply a
+        LEFT JOIN sys_emp e ON a.emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON COALESCE(e.dept_id, a.dept_id) = d.dept_id
+        WHERE a.status = #{status} ORDER BY a.create_time DESC
+    </select>
+
+    <select id="selectByStatusPage" resultMap="BaseResultMap">
+        SELECT a.apply_id, a.apply_no, a.emp_id, a.hr_apply_type, a.hr_apply_sub_type,
+               a.start_time, a.end_time, a.supplement_id, a.apply_day,
+               a.apply_reason, a.main_attach_id, a.is_nurse, a.status,
+               a.template_config_id, a.process_definition_id, a.process_instance_id,
+               a.remark, a.create_user, a.create_time, a.update_time,
+               COALESCE(e.emp_code, a.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, a.emp_name, '') AS emp_name,
+               COALESCE(e.emp_phone, a.emp_phone, '') AS emp_phone,
+               COALESCE(e.dept_id, a.dept_id) AS dept_id,
+               COALESCE(d.dept_name, a.dept_name, '') AS dept_name
+        FROM hr_apply a
+        LEFT JOIN sys_emp e ON a.emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON COALESCE(e.dept_id, a.dept_id) = d.dept_id
+        WHERE a.status = #{status} ORDER BY a.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByStatus" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM hr_apply WHERE status = #{status}
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT a.apply_id, a.apply_no, a.emp_id, a.hr_apply_type, a.hr_apply_sub_type,
+               a.start_time, a.end_time, a.supplement_id, a.apply_day,
+               a.apply_reason, a.main_attach_id, a.is_nurse, a.status,
+               a.template_config_id, a.process_definition_id, a.process_instance_id,
+               a.remark, a.create_user, a.create_time, a.update_time,
+               COALESCE(e.emp_code, a.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, a.emp_name, '') AS emp_name,
+               COALESCE(e.emp_phone, a.emp_phone, '') AS emp_phone,
+               COALESCE(e.dept_id, a.dept_id) AS dept_id,
+               COALESCE(d.dept_name, a.dept_name, '') AS dept_name
+        FROM hr_apply a
+        LEFT JOIN sys_emp e ON a.emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON COALESCE(e.dept_id, a.dept_id) = d.dept_id
+        ORDER BY a.create_time DESC
+    </select>
+
+    <select id="selectAllPage" resultMap="BaseResultMap">
+        SELECT a.apply_id, a.apply_no, a.emp_id, a.hr_apply_type, a.hr_apply_sub_type,
+               a.start_time, a.end_time, a.supplement_id, a.apply_day,
+               a.apply_reason, a.main_attach_id, a.is_nurse, a.status,
+               a.template_config_id, a.process_definition_id, a.process_instance_id,
+               a.remark, a.create_user, a.create_time, a.update_time,
+               COALESCE(e.emp_code, a.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, a.emp_name, '') AS emp_name,
+               COALESCE(e.emp_phone, a.emp_phone, '') AS emp_phone,
+               COALESCE(e.dept_id, a.dept_id) AS dept_id,
+               COALESCE(d.dept_name, a.dept_name, '') AS dept_name
+        FROM hr_apply a
+        LEFT JOIN sys_emp e ON a.emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON COALESCE(e.dept_id, a.dept_id) = d.dept_id
+        ORDER BY a.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countAll" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM hr_apply
+    </select>
+
+    <select id="selectByApprover" resultMap="BaseResultMap">
+        SELECT DISTINCT a.apply_id, a.apply_no, a.emp_id, a.hr_apply_type, a.hr_apply_sub_type,
+               a.start_time, a.end_time, a.supplement_id, a.apply_day,
+               a.apply_reason, a.main_attach_id, a.is_nurse, a.status,
+               a.template_config_id, a.process_definition_id, a.process_instance_id,
+               a.remark, a.create_user, a.create_time, a.update_time,
+               COALESCE(e.emp_code, a.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, a.emp_name, '') AS emp_name,
+               COALESCE(e.emp_phone, a.emp_phone, '') AS emp_phone,
+               COALESCE(e.dept_id, a.dept_id) AS dept_id,
+               COALESCE(d.dept_name, a.dept_name, '') AS dept_name
+        FROM hr_apply a
+        LEFT JOIN sys_emp e ON a.emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON COALESCE(e.dept_id, a.dept_id) = d.dept_id
+        INNER JOIN wf_process_task pt ON a.apply_no = pt.task_key
+        WHERE pt.assignee_user_id = #{userId} 
+          AND pt.task_status = 'PENDING'
+        ORDER BY a.create_time DESC
+    </select>
+
+    <select id="selectByApproverPage" resultMap="BaseResultMap">
+        SELECT DISTINCT a.apply_id, a.apply_no, a.emp_id, a.hr_apply_type, a.hr_apply_sub_type,
+               a.start_time, a.end_time, a.supplement_id, a.apply_day,
+               a.apply_reason, a.main_attach_id, a.is_nurse, a.status,
+               a.template_config_id, a.process_definition_id, a.process_instance_id,
+               a.remark, a.create_user, a.create_time, a.update_time,
+               COALESCE(e.emp_code, a.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, a.emp_name, '') AS emp_name,
+               COALESCE(e.emp_phone, a.emp_phone, '') AS emp_phone,
+               COALESCE(e.dept_id, a.dept_id) AS dept_id,
+               COALESCE(d.dept_name, a.dept_name, '') AS dept_name
+        FROM hr_apply a
+        LEFT JOIN sys_emp e ON a.emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON COALESCE(e.dept_id, a.dept_id) = d.dept_id
+        INNER JOIN wf_process_task pt ON a.apply_no = pt.task_key
+        WHERE pt.assignee_user_id = #{userId}
+        <if test="status != null and status != ''">
+            AND pt.task_status = #{status}
+        </if>
+        ORDER BY a.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByApprover" resultType="java.lang.Long">
+        SELECT COUNT(DISTINCT a.apply_id)
+        FROM hr_apply a
+        INNER JOIN wf_process_task pt ON a.apply_no = pt.task_key
+        WHERE pt.assignee_user_id = #{userId}
+        <if test="status != null and status != ''">
+            AND pt.task_status = #{status}
+        </if>
+        <if test="status == null or status == '' or status == 'PENDING'">
+          -- 加签场景：如果有加签任务（is_addsign_task=1），只显示加签任务，原任务不显示
+          -- 如果没有加签任务，显示原任务
+          AND (
+              pt.is_addsign_task = 1
+              OR NOT EXISTS (
+                  SELECT 1 FROM wf_process_task addsign_task
+                  WHERE addsign_task.task_key = pt.task_key
+                    AND addsign_task.is_addsign_task = 1
+                    AND addsign_task.task_status = 'PENDING'
+              )
+          )
+        </if>
+    </select>
+
+    <select id="selectByConditions" resultMap="BaseResultMap">
+        SELECT a.apply_id, a.apply_no, a.emp_id, a.hr_apply_type, a.hr_apply_sub_type,
+               a.start_time, a.end_time, a.supplement_id, a.apply_day,
+               a.apply_reason, a.main_attach_id, a.is_nurse, a.status,
+               a.template_config_id, a.process_definition_id, a.process_instance_id,
+               a.remark, a.create_user, a.create_time, a.update_time,
+               COALESCE(e.emp_code, a.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, a.emp_name, '') AS emp_name,
+               COALESCE(e.emp_phone, a.emp_phone, '') AS emp_phone,
+               COALESCE(e.dept_id, a.dept_id) AS dept_id,
+               COALESCE(d.dept_name, a.dept_name, '') AS dept_name
+        FROM hr_apply a
+        LEFT JOIN sys_emp e ON a.emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON COALESCE(e.dept_id, a.dept_id) = d.dept_id
+        WHERE 1=1
+        <if test="applyNo != null and applyNo != ''">
+            AND a.apply_no LIKE CONCAT('%', #{applyNo}, '%')
+        </if>
+        <if test="empId != null">
+            AND a.emp_id = #{empId}
+        </if>
+        <if test="empName != null and empName != ''">
+            AND (COALESCE(e.emp_name, a.emp_name, '') LIKE CONCAT('%', #{empName}, '%'))
+        </if>
+        <if test="hrApplyType != null and hrApplyType != ''">
+            AND a.hr_apply_type = #{hrApplyType}
+        </if>
+        <if test="status != null and status != ''">
+            AND a.status = #{status}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND DATE(a.start_time) &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND DATE(a.start_time) &lt;= #{endDate}
+        </if>
+        ORDER BY a.create_time DESC
+    </select>
+
+    <select id="selectMaxApplyNoByPrefix" resultType="String">
+        SELECT MAX(apply_no) FROM hr_apply WHERE apply_no LIKE CONCAT(#{prefix}, '%')
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.HrApply" useGeneratedKeys="true" keyProperty="applyId">
+        INSERT INTO hr_apply (apply_no, emp_id, emp_code, emp_name, emp_phone, dept_id, dept_name,
+                             hr_apply_type, hr_apply_sub_type, start_time, end_time,
+                             supplement_id, apply_day, apply_reason, main_attach_id, is_nurse, status,
+                             template_config_id, process_definition_id, process_instance_id, remark, create_user)
+        VALUES (#{applyNo}, #{empId}, #{empCode}, #{empName}, #{empPhone}, #{deptId}, #{deptName},
+                #{hrApplyType}, #{hrApplySubType}, #{startTime}, #{endTime},
+                #{supplementId}, #{applyDay}, #{applyReason}, #{mainAttachId}, #{isNurse}, #{status},
+                #{templateConfigId}, #{processDefinitionId}, #{processInstanceId}, #{remark}, #{createUser})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.HrApply">
+        UPDATE hr_apply
+        <set>
+            <if test="empCode != null">emp_code = #{empCode},</if>
+            <if test="empName != null">emp_name = #{empName},</if>
+            <if test="empPhone != null">emp_phone = #{empPhone},</if>
+            <if test="deptId != null">dept_id = #{deptId},</if>
+            <if test="deptName != null">dept_name = #{deptName},</if>
+            <if test="hrApplyType != null">hr_apply_type = #{hrApplyType},</if>
+            <if test="hrApplySubType != null">hr_apply_sub_type = #{hrApplySubType},</if>
+            <if test="startTime != null">start_time = #{startTime},</if>
+            <if test="endTime != null">end_time = #{endTime},</if>
+            <if test="supplementId != null">supplement_id = #{supplementId},</if>
+            <if test="applyDay != null">apply_day = #{applyDay},</if>
+            <if test="applyReason != null">apply_reason = #{applyReason},</if>
+            <if test="mainAttachId != null">main_attach_id = #{mainAttachId},</if>
+            <if test="isNurse != null">is_nurse = #{isNurse},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="templateConfigId != null">template_config_id = #{templateConfigId},</if>
+            <if test="processDefinitionId != null">process_definition_id = #{processDefinitionId},</if>
+            <if test="processInstanceId != null">process_instance_id = #{processInstanceId},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE apply_id = #{applyId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM hr_apply WHERE apply_id = #{applyId}
+    </delete>
+
+</mapper>

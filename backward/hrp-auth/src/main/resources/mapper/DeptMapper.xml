@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.auth.mapper.DeptMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.Dept">
+        <id column="dept_id" property="deptId"/>
+        <result column="dept_code" property="deptCode"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="super_dept_code" property="superDeptCode"/>
+        <result column="dept_level" property="deptLevel"/>
+        <result column="dept_phone" property="deptPhone"/>
+        <result column="dept_manager_id" property="deptManagerId"/>
+        <result column="dept_manager_name" property="deptManagerName"/>
+        <result column="dept_manager_code" property="deptManagerCode"/>
+        <result column="nurse_manager_id" property="nurseManagerId"/>
+        <result column="nurse_manager_name" property="nurseManagerName"/>
+        <result column="nurse_manager_code" property="nurseManagerCode"/>
+        <result column="vice_president_id" property="vicePresidentId"/>
+        <result column="vice_president_name" property="vicePresidentName"/>
+        <result column="vice_president_code" property="vicePresidentCode"/>
+        <result column="is_stop" property="isStop"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT d.*, 
+               e1.emp_name as dept_manager_name, e1.emp_code as dept_manager_code,
+               e2.emp_name as nurse_manager_name, e2.emp_code as nurse_manager_code,
+               e3.emp_name as vice_president_name, e3.emp_code as vice_president_code
+        FROM sys_dept d
+        LEFT JOIN sys_emp e1 ON d.dept_manager_id = e1.emp_id
+        LEFT JOIN sys_emp e2 ON d.nurse_manager_id = e2.emp_id
+        LEFT JOIN sys_emp e3 ON d.vice_president_id = e3.emp_id
+        WHERE d.dept_id = #{deptId}
+    </select>
+
+    <select id="selectByCode" resultMap="BaseResultMap">
+        SELECT d.*, 
+               e1.emp_name as dept_manager_name, e1.emp_code as dept_manager_code,
+               e2.emp_name as nurse_manager_name, e2.emp_code as nurse_manager_code,
+               e3.emp_name as vice_president_name, e3.emp_code as vice_president_code
+        FROM sys_dept d
+        LEFT JOIN sys_emp e1 ON d.dept_manager_id = e1.emp_id
+        LEFT JOIN sys_emp e2 ON d.nurse_manager_id = e2.emp_id
+        LEFT JOIN sys_emp e3 ON d.vice_president_id = e3.emp_id
+        WHERE d.dept_code = #{deptCode} AND d.is_stop = 0
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT d.*, 
+               e1.emp_name as dept_manager_name, e1.emp_code as dept_manager_code,
+               e2.emp_name as nurse_manager_name, e2.emp_code as nurse_manager_code,
+               e3.emp_name as vice_president_name, e3.emp_code as vice_president_code
+        FROM sys_dept d
+        LEFT JOIN sys_emp e1 ON d.dept_manager_id = e1.emp_id
+        LEFT JOIN sys_emp e2 ON d.nurse_manager_id = e2.emp_id
+        LEFT JOIN sys_emp e3 ON d.vice_president_id = e3.emp_id
+        WHERE 1=1
+        <if test="isStop != null">
+            AND (d.is_stop = #{isStop} OR (d.is_stop IS NULL AND #{isStop} = 0))
+        </if>
+        <if test="isStop == null">
+            AND (d.is_stop = 0 OR d.is_stop IS NULL)
+        </if>
+        ORDER BY d.dept_code ASC
+    </select>
+
+    <select id="selectBySuperDeptCode" resultMap="BaseResultMap">
+        SELECT * FROM sys_dept WHERE super_dept_code = #{superDeptCode} AND is_stop = 0 ORDER BY dept_code ASC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.Dept">
+        INSERT INTO sys_dept (dept_code, dept_name, super_dept_code, dept_level, dept_phone, dept_manager_id, nurse_manager_id, vice_president_id, is_stop, create_user)
+        VALUES (#{deptCode}, #{deptName}, #{superDeptCode}, #{deptLevel}, #{deptPhone}, #{deptManagerId}, #{nurseManagerId}, #{vicePresidentId}, #{isStop}, #{createUser})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.Dept">
+        UPDATE sys_dept
+        <set>
+            <if test="deptCode != null">dept_code = #{deptCode},</if>
+            <if test="deptName != null">dept_name = #{deptName},</if>
+            <if test="superDeptCode != null">super_dept_code = #{superDeptCode},</if>
+            <if test="deptLevel != null">dept_level = #{deptLevel},</if>
+            <if test="deptPhone != null">dept_phone = #{deptPhone},</if>
+            dept_manager_id = #{deptManagerId},
+            nurse_manager_id = #{nurseManagerId},
+            vice_president_id = #{vicePresidentId},
+            <if test="isStop != null">is_stop = #{isStop},</if>
+        </set>
+        WHERE dept_id = #{deptId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM sys_dept WHERE dept_id = #{deptId}
+    </delete>
+
+    <select id="selectAllPage" resultMap="BaseResultMap">
+        SELECT d.*, 
+               e1.emp_name as dept_manager_name, e1.emp_code as dept_manager_code,
+               e2.emp_name as nurse_manager_name, e2.emp_code as nurse_manager_code,
+               e3.emp_name as vice_president_name, e3.emp_code as vice_president_code
+        FROM sys_dept d
+        LEFT JOIN sys_emp e1 ON d.dept_manager_id = e1.emp_id
+        LEFT JOIN sys_emp e2 ON d.nurse_manager_id = e2.emp_id
+        LEFT JOIN sys_emp e3 ON d.vice_president_id = e3.emp_id
+        WHERE 1=1
+        <if test="isStop != null">
+            AND (d.is_stop = #{isStop} OR (d.is_stop IS NULL AND #{isStop} = 0))
+        </if>
+        <if test="isStop == null">
+            AND (d.is_stop = 0 OR d.is_stop IS NULL)
+        </if>
+        ORDER BY d.dept_code ASC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countAll" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM sys_dept d
+        WHERE 1=1
+        <if test="isStop != null">
+            AND (d.is_stop = #{isStop} OR (d.is_stop IS NULL AND #{isStop} = 0))
+        </if>
+        <if test="isStop == null">
+            AND (d.is_stop = 0 OR d.is_stop IS NULL)
+        </if>
+    </select>
+
+</mapper>
+

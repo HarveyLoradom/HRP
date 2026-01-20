@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.reimb.mapper.CtrlPayoutMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.CtrlPayout">
+        <id column="payout_id" property="payoutId"/>
+        <result column="payout_billcode" property="payoutBillcode"/>
+        <result column="bill_type" property="billType"/>
+        <result column="emp_id" property="empId"/>
+        <result column="emp_code" property="empCode"/>
+        <result column="emp_name" property="empName"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="emp_phone" property="empPhone"/>
+        <result column="is_nurse" property="isNurse"/>
+        <result column="payout_type_id" property="payoutTypeId"/>
+        <result column="apply_amount" property="applyAmount"/>
+        <result column="apply_reason" property="applyReason"/>
+        <result column="apply_date" property="applyDate"/>
+        <result column="source_apply_no" property="sourceApplyNo"/>
+        <result column="contract_no" property="contractNo"/>
+        <result column="status" property="status"/>
+        <result column="template_config_id" property="templateConfigId"/>
+        <result column="main_attach_id" property="mainAttachId"/>
+        <result column="process_definition_id" property="processDefinitionId"/>
+        <result column="process_instance_id" property="processInstanceId"/>
+        <result column="budget_id" property="budgetId"/>
+        <result column="budget_item_id" property="budgetItemId"/>
+        <result column="remark" property="remark"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT p.payout_id, p.payout_billcode, p.bill_type, p.emp_id, p.emp_code, p.emp_name, p.dept_id, 
+               COALESCE(d.dept_name, '') AS dept_name,
+               COALESCE(e.emp_phone, '') AS emp_phone,
+               p.is_nurse, p.payout_type_id, p.apply_amount, p.apply_reason, p.apply_date, p.status, p.source_apply_no,
+               p.template_config_id, p.main_attach_id, p.process_definition_id, p.process_instance_id,
+               p.budget_id, p.budget_item_id, p.remark, p.create_user, p.create_time, p.update_time
+        FROM ctrl_payout p
+        LEFT JOIN sys_dept d ON p.dept_id = d.dept_id
+        LEFT JOIN sys_emp e ON p.emp_id = e.emp_id
+        WHERE p.payout_id = #{id}
+    </select>
+
+    <select id="selectByBillcode" resultMap="BaseResultMap">
+        SELECT p.payout_id, p.payout_billcode, p.bill_type, p.emp_id, p.emp_code, p.emp_name, p.dept_id,
+               COALESCE(d.dept_name, '') AS dept_name,
+               COALESCE(e.emp_phone, '') AS emp_phone,
+               p.is_nurse, p.payout_type_id, p.apply_amount, p.apply_reason, p.apply_date, p.status,p.source_apply_no,
+               p.template_config_id, p.main_attach_id, p.process_definition_id, p.process_instance_id,
+               p.budget_id, p.budget_item_id, p.remark, p.create_user, p.create_time, p.update_time
+        FROM ctrl_payout p
+        LEFT JOIN sys_dept d ON p.dept_id = d.dept_id
+        LEFT JOIN sys_emp e ON p.emp_id = e.emp_id
+        WHERE p.payout_billcode = #{billcode}
+    </select>
+
+    <select id="selectByEmpId" resultMap="BaseResultMap">
+        SELECT p.payout_id, p.payout_billcode, p.bill_type, p.emp_id, p.emp_code, p.emp_name, p.dept_id,
+               COALESCE(d.dept_name, '') AS dept_name,
+               COALESCE(e.emp_phone, '') AS emp_phone,
+               p.is_nurse, p.payout_type_id, p.apply_amount, p.apply_reason, p.apply_date, p.status,p.source_apply_no,
+               p.template_config_id, p.main_attach_id, p.process_definition_id, p.process_instance_id,
+               p.budget_id, p.budget_item_id, p.remark, p.create_user, p.create_time, p.update_time
+        FROM ctrl_payout p
+        LEFT JOIN sys_dept d ON p.dept_id = d.dept_id
+        LEFT JOIN sys_emp e ON p.emp_id = e.emp_id
+        WHERE p.emp_id = #{empId} ORDER BY p.create_time DESC
+    </select>
+
+    <select id="selectByEmpIdPage" resultMap="BaseResultMap">
+        SELECT p.payout_id, p.payout_billcode, p.bill_type, p.emp_id, p.emp_code, p.emp_name, p.dept_id,
+               COALESCE(d.dept_name, '') AS dept_name,
+               COALESCE(e.emp_phone, '') AS emp_phone,
+               p.is_nurse, p.payout_type_id, p.apply_amount, p.apply_reason, p.apply_date, p.status,p.source_apply_no,
+               p.template_config_id, p.main_attach_id, p.process_definition_id, p.process_instance_id,
+               p.budget_id, p.budget_item_id, p.remark, p.create_user, p.create_time, p.update_time
+        FROM ctrl_payout p
+        LEFT JOIN sys_dept d ON p.dept_id = d.dept_id
+        LEFT JOIN sys_emp e ON p.emp_id = e.emp_id
+        WHERE p.emp_id = #{empId} ORDER BY p.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByEmpId" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM ctrl_payout WHERE emp_id = #{empId}
+    </select>
+
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT p.payout_id, p.payout_billcode, p.bill_type, p.emp_id, p.emp_code, p.emp_name, p.dept_id,
+               COALESCE(d.dept_name, '') AS dept_name,
+               COALESCE(e.emp_phone, '') AS emp_phone,
+               p.is_nurse, p.payout_type_id, p.apply_amount, p.apply_reason, p.apply_date, p.status,p.source_apply_no,
+               p.template_config_id, p.main_attach_id, p.process_definition_id, p.process_instance_id,
+               p.budget_id, p.budget_item_id, p.remark, p.create_user, p.create_time, p.update_time
+        FROM ctrl_payout p
+        LEFT JOIN sys_dept d ON p.dept_id = d.dept_id
+        LEFT JOIN sys_emp e ON p.emp_id = e.emp_id
+        WHERE p.status = #{status} ORDER BY p.create_time DESC
+    </select>
+
+    <select id="selectByStatusPage" resultMap="BaseResultMap">
+        SELECT p.payout_id, p.payout_billcode, p.bill_type, p.emp_id, p.emp_code, p.emp_name, p.dept_id,
+               COALESCE(d.dept_name, '') AS dept_name,
+               COALESCE(e.emp_phone, '') AS emp_phone,
+               p.is_nurse, p.payout_type_id, p.apply_amount, p.apply_reason, p.apply_date, p.status,p.source_apply_no,
+               p.template_config_id, p.main_attach_id, p.process_definition_id, p.process_instance_id,
+               p.budget_id, p.budget_item_id, p.remark, p.create_user, p.create_time, p.update_time
+        FROM ctrl_payout p
+        LEFT JOIN sys_dept d ON p.dept_id = d.dept_id
+        LEFT JOIN sys_emp e ON p.emp_id = e.emp_id
+        WHERE p.status = #{status} ORDER BY p.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByStatus" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM ctrl_payout WHERE status = #{status}
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT p.payout_id, p.payout_billcode, p.bill_type, p.emp_id, p.emp_code, p.emp_name, p.dept_id,
+               COALESCE(d.dept_name, '') AS dept_name,
+               COALESCE(e.emp_phone, '') AS emp_phone,
+               p.is_nurse, p.payout_type_id, p.apply_amount, p.apply_reason, p.apply_date, p.status,p.source_apply_no,
+               p.template_config_id, p.main_attach_id, p.process_definition_id, p.process_instance_id,
+               p.budget_id, p.budget_item_id, p.remark, p.create_user, p.create_time, p.update_time
+        FROM ctrl_payout p
+        LEFT JOIN sys_dept d ON p.dept_id = d.dept_id
+        LEFT JOIN sys_emp e ON p.emp_id = e.emp_id
+        ORDER BY p.create_time DESC
+    </select>
+
+    <select id="selectAllPage" resultMap="BaseResultMap">
+        SELECT p.payout_id, p.payout_billcode, p.bill_type, p.emp_id, p.emp_code, p.emp_name, p.dept_id,
+               COALESCE(d.dept_name, '') AS dept_name,
+               COALESCE(e.emp_phone, '') AS emp_phone,
+               p.is_nurse, p.payout_type_id, p.apply_amount, p.apply_reason, p.apply_date, p.status,p.source_apply_no,
+               p.template_config_id, p.main_attach_id, p.process_definition_id, p.process_instance_id,
+               p.budget_id, p.budget_item_id, p.remark, p.create_user, p.create_time, p.update_time
+        FROM ctrl_payout p
+        LEFT JOIN sys_dept d ON p.dept_id = d.dept_id
+        LEFT JOIN sys_emp e ON p.emp_id = e.emp_id
+        ORDER BY p.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countAll" resultType="java.lang.Long">
+        SELECT COUNT(*) FROM ctrl_payout
+    </select>
+
+    <!-- 用于申请冲销：查询bill_type='APPLY'的申请单 -->
+    <select id="selectByItemId" resultMap="BaseResultMap">
+        SELECT p.payout_id, p.payout_billcode, p.bill_type, p.emp_id, p.emp_code, p.emp_name, p.dept_id,
+               COALESCE(d.dept_name, '') AS dept_name,
+               COALESCE(e.emp_phone, '') AS emp_phone,
+               p.is_nurse, p.payout_type_id, p.apply_amount, p.apply_reason, p.apply_date, p.status,p.source_apply_no,
+               p.template_config_id, p.main_attach_id, p.process_definition_id, p.process_instance_id,
+               p.budget_id, p.budget_item_id, p.remark, p.create_user, p.create_time, p.update_time
+        FROM ctrl_payout p
+        LEFT JOIN sys_dept d ON p.dept_id = d.dept_id
+        LEFT JOIN sys_emp e ON p.emp_id = e.emp_id
+        WHERE p.budget_item_id = #{itemId} AND p.bill_type = 'APPLY' AND p.status = 'APPROVED'
+        ORDER BY p.create_time DESC
+    </select>
+    
+    <!-- 用于报账冲销：查询bill_type='PAYOUT'的报账单 -->
+    <select id="selectPayoutByItemId" resultMap="BaseResultMap">
+        SELECT p.payout_id, p.payout_billcode, p.bill_type, p.emp_id, p.emp_code, p.emp_name, p.dept_id,
+               COALESCE(d.dept_name, '') AS dept_name,
+               COALESCE(e.emp_phone, '') AS emp_phone,
+               p.is_nurse, p.payout_type_id, p.apply_amount, p.apply_reason, p.apply_date, p.status,p.source_apply_no,
+               p.template_config_id, p.main_attach_id, p.process_definition_id, p.process_instance_id,
+               p.budget_id, p.budget_item_id, p.remark, p.create_user, p.create_time, p.update_time
+        FROM ctrl_payout p
+        LEFT JOIN sys_dept d ON p.dept_id = d.dept_id
+        LEFT JOIN sys_emp e ON p.emp_id = e.emp_id
+        WHERE p.budget_item_id = #{itemId} AND p.bill_type = 'PAYOUT' AND p.status = 'APPROVED'
+        ORDER BY p.create_time DESC
+    </select>
+
+    <select id="selectByApprover" resultMap="BaseResultMap">
+        SELECT DISTINCT p.payout_id, p.payout_billcode, p.bill_type, p.emp_id, p.emp_code, p.emp_name, p.dept_id,
+               COALESCE(d.dept_name, '') AS dept_name,
+               COALESCE(e.emp_phone, '') AS emp_phone,
+               p.is_nurse, p.payout_type_id, p.apply_amount, p.apply_reason, p.apply_date, p.status,p.source_apply_no,
+               p.template_config_id, p.main_attach_id, p.process_definition_id, p.process_instance_id,
+               p.budget_id, p.budget_item_id, p.remark, p.create_user, p.create_time, p.update_time
+        FROM ctrl_payout p
+        LEFT JOIN sys_dept d ON p.dept_id = d.dept_id
+        LEFT JOIN sys_emp e ON p.emp_id = e.emp_id
+        INNER JOIN wf_process_instance pi ON p.process_instance_id = pi.instance_id
+        INNER JOIN wf_process_task pt ON pi.instance_id = pt.instance_id
+        WHERE pt.assignee_user_id = #{userId}
+        AND pt.task_status = 'PENDING'
+        AND p.status = 'PENDING'
+        ORDER BY p.create_time DESC
+    </select>
+
+    <select id="selectByApproverPage" resultMap="BaseResultMap">
+        SELECT DISTINCT p.payout_id, p.payout_billcode, p.bill_type, p.emp_id, p.emp_code, p.emp_name, p.dept_id,
+               COALESCE(d.dept_name, '') AS dept_name,
+               COALESCE(e.emp_phone, '') AS emp_phone,
+               p.is_nurse, p.payout_type_id, p.apply_amount, p.apply_reason, p.apply_date, p.status,p.source_apply_no,
+               p.template_config_id, p.main_attach_id, p.process_definition_id, p.process_instance_id,
+               p.budget_id, p.budget_item_id, p.remark, p.create_user, p.create_time, p.update_time
+        FROM ctrl_payout p
+        LEFT JOIN sys_dept d ON p.dept_id = d.dept_id
+        LEFT JOIN sys_emp e ON p.emp_id = e.emp_id
+        INNER JOIN wf_process_instance pi ON p.process_instance_id = pi.instance_id
+        INNER JOIN wf_process_task pt ON pi.instance_id = pt.instance_id
+        WHERE pt.assignee_user_id = #{userId}
+        AND pt.task_status = 'PENDING'
+        AND p.status = 'PENDING'
+        ORDER BY p.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByApprover" resultType="java.lang.Long">
+        SELECT COUNT(DISTINCT p.payout_id)
+        FROM ctrl_payout p
+        INNER JOIN wf_process_instance pi ON p.process_instance_id = pi.instance_id
+        INNER JOIN wf_process_task pt ON pi.instance_id = pt.instance_id
+        WHERE pt.assignee_user_id = #{userId}
+        AND pt.task_status = 'PENDING'
+        AND p.status = 'PENDING'
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.CtrlPayout" useGeneratedKeys="true" keyProperty="payoutId">
+        INSERT INTO ctrl_payout (payout_billcode, bill_type, emp_id, emp_code, emp_name, dept_id, is_nurse, payout_type_id, 
+                                 apply_amount, apply_reason, apply_date, status, template_config_id, main_attach_id, process_definition_id, process_instance_id, 
+                                 budget_id, budget_item_id, source_apply_no, contract_no, remark, create_user)
+        VALUES (#{payoutBillcode}, #{billType}, #{empId}, #{empCode}, #{empName}, #{deptId}, #{isNurse}, #{payoutTypeId},
+                #{applyAmount}, #{applyReason}, #{applyDate}, #{status}, #{templateConfigId}, #{mainAttachId}, #{processDefinitionId}, #{processInstanceId}, 
+                #{budgetId}, #{budgetItemId}, #{sourceApplyNo}, #{contractNo}, #{remark}, #{createUser})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.CtrlPayout">
+        UPDATE ctrl_payout
+        <set>
+            <if test="payoutTypeId != null">payout_type_id = #{payoutTypeId},</if>
+            <if test="applyAmount != null">apply_amount = #{applyAmount},</if>
+            <if test="applyReason != null">apply_reason = #{applyReason},</if>
+            <if test="isNurse != null">is_nurse = #{isNurse},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="templateConfigId != null">template_config_id = #{templateConfigId},</if>
+            <if test="mainAttachId != null">main_attach_id = #{mainAttachId},</if>
+            <if test="processDefinitionId != null">process_definition_id = #{processDefinitionId},</if>
+            <if test="processInstanceId != null">process_instance_id = #{processInstanceId},</if>
+            <if test="budgetId != null">budget_id = #{budgetId},</if>
+            <if test="budgetItemId != null">budget_item_id = #{budgetItemId},</if>
+            <if test="sourceApplyNo != null">source_apply_no = #{sourceApplyNo},</if>
+            <if test="contractNo != null">contract_no = #{contractNo},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE payout_id = #{payoutId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM ctrl_payout WHERE payout_id = #{id}
+    </delete>
+
+    <select id="selectMaxBillcodeByPrefix" resultType="java.lang.String">
+        SELECT MAX(payout_billcode) 
+        FROM ctrl_payout 
+        WHERE payout_billcode LIKE CONCAT(#{prefix}, '%')
+    </select>
+
+    <select id="selectBySourceApplyNo" resultMap="BaseResultMap">
+        SELECT p.payout_id, p.payout_billcode, p.bill_type, p.emp_id, p.emp_code, p.emp_name, p.dept_id,
+               COALESCE(d.dept_name, '') AS dept_name,
+               COALESCE(e.emp_phone, '') AS emp_phone,
+               p.is_nurse, p.payout_type_id, p.apply_amount, p.apply_reason, p.apply_date, p.status, p.source_apply_no, p.contract_no,
+               p.template_config_id, p.main_attach_id, p.process_definition_id, p.process_instance_id,
+               p.budget_id, p.budget_item_id, p.remark, p.create_user, p.create_time, p.update_time
+        FROM ctrl_payout p
+        LEFT JOIN sys_dept d ON p.dept_id = d.dept_id
+        LEFT JOIN sys_emp e ON p.emp_id = e.emp_id
+        WHERE p.source_apply_no = #{sourceApplyNo}
+          AND p.bill_type = 'PAYOUT'
+          <if test="excludePayoutId != null">
+          AND p.payout_id != #{excludePayoutId}
+          </if>
+        LIMIT 1
+    </select>
+
+    <select id="selectByContractNo" resultMap="BaseResultMap">
+        SELECT p.payout_id, p.payout_billcode, p.bill_type, p.emp_id, p.emp_code, p.emp_name, p.dept_id,
+               COALESCE(d.dept_name, '') AS dept_name,
+               COALESCE(e.emp_phone, '') AS emp_phone,
+               p.is_nurse, p.payout_type_id, p.apply_amount, p.apply_reason, p.apply_date, p.status, p.source_apply_no, p.contract_no,
+               p.template_config_id, p.main_attach_id, p.process_definition_id, p.process_instance_id,
+               p.budget_id, p.budget_item_id, p.remark, p.create_user, p.create_time, p.update_time
+        FROM ctrl_payout p
+        LEFT JOIN sys_dept d ON p.dept_id = d.dept_id
+        LEFT JOIN sys_emp e ON p.emp_id = e.emp_id
+        WHERE p.contract_no = #{contractNo}
+          AND p.bill_type = 'PAYOUT'
+          <if test="excludePayoutId != null">
+          AND p.payout_id != #{excludePayoutId}
+          </if>
+        LIMIT 1
+    </select>
+
+    <select id="selectByConditions" resultMap="BaseResultMap">
+        SELECT p.payout_id, p.payout_billcode, p.bill_type, p.emp_id, p.emp_code, p.emp_name, p.dept_id,
+               COALESCE(d.dept_name, '') AS dept_name,
+               COALESCE(e.emp_phone, '') AS emp_phone,
+               p.is_nurse, p.payout_type_id, p.apply_amount, p.apply_reason, p.apply_date, p.status,p.source_apply_no,
+               p.template_config_id, p.main_attach_id, p.process_definition_id, p.process_instance_id,
+               p.budget_id, p.budget_item_id, p.remark, p.create_user, p.create_time, p.update_time
+        FROM ctrl_payout p
+        LEFT JOIN sys_dept d ON p.dept_id = d.dept_id
+        LEFT JOIN sys_emp e ON p.emp_id = e.emp_id
+        <where>
+            <if test="payoutBillcode != null and payoutBillcode != ''">
+                AND p.payout_billcode LIKE CONCAT('%', #{payoutBillcode}, '%')
+            </if>
+            <if test="empName != null and empName != ''">
+                AND p.emp_name LIKE CONCAT('%', #{empName}, '%')
+            </if>
+            <if test="payoutTypeId != null and payoutTypeId != ''">
+                AND p.payout_type_id = #{payoutTypeId}
+            </if>
+            <if test="status != null and status != ''">
+                AND p.status = #{status}
+            </if>
+            <if test="startDate != null and startDate != ''">
+                AND DATE(p.apply_date) &gt;= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND DATE(p.apply_date) &lt;= #{endDate}
+            </if>
+            <if test="billTypePrefix != null and billTypePrefix != ''">
+                AND p.payout_billcode LIKE CONCAT(#{billTypePrefix}, '%')
+            </if>
+        </where>
+        ORDER BY p.create_time DESC
+    </select>
+
+</mapper>
+

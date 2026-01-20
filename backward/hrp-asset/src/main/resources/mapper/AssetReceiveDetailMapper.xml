@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.asset.mapper.AssetReceiveDetailMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.AssetReceiveDetail">
+        <id column="id" property="id"/>
+        <result column="receive_id" property="receiveId"/>
+        <result column="receive_no" property="receiveNo"/>
+        <result column="asset_code" property="assetCode"/>
+        <result column="asset_name" property="assetName"/>
+        <result column="spec" property="spec"/>
+        <result column="unit" property="unit"/>
+        <result column="receive_num" property="receiveNum"/>
+        <result column="manufacturer" property="manufacturer"/>
+        <result column="remain_num" property="remainNum"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectByReceiveId" resultMap="BaseResultMap">
+        SELECT id, receive_id, receive_no, asset_code, asset_name, spec, unit, 
+               receive_num, manufacturer, remain_num, create_time, update_time
+        FROM asset_receive_detail
+        WHERE receive_id = #{receiveId}
+        ORDER BY id
+    </select>
+
+    <select id="selectByReceiveNo" resultMap="BaseResultMap">
+        SELECT id, receive_id, receive_no, asset_code, asset_name, spec, unit, 
+               receive_num, manufacturer, remain_num, create_time, update_time
+        FROM asset_receive_detail
+        WHERE receive_no = #{receiveNo}
+        ORDER BY id
+    </select>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT id, receive_id, receive_no, asset_code, asset_name, spec, unit, 
+               receive_num, manufacturer, remain_num, create_time, update_time
+        FROM asset_receive_detail
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.AssetReceiveDetail" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO asset_receive_detail (receive_id, receive_no, asset_code, asset_name, spec, unit, 
+                                         receive_num, manufacturer, remain_num)
+        VALUES (#{receiveId}, #{receiveNo}, #{assetCode}, #{assetName}, #{spec}, #{unit}, 
+                #{receiveNum}, #{manufacturer}, #{remainNum})
+    </insert>
+
+    <insert id="insertBatch" parameterType="java.util.List">
+        INSERT INTO asset_receive_detail (receive_id, receive_no, asset_code, asset_name, spec, unit, 
+                                         receive_num, manufacturer, remain_num)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.receiveId}, #{item.receiveNo}, #{item.assetCode}, #{item.assetName}, #{item.spec}, #{item.unit}, 
+             #{item.receiveNum}, #{item.manufacturer}, #{item.remainNum})
+        </foreach>
+    </insert>
+
+    <delete id="deleteByReceiveId">
+        DELETE FROM asset_receive_detail WHERE receive_id = #{receiveId}
+    </delete>
+
+</mapper>
+

@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.asset.mapper.AssetCategoryMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.AssetCategory">
+        <id column="id" property="id" />
+        <result column="category_code" property="categoryCode" />
+        <result column="category_name" property="categoryName" />
+        <result column="parent_id" property="parentId" />
+        <result column="level" property="level" />
+        <result column="status" property="status" />
+        <result column="create_user" property="createUser" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <!-- 查询一级分类 -->
+    <select id="selectLevel1ByConditions" resultMap="BaseResultMap">
+        SELECT * FROM asset_category
+        WHERE level = 1
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="categoryName != null and categoryName != ''">
+            AND category_name LIKE CONCAT('%', #{categoryName}, '%')
+        </if>
+        ORDER BY category_code
+    </select>
+
+    <!-- 查询二级分类 -->
+    <select id="selectLevel2ByConditions" resultMap="BaseResultMap">
+        SELECT * FROM asset_category
+        WHERE level = 2
+        <if test="parentId != null">
+            AND parent_id = #{parentId}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="categoryName != null and categoryName != ''">
+            AND category_name LIKE CONCAT('%', #{categoryName}, '%')
+        </if>
+        ORDER BY category_code
+    </select>
+
+    <!-- 查询三级分类 -->
+    <select id="selectLevel3ByConditions" resultMap="BaseResultMap">
+        SELECT ac3.* FROM asset_category ac3
+        WHERE ac3.level = 3
+        <choose>
+            <when test="useParentId != null and useParentId == 'true'">
+                <!-- 如果指定了二级分类ID，直接查询该二级分类下的三级分类 -->
+                AND ac3.parent_id = #{parentId}
+            </when>
+            <when test="useLevel1Id != null and useLevel1Id == 'true'">
+                <!-- 如果指定了一级分类ID（且没有指定二级分类ID），查询该一级分类下所有二级分类的三级分类 -->
+                AND EXISTS (
+                    SELECT 1 FROM asset_category ac2 
+                    WHERE ac2.id = ac3.parent_id 
+                    AND ac2.level = 2 
+                    AND ac2.parent_id = #{level1Id}
+                )
+            </when>
+        </choose>
+        <if test="status != null">
+            AND ac3.status = #{status}
+        </if>
+        <if test="categoryName != null and categoryName != ''">
+            AND ac3.category_name LIKE CONCAT('%', #{categoryName}, '%')
+        </if>
+        ORDER BY ac3.category_code
+    </select>
+
+    <!-- 根据ID查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM asset_category WHERE id = #{id}
+    </select>
+
+    <!-- 根据编码查询 -->
+    <select id="selectByCode" resultMap="BaseResultMap">
+        SELECT * FROM asset_category WHERE category_code = #{code}
+    </select>
+
+    <!-- 新增 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO asset_category (
+            category_code, category_name, parent_id, level, status, create_user, create_time, update_time
+        ) VALUES (
+            #{categoryCode}, #{categoryName}, #{parentId}, #{level}, #{status}, #{createUser}, NOW(), NOW()
+        )
+    </insert>
+
+    <!-- 更新 -->
+    <update id="updateById">
+        UPDATE asset_category
+        SET category_name = #{categoryName},
+            status = #{status},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="deleteById">
+        DELETE FROM asset_category WHERE id = #{id}
+    </delete>
+
+    <!-- 查询指定父分类下的最大编码 -->
+    <select id="selectMaxCodeByParentId" resultType="java.lang.String">
+        SELECT MAX(category_code) FROM asset_category
+        WHERE parent_id = #{parentId}
+    </select>
+
+    <!-- 检查分类下是否有子分类 -->
+    <select id="countChildrenByParentId" resultType="int">
+        SELECT COUNT(*) FROM asset_category
+        WHERE parent_id = #{parentId}
+    </select>
+    
+    <!-- 检查分类下是否有未停用的子分类（用于停用检查） -->
+    <select id="countActiveChildrenByParentId" resultType="int">
+        SELECT COUNT(*) FROM asset_category
+        WHERE parent_id = #{parentId}
+        AND status = 1
+    </select>
+
+    <!-- 查询所有一级分类（用于下拉选择） -->
+    <select id="selectAllLevel1" resultMap="BaseResultMap">
+        SELECT * FROM asset_category
+        WHERE level = 1
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY category_code
+    </select>
+
+    <!-- 查询指定一级分类下的所有二级分类（用于下拉选择） -->
+    <select id="selectAllLevel2ByParentId" resultMap="BaseResultMap">
+        SELECT * FROM asset_category
+        WHERE level = 2
+        <if test="parentId != null">
+            AND parent_id = #{parentId}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY category_code
+    </select>
+
+    <!-- 查询指定二级分类下的所有三级分类（用于下拉选择） -->
+    <select id="selectAllLevel3ByParentId" resultMap="BaseResultMap">
+        SELECT * FROM asset_category
+        WHERE level = 3
+        <if test="parentId != null">
+            AND parent_id = #{parentId}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY category_code
+    </select>
+
+    <!-- 根据名称和级别精确查询分类（用于导入时根据名称查找ID） -->
+    <select id="selectByNameAndLevel" resultMap="BaseResultMap">
+        SELECT * FROM asset_category
+        WHERE category_name = #{categoryName}
+        AND level = #{level}
+        <if test="parentId != null">
+            AND parent_id = #{parentId}
+        </if>
+        LIMIT 1
+    </select>
+
+</mapper>
+

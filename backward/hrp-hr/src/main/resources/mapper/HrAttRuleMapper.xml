@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.hr.mapper.HrAttRuleMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.HrAttRule">
+        <id column="rule_id" property="ruleId"/>
+        <result column="rule_type" property="ruleType"/>
+        <result column="rule_name" property="ruleName"/>
+        <result column="sal_coefficient" property="salCoefficient"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT rule_id, rule_type, rule_name, sal_coefficient, create_time, update_time
+        FROM hr_att_rule
+        WHERE rule_id = #{ruleId}
+    </select>
+
+    <select id="selectByRuleType" resultMap="BaseResultMap">
+        SELECT rule_id, rule_type, rule_name, sal_coefficient, create_time, update_time
+        FROM hr_att_rule
+        WHERE rule_type = #{ruleType}
+        ORDER BY rule_id
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT rule_id, rule_type, rule_name, sal_coefficient, create_time, update_time
+        FROM hr_att_rule
+        ORDER BY rule_type, rule_id
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.HrAttRule" useGeneratedKeys="true" keyProperty="ruleId">
+        INSERT INTO hr_att_rule (rule_type, rule_name, sal_coefficient)
+        VALUES (#{ruleType}, #{ruleName}, #{salCoefficient})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.HrAttRule">
+        UPDATE hr_att_rule
+        <set>
+            <if test="ruleType != null">rule_type = #{ruleType},</if>
+            <if test="ruleName != null">rule_name = #{ruleName},</if>
+            <if test="salCoefficient != null">sal_coefficient = #{salCoefficient},</if>
+        </set>
+        WHERE rule_id = #{ruleId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM hr_att_rule WHERE rule_id = #{ruleId}
+    </delete>
+
+</mapper>
+

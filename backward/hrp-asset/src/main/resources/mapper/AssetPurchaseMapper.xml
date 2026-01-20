@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.asset.mapper.AssetPurchaseMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.AssetPurchase">
+        <id column="id" property="id"/>
+        <result column="order_no" property="orderNo"/>
+        <result column="apply_no" property="applyNo"/>
+        <result column="apply_id" property="applyId"/>
+        <result column="purchase_date" property="purchaseDate"/>
+        <result column="purchase_status" property="purchaseStatus"/>
+        <result column="contract_no" property="contractNo"/>
+        <result column="supplier_id" property="supplierId"/>
+        <result column="supplier_name" property="supplierName"/>
+        <result column="total_amount" property="totalAmount"/>
+        <result column="operator_id" property="operatorId"/>
+        <result column="operator_name" property="operatorName"/>
+        <result column="remark" property="remark"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <!-- 扩展字段，用于前端显示 -->
+        <result column="apply_emp_name" property="applyEmpName"/>
+        <result column="apply_dept_name" property="applyDeptName"/>
+        <result column="operator_dept_name" property="operatorDeptName"/>
+        <result column="operator_phone" property="operatorPhone"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT p.id, p.order_no, p.apply_no, p.apply_id, p.purchase_date, p.purchase_status,
+               p.contract_no, p.supplier_id, p.supplier_name, p.total_amount, p.operator_id, p.operator_name,
+               p.remark, p.create_user, p.create_time, p.update_time,
+               COALESCE(e.emp_name, '') AS apply_emp_name,
+               COALESCE(d.dept_name, '') AS apply_dept_name,
+               COALESCE(od.dept_name, '') AS operator_dept_name,
+               COALESCE(oe.emp_phone, '') AS operator_phone
+        FROM asset_purchase p
+        LEFT JOIN asset_purchase_apply_main a ON p.apply_id = a.id
+        LEFT JOIN sys_emp e ON a.apply_emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON (a.apply_dept_id = CAST(d.dept_id AS CHAR) OR a.apply_dept_id = d.dept_code)
+        LEFT JOIN sys_emp oe ON p.operator_id = oe.emp_id
+        LEFT JOIN sys_dept od ON (oe.dept_id = od.dept_id OR (oe.dept_code IS NOT NULL AND oe.dept_code = od.dept_code))
+        WHERE p.id = #{id}
+    </select>
+
+    <select id="selectByOrderNo" resultMap="BaseResultMap">
+        SELECT p.id, p.order_no, p.apply_no, p.apply_id, p.purchase_date, p.purchase_status,
+               p.contract_no, p.supplier_id, p.supplier_name, p.total_amount, p.operator_id, p.operator_name,
+               p.remark, p.create_user, p.create_time, p.update_time,
+               COALESCE(e.emp_name, '') AS apply_emp_name,
+               COALESCE(d.dept_name, '') AS apply_dept_name,
+               COALESCE(od.dept_name, '') AS operator_dept_name,
+               COALESCE(oe.emp_phone, '') AS operator_phone
+        FROM asset_purchase p
+        LEFT JOIN asset_purchase_apply_main a ON p.apply_id = a.id
+        LEFT JOIN sys_emp e ON a.apply_emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON (a.apply_dept_id = CAST(d.dept_id AS CHAR) OR a.apply_dept_id = d.dept_code)
+        LEFT JOIN sys_emp oe ON p.operator_id = oe.emp_id
+        LEFT JOIN sys_dept od ON (oe.dept_id = od.dept_id OR (oe.dept_code IS NOT NULL AND oe.dept_code = od.dept_code))
+        WHERE p.order_no = #{orderNo}
+    </select>
+
+    <select id="selectByApplyNo" resultMap="BaseResultMap">
+        SELECT p.id, p.order_no, p.apply_no, p.apply_id, p.purchase_date, p.purchase_status,
+               p.contract_no, p.supplier_id, p.supplier_name, p.total_amount, p.operator_id, p.operator_name,
+               p.remark, p.create_user, p.create_time, p.update_time,
+               COALESCE(e.emp_name, '') AS apply_emp_name,
+               COALESCE(d.dept_name, '') AS apply_dept_name,
+               COALESCE(od.dept_name, '') AS operator_dept_name,
+               COALESCE(oe.emp_phone, '') AS operator_phone
+        FROM asset_purchase p
+        LEFT JOIN asset_purchase_apply_main a ON p.apply_id = a.id
+        LEFT JOIN sys_emp e ON a.apply_emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON (a.apply_dept_id = CAST(d.dept_id AS CHAR) OR a.apply_dept_id = d.dept_code)
+        LEFT JOIN sys_emp oe ON p.operator_id = oe.emp_id
+        LEFT JOIN sys_dept od ON (oe.dept_id = od.dept_id OR (oe.dept_code IS NOT NULL AND oe.dept_code = od.dept_code))
+        WHERE p.apply_no = #{applyNo}
+        ORDER BY p.create_time DESC
+    </select>
+
+    <select id="selectByConditions" resultMap="BaseResultMap">
+        SELECT p.id, p.order_no, p.apply_no, p.apply_id, p.purchase_date, p.purchase_status,
+               p.contract_no, p.supplier_id, p.supplier_name, p.total_amount, p.operator_id, p.operator_name,
+               p.remark, p.create_user, p.create_time, p.update_time,
+               COALESCE(e.emp_name, '') AS apply_emp_name,
+               COALESCE(d.dept_name, '') AS apply_dept_name,
+               COALESCE(od.dept_name, '') AS operator_dept_name,
+               COALESCE(oe.emp_phone, '') AS operator_phone
+        FROM asset_purchase p
+        LEFT JOIN asset_purchase_apply_main a ON p.apply_id = a.id
+        LEFT JOIN sys_emp e ON a.apply_emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON (a.apply_dept_id = CAST(d.dept_id AS CHAR) OR a.apply_dept_id = d.dept_code)
+        LEFT JOIN sys_emp oe ON p.operator_id = oe.emp_id
+        LEFT JOIN sys_dept od ON (oe.dept_id = od.dept_id OR (oe.dept_code IS NOT NULL AND oe.dept_code = od.dept_code))
+        WHERE 1=1
+        <if test="orderNo != null and orderNo != ''">
+            AND p.order_no LIKE CONCAT('%', #{orderNo}, '%')
+        </if>
+        <if test="applyNo != null and applyNo != ''">
+            AND p.apply_no LIKE CONCAT('%', #{applyNo}, '%')
+        </if>
+        <if test="purchaseStatus != null and purchaseStatus != ''">
+            AND p.purchase_status = #{purchaseStatus}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND DATE(p.purchase_date) &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND DATE(p.purchase_date) &lt;= #{endDate}
+        </if>
+        ORDER BY p.create_time DESC
+    </select>
+
+    <select id="selectMaxOrderNoByPrefix" resultType="java.lang.String">
+        SELECT MAX(order_no) 
+        FROM asset_purchase 
+        WHERE order_no LIKE CONCAT(#{prefix}, '%')
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.AssetPurchase" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO asset_purchase (order_no, apply_no, apply_id, purchase_date, purchase_status,
+                                   contract_no, supplier_id, supplier_name, total_amount, 
+                                   operator_id, operator_name, remark, create_user)
+        VALUES (#{orderNo}, #{applyNo}, #{applyId}, #{purchaseDate}, #{purchaseStatus},
+                #{contractNo}, #{supplierId}, #{supplierName}, #{totalAmount},
+                #{operatorId}, #{operatorName}, #{remark}, #{createUser})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.AssetPurchase">
+        UPDATE asset_purchase
+        <set>
+            <if test="purchaseDate != null">purchase_date = #{purchaseDate},</if>
+            <if test="purchaseStatus != null">purchase_status = #{purchaseStatus},</if>
+            <if test="contractNo != null">contract_no = #{contractNo},</if>
+            <if test="supplierId != null">supplier_id = #{supplierId},</if>
+            <if test="supplierName != null">supplier_name = #{supplierName},</if>
+            <if test="totalAmount != null">total_amount = #{totalAmount},</if>
+            <if test="operatorId != null">operator_id = #{operatorId},</if>
+            <if test="operatorName != null">operator_name = #{operatorName},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM asset_purchase WHERE id = #{id}
+    </delete>
+
+</mapper>
+

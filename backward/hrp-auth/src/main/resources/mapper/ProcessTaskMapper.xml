@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.auth.mapper.ProcessTaskMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.ProcessTask">
+        <id column="task_id" property="taskId"/>
+        <result column="process_instance_id" property="processInstanceId"/>
+        <result column="task_key" property="taskKey"/>
+        <result column="task_name" property="taskName"/>
+        <result column="next_task_id" property="nextTaskId"/>
+        <result column="allow_addsign" property="allowAddsign"/>
+        <result column="allow_transfer" property="allowTransfer"/>
+        <result column="allow_reject" property="allowReject"/>
+        <result column="allow_reduce_sign" property="allowReduceSign"/>
+        <result column="assignee_user_id" property="assigneeUserId"/>
+        <result column="assignee_user_name" property="assigneeUserName"/>
+        <result column="assignee_emp_code" property="assigneeEmpCode"/>
+        <result column="assignee_type" property="assigneeType"/>
+        <result column="position_code" property="positionCode"/>
+        <result column="dept_code" property="deptCode"/>
+        <result column="candidate_users" property="candidateUsers"/>
+        <result column="task_status" property="taskStatus"/>
+        <result column="task_type" property="taskType"/>
+        <result column="approval_type" property="approvalType"/>
+        <result column="approver_list" property="approverList"/>
+        <result column="approved_list" property="approvedList"/>
+        <result column="need_print" property="needPrint"/>
+        <result column="print_order" property="printOrder"/>
+        <result column="parent_task_id" property="parentTaskId"/>
+        <result column="is_addsign_task" property="isAddsignTask"/>
+        <result column="priority" property="priority"/>
+        <result column="due_date" property="dueDate"/>
+        <result column="claim_time" property="claimTime"/>
+        <result column="complete_time" property="completeTime"/>
+        <result column="comment" property="comment"/>
+        <result column="approver_signature" property="approverSignature"/>
+        <result column="return_type" property="returnType"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="business_key" property="businessKey"/>
+        <result column="business_type" property="businessType"/>
+        <result column="process_definition_name" property="processDefinitionName"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM wf_process_task WHERE task_id = #{taskId}
+    </select>
+
+    <select id="selectByInstanceId" resultMap="BaseResultMap">
+        SELECT * FROM wf_process_task WHERE process_instance_id = #{processInstanceId}
+        ORDER BY create_time ASC
+    </select>
+
+    <select id="selectByAssignee" resultMap="BaseResultMap">
+        <![CDATA[
+        SELECT t.*, 
+               t.task_key as business_key,
+               NULL as business_type,
+               NULL as process_definition_name
+        FROM wf_process_task t
+        WHERE t.assignee_user_id = #{assigneeUserId} 
+          AND t.task_status = 'PENDING'
+          AND t.task_key IS NOT NULL
+          -- 只显示当前节点的任务（确保不存在更早的待处理节点）
+          AND NOT EXISTS (
+              SELECT 1 FROM wf_process_task prev
+              WHERE prev.task_key = t.task_key
+                AND prev.task_status = 'PENDING'
+                AND (
+                    (prev.print_order IS NOT NULL AND t.print_order IS NOT NULL AND prev.print_order < t.print_order)
+                    OR
+                    (prev.print_order IS NOT NULL AND t.print_order IS NULL)
+                    OR
+                    (prev.print_order IS NULL AND t.print_order IS NULL AND prev.create_time < t.create_time)
+                )
+          )
+        ORDER BY COALESCE(t.print_order, 999999) ASC, t.create_time ASC
+        ]]>
+    </select>
+
+    <!-- 根据办理人ID和任务状态查询任务列表（用于查询已审批等历史记录） -->
+    <select id="selectByAssigneeAndStatus" resultMap="BaseResultMap">
+        SELECT DISTINCT t.*, 
+               t.task_key as business_key,
+               NULL as business_type,
+               NULL as process_definition_name
+        FROM wf_process_task t
+        WHERE t.assignee_user_id = #{assigneeUserId} 
+          AND t.task_status = #{taskStatus}
+          AND t.task_key IS NOT NULL
+        ORDER BY t.complete_time DESC, t.create_time DESC
+    </select>
+
+    <select id="selectByBusinessKey" resultMap="BaseResultMap">
+        SELECT t.*, 
+               t.task_key as business_key,
+               NULL as business_type,
+               NULL as process_definition_name
+        FROM wf_process_task t
+        WHERE t.task_key = #{businessKey}
+        ORDER BY COALESCE(t.print_order, 999999) ASC, t.create_time ASC
+    </select>
+
+    <!-- 查询所有当前节点的任务（显示所有流程的当前审批节点） -->
+    <select id="selectAllCurrentTasks" resultMap="BaseResultMap">
+        <![CDATA[
+        SELECT t.*, 
+               t.task_key as business_key,
+               NULL as business_type,
+               NULL as process_definition_name
+        FROM wf_process_task t
+        WHERE t.task_status = 'PENDING'
+          AND t.task_key IS NOT NULL
+          -- 只显示当前节点的任务（确保不存在更早的待处理节点）
+          AND NOT EXISTS (
+              SELECT 1 FROM wf_process_task prev
+              WHERE prev.task_key = t.task_key
+                AND prev.task_status = 'PENDING'
+                AND (
+                    (prev.print_order IS NOT NULL AND t.print_order IS NOT NULL AND prev.print_order < t.print_order)
+                    OR
+                    (prev.print_order IS NOT NULL AND t.print_order IS NULL)
+                    OR
+                    (prev.print_order IS NULL AND t.print_order IS NULL AND prev.create_time < t.create_time)
+                )
+          )
+        ORDER BY COALESCE(t.print_order, 999999) ASC, t.create_time ASC
+        ]]>
+    </select>
+
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT t.*, i.business_key, i.business_type, d.definition_name as process_definition_name
+        FROM wf_process_task t
+        LEFT JOIN wf_process_instance i ON t.process_instance_id = i.instance_id
+        LEFT JOIN wf_process_definition d ON i.process_definition_id = d.definition_id
+        WHERE t.task_status = #{taskStatus}
+        ORDER BY t.create_time DESC
+    </select>
+
+    <select id="selectNextPendingTask" resultMap="BaseResultMap">
+        SELECT t.*, i.business_key, i.business_type, d.definition_name as process_definition_name
+        FROM wf_process_task t
+        LEFT JOIN wf_process_instance i ON t.process_instance_id = i.instance_id
+        LEFT JOIN wf_process_definition d ON i.process_definition_id = d.definition_id
+        WHERE t.process_instance_id = #{processInstanceId} AND t.task_status = 'PENDING'
+        ORDER BY t.create_time ASC
+        LIMIT 1
+    </select>
+
+    <select id="selectByStatusPage" resultMap="BaseResultMap">
+        SELECT t.*, i.business_key, i.business_type, d.definition_name as process_definition_name
+        FROM wf_process_task t
+        LEFT JOIN wf_process_instance i ON t.process_instance_id = i.instance_id
+        LEFT JOIN wf_process_definition d ON i.process_definition_id = d.definition_id
+        WHERE t.task_status = #{taskStatus}
+        ORDER BY t.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByStatus" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM wf_process_task t
+        WHERE t.task_status = #{taskStatus}
+    </select>
+
+    <select id="selectByBusinessKeyPage" resultMap="BaseResultMap">
+        SELECT t.*, i.business_key, i.business_type, d.definition_name as process_definition_name
+        FROM wf_process_task t
+        LEFT JOIN wf_process_instance i ON t.process_instance_id = i.instance_id
+        LEFT JOIN wf_process_definition d ON i.process_definition_id = d.definition_id
+        WHERE i.business_key = #{businessKey}
+        ORDER BY t.create_time DESC
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByBusinessKey" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM wf_process_task t
+        LEFT JOIN wf_process_instance i ON t.process_instance_id = i.instance_id
+        WHERE i.business_key = #{businessKey}
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.ProcessTask">
+        INSERT INTO wf_process_task (task_id, process_instance_id, task_key, task_name, next_task_id, assignee_user_id, assignee_user_name, assignee_emp_code, assignee_type, position_code, dept_code, candidate_users, task_status, task_type, approval_type, approver_list, approved_list, need_print, print_order, parent_task_id, is_addsign_task, allow_addsign, allow_transfer, allow_reject, allow_reduce_sign, priority, due_date, comment, approver_signature, return_type, complete_time, create_time)
+        VALUES (#{taskId}, #{processInstanceId}, #{taskKey}, #{taskName}, #{nextTaskId}, #{assigneeUserId}, #{assigneeUserName}, #{assigneeEmpCode}, #{assigneeType}, #{positionCode}, #{deptCode}, #{candidateUsers}, #{taskStatus}, #{taskType}, #{approvalType}, #{approverList}, #{approvedList}, #{needPrint}, #{printOrder}, #{parentTaskId}, #{isAddsignTask}, #{allowAddsign}, #{allowTransfer}, #{allowReject}, #{allowReduceSign}, #{priority}, #{dueDate}, #{comment}, #{approverSignature}, #{returnType}, #{completeTime}, NOW())
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.ProcessTask">
+        UPDATE wf_process_task
+        <set>
+            <if test="nextTaskId != null">next_task_id = #{nextTaskId},</if>
+            <if test="assigneeUserId != null">assignee_user_id = #{assigneeUserId},</if>
+            <if test="assigneeUserName != null">assignee_user_name = #{assigneeUserName},</if>
+            <if test="assigneeEmpCode != null">assignee_emp_code = #{assigneeEmpCode},</if>
+            <if test="assigneeType != null">assignee_type = #{assigneeType},</if>
+            <if test="positionCode != null">position_code = #{positionCode},</if>
+            <if test="deptCode != null">dept_code = #{deptCode},</if>
+            <if test="taskStatus != null">task_status = #{taskStatus},</if>
+            <if test="approvalType != null">approval_type = #{approvalType},</if>
+            <if test="approverList != null">approver_list = #{approverList},</if>
+            <if test="approvedList != null">approved_list = #{approvedList},</if>
+            <if test="needPrint != null">need_print = #{needPrint},</if>
+            <if test="printOrder != null">print_order = #{printOrder},</if>
+            <if test="parentTaskId != null">parent_task_id = #{parentTaskId},</if>
+            <if test="isAddsignTask != null">is_addsign_task = #{isAddsignTask},</if>
+            <if test="allowAddsign != null">allow_addsign = #{allowAddsign},</if>
+            <if test="allowTransfer != null">allow_transfer = #{allowTransfer},</if>
+            <if test="allowReject != null">allow_reject = #{allowReject},</if>
+            <if test="allowReduceSign != null">allow_reduce_sign = #{allowReduceSign},</if>
+            <if test="claimTime != null">claim_time = #{claimTime},</if>
+            <if test="completeTime != null">complete_time = #{completeTime},</if>
+            <if test="comment != null">comment = #{comment},</if>
+            <if test="approverSignature != null">approver_signature = #{approverSignature},</if>
+            <if test="returnType != null">return_type = #{returnType},</if>
+            update_time = NOW()
+        </set>
+        WHERE task_id = #{taskId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM wf_process_task WHERE task_id = #{taskId}
+    </delete>
+
+    <delete id="deleteByTaskKey">
+        DELETE FROM wf_process_task WHERE task_key = #{taskKey}
+    </delete>
+
+    <select id="selectByTaskKey" resultMap="BaseResultMap">
+        SELECT * FROM wf_process_task WHERE task_key = #{taskKey}
+        ORDER BY create_time ASC
+    </select>
+
+    <!-- 根据task_key更新所有PENDING状态的任务为TERMINATED -->
+    <update id="terminateTasksByTaskKey">
+        UPDATE wf_process_task
+        SET task_status = 'TERMINATED',
+            update_time = NOW()
+        WHERE task_key = #{taskKey}
+          AND task_status = 'PENDING'
+    </update>
+
+</mapper>
+
+
+

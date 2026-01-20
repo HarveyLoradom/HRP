@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.hr.mapper.HrSalConfigMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.HrSalConfig">
+        <id column="config_id" property="configId"/>
+        <result column="emp_id" property="empId"/>
+        <result column="emp_code" property="empCode"/>
+        <result column="emp_name" property="empName"/>
+        <result column="basic_salary" property="basicSalary"/>
+        <result column="post_allowance" property="postAllowance"/>
+        <result column="social_security" property="socialSecurity"/>
+        <result column="provident_fund" property="providentFund"/>
+        <result column="tax_threshold" property="taxThreshold"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT c.config_id, c.emp_id, c.basic_salary, c.post_allowance, c.social_security,
+               c.provident_fund, c.tax_threshold, c.create_user, c.create_time, c.update_time,
+               COALESCE(e.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, '') AS emp_name
+        FROM hr_sal_config c
+        LEFT JOIN sys_emp e ON c.emp_id = e.emp_id
+        WHERE c.config_id = #{configId}
+    </select>
+
+    <select id="selectByEmpId" resultMap="BaseResultMap">
+        SELECT c.config_id, c.emp_id, c.basic_salary, c.post_allowance, c.social_security,
+               c.provident_fund, c.tax_threshold, c.create_user, c.create_time, c.update_time,
+               COALESCE(e.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, '') AS emp_name
+        FROM hr_sal_config c
+        LEFT JOIN sys_emp e ON c.emp_id = e.emp_id
+        WHERE c.emp_id = #{empId}
+    </select>
+
+    <select id="selectByConditions" resultMap="BaseResultMap">
+        SELECT c.config_id, c.emp_id, c.basic_salary, c.post_allowance, c.social_security,
+               c.provident_fund, c.tax_threshold, c.create_user, c.create_time, c.update_time,
+               COALESCE(e.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, '') AS emp_name
+        FROM hr_sal_config c
+        LEFT JOIN sys_emp e ON c.emp_id = e.emp_id
+        WHERE 1=1
+        <if test="empId != null">
+            AND c.emp_id = #{empId}
+        </if>
+        <if test="empCode != null and empCode != ''">
+            AND e.emp_code LIKE CONCAT('%', #{empCode}, '%')
+        </if>
+        <if test="empName != null and empName != ''">
+            AND e.emp_name LIKE CONCAT('%', #{empName}, '%')
+        </if>
+        ORDER BY c.update_time DESC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.HrSalConfig" useGeneratedKeys="true" keyProperty="configId">
+        INSERT INTO hr_sal_config (emp_id, basic_salary, post_allowance, social_security,
+                                  provident_fund, tax_threshold, create_user)
+        VALUES (#{empId}, #{basicSalary}, #{postAllowance}, #{socialSecurity},
+                #{providentFund}, #{taxThreshold}, #{createUser})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.HrSalConfig">
+        UPDATE hr_sal_config
+        <set>
+            <if test="basicSalary != null">basic_salary = #{basicSalary},</if>
+            <if test="postAllowance != null">post_allowance = #{postAllowance},</if>
+            <if test="socialSecurity != null">social_security = #{socialSecurity},</if>
+            <if test="providentFund != null">provident_fund = #{providentFund},</if>
+            <if test="taxThreshold != null">tax_threshold = #{taxThreshold},</if>
+        </set>
+        WHERE config_id = #{configId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM hr_sal_config WHERE config_id = #{configId}
+    </delete>
+
+    <delete id="deleteByEmpId">
+        DELETE FROM hr_sal_config WHERE emp_id = #{empId}
+    </delete>
+
+    <select id="selectAllEmpIds" resultType="java.lang.Long">
+        SELECT DISTINCT emp_id
+        FROM hr_sal_config
+        ORDER BY emp_id ASC
+    </select>
+
+</mapper>
+

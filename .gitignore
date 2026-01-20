@@ -1,0 +1,103 @@
+# ==================== 后端通用（Java/Maven/Gradle 为主） ====================
+# Maven 构建产物（核心编译/打包目录，递归匹配所有嵌套目录）
+**/target/
+
+# Gradle 构建产物
+**/build/
+**/out/
+.gradle/
+gradle-wrapper.jar
+
+# 编译生成的字节码文件（Java 源码编译产物）
+*.class
+
+# Java 项目编辑器/工具配置/缓存文件
+.idea/
+*.iml
+*.ipr
+*.iws
+.settings/
+.classpath
+.project
+
+# 后端日志文件（避免提交超大日志文件，递归匹配所有 logs 目录）
+*.log
+logs/
+**/logs/
+
+# 后端配置文件（可选：包含数据库密码等敏感信息，强烈建议忽略）
+*.properties
+*.yml
+*.yaml
+
+# 打包产物（除 target 内，单独的包文件也忽略）
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+
+# 服务器相关临时文件
+nohup.out
+
+# ==================== 前端通用（Vue/React/Angular 为主） ====================
+# 前端依赖包（体积庞大，可通过 package.json 重新安装，必须忽略）
+node_modules/
+
+# 前端构建产物（编译/打包后的静态资源，递归匹配所有目录下的构建目录）
+**/dist/
+**/build/
+
+# 前端打包/校验缓存文件
+.cache/
+.eslintcache
+
+# 环境变量配置文件（包含敏感信息如接口地址、密钥）
+.env
+.env.*
+!.env.example  # 反向忽略：保留配置示例文件，方便团队共享
+
+# 前端日志/临时文件
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+tmp/
+temp/
+
+# 前端编辑器配置（VS Code）：忽略整体，保留核心共享配置
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# 前端打包映射文件（可选：无需线上调试可忽略，如需调试可删除此行）
+*.map
+
+# 前端依赖版本锁文件（可选：团队协作建议删除以下两行，纳入Git追踪以统一版本）
+yarn.lock
+package-lock.json
+
+# ==================== 跨平台/通用忽略项 ====================
+# Mac 系统专属隐藏文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows 系统专属隐藏文件
+ehthumbs.db
+Thumbs.db
+
+# 通用压缩包文件（无需纳入版本控制）
+*.7z
+*.rar
+*.zip
+*.gz
+*.bz2
+
+# 通用临时文件/编辑缓存文件
+*.tmp
+*.swp
+*.swo

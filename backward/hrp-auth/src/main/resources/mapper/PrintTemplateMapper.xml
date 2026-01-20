@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.auth.mapper.PrintTemplateMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.PrintTemplate">
+        <id column="template_id" property="templateId"/>
+        <result column="template_code" property="templateCode"/>
+        <result column="template_name" property="templateName"/>
+        <result column="template_type" property="templateType"/>
+        <result column="template_content" property="templateContent"/>
+        <result column="template_xml" property="templateXml"/>
+        <result column="template_json" property="templateJson"/>
+        <result column="template_fields" property="templateFields"/>
+        <result column="page_size" property="pageSize"/>
+        <result column="orientation" property="orientation"/>
+        <result column="margin_top" property="marginTop"/>
+        <result column="margin_bottom" property="marginBottom"/>
+        <result column="margin_left" property="marginLeft"/>
+        <result column="margin_right" property="marginRight"/>
+        <result column="custom_css" property="customCss"/>
+        <result column="header_html" property="headerHtml"/>
+        <result column="footer_html" property="footerHtml"/>
+        <result column="is_default" property="isDefault"/>
+        <result column="is_active" property="isActive"/>
+        <result column="remark" property="remark"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM sys_print_template WHERE template_id = #{templateId}
+    </select>
+
+    <select id="selectByCode" resultMap="BaseResultMap">
+        SELECT * FROM sys_print_template WHERE template_code = #{templateCode}
+    </select>
+
+    <select id="selectByType" resultMap="BaseResultMap">
+        SELECT * FROM sys_print_template 
+        WHERE template_type = #{templateType}
+        <if test="isActive != null and isActive == 1">
+            AND (is_active = 1 OR is_active IS NULL)
+        </if>
+        <if test="isActive != null and isActive == 0">
+            AND is_active = 0
+        </if>
+        <if test="isActive == null">
+            AND (is_active = 1 OR is_active IS NULL)
+        </if>
+        ORDER BY is_default DESC, create_time DESC
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT * FROM sys_print_template
+        WHERE 1=1
+        <if test="isActive != null and isActive == 1">
+            AND (is_active = 1 OR is_active IS NULL)
+        </if>
+        <if test="isActive != null and isActive == 0">
+            AND is_active = 0
+        </if>
+        <if test="isActive == null">
+            AND (is_active = 1 OR is_active IS NULL)
+        </if>
+        ORDER BY template_type, is_default DESC, create_time DESC
+    </select>
+
+    <select id="selectDefaultByType" resultMap="BaseResultMap">
+        SELECT * FROM sys_print_template 
+        WHERE template_type = #{templateType} AND is_default = 1 AND is_active = 1
+        LIMIT 1
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.PrintTemplate">
+        INSERT INTO sys_print_template 
+        (template_code, template_name, template_type, template_content, template_xml, template_json, template_fields, 
+         page_size, orientation, margin_top, margin_bottom, margin_left, margin_right, 
+         custom_css, header_html, footer_html, is_default, is_active, remark, create_user, create_time)
+        VALUES 
+        (#{templateCode}, #{templateName}, #{templateType}, #{templateContent}, #{templateXml}, #{templateJson}, #{templateFields},
+         #{pageSize}, #{orientation}, #{marginTop}, #{marginBottom}, #{marginLeft}, #{marginRight},
+         #{customCss}, #{headerHtml}, #{footerHtml}, #{isDefault}, #{isActive}, #{remark}, #{createUser}, NOW())
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.PrintTemplate">
+        UPDATE sys_print_template
+        <set>
+            <if test="templateCode != null">template_code = #{templateCode},</if>
+            <if test="templateName != null">template_name = #{templateName},</if>
+            <if test="templateType != null">template_type = #{templateType},</if>
+            <if test="templateContent != null">template_content = #{templateContent},</if>
+            <if test="templateXml != null">template_xml = #{templateXml},</if>
+            <if test="templateJson != null">template_json = #{templateJson},</if>
+            <if test="templateFields != null">template_fields = #{templateFields},</if>
+            <if test="pageSize != null">page_size = #{pageSize},</if>
+            <if test="orientation != null">orientation = #{orientation},</if>
+            <if test="marginTop != null">margin_top = #{marginTop},</if>
+            <if test="marginBottom != null">margin_bottom = #{marginBottom},</if>
+            <if test="marginLeft != null">margin_left = #{marginLeft},</if>
+            <if test="marginRight != null">margin_right = #{marginRight},</if>
+            <if test="customCss != null">custom_css = #{customCss},</if>
+            <if test="headerHtml != null">header_html = #{headerHtml},</if>
+            <if test="footerHtml != null">footer_html = #{footerHtml},</if>
+            <if test="isDefault != null">is_default = #{isDefault},</if>
+            <if test="isActive != null">is_active = #{isActive},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = NOW()
+        </set>
+        WHERE template_id = #{templateId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM sys_print_template WHERE template_id = #{templateId}
+    </delete>
+
+    <!-- 通用数据查询：根据模板类型和业务主键查询数据 -->
+    <select id="selectDataByBusinessKey" resultType="java.util.HashMap">
+        <choose>
+            <!-- 申请单/报账单 -->
+            <when test="templateType == 'APPLY' or templateType == 'PAYOUT' or templateType == 'APPLY_TYPE' or templateType == 'PAYOUT_TYPE'">
+                SELECT 
+                    p.payout_id as payoutId,
+                    p.payout_billcode as payoutBillcode,
+                    p.bill_type as billType,
+                    p.emp_id as empId,
+                    p.emp_code as empCode,
+                    p.emp_name as empName,
+                    p.dept_id as deptId,
+                    COALESCE(d.dept_name, '') as deptName,
+                    p.payout_type_id as payoutTypeId,
+                    p.apply_amount as applyAmount,
+                    p.apply_reason as applyReason,
+                    DATE_FORMAT(p.apply_date, '%Y-%m-%d') as applyDate,
+                    p.status,
+                    p.remark,
+                    DATE_FORMAT(p.create_time, '%Y-%m-%d') as createTime
+                FROM ctrl_payout p
+                LEFT JOIN sys_dept d ON p.dept_id = d.dept_id
+                WHERE p.payout_billcode = #{businessKey}
+            </when>
+            <!-- 合同 -->
+            <when test="templateType == 'CONTRACT'">
+                SELECT 
+                    pm.pact_id as pactId,
+                    pm.contract_no as contractNo,
+                    sd.dept_name as deptName,
+                    se.emp_name as empName,
+                    pm.contract_name as contractName,
+                    pm.contract_type as contractType,
+                    pm.party_a as partyA,
+                    pm.party_b as partyB,
+                    pm.contract_amount as contractAmount,
+                    DATE_FORMAT(pm.sign_date, '%Y-%m-%d') as signDate,
+                    DATE_FORMAT(pm.start_date, '%Y-%m-%d') as startDate,
+                    DATE_FORMAT(pm.end_date, '%Y-%m-%d') as endDate,
+                    pm.status,
+                    pm.remark,
+                    DATE_FORMAT(pm.create_time, '%Y-%m-%d %H:%i:%s') as createTime
+                FROM pact_main pm
+                left join sys_dept sd on sd.dept_id=pm.dept_id
+                left join sys_emp se on se.emp_id=pm.emp_id
+                WHERE contract_no = #{businessKey}
+            </when>
+
+            <!-- 预算申请 -->
+            <when test="templateType == 'BUDG' or templateType == 'BUDGET_TYPE' or templateType == 'BUDGET'">
+                SELECT 
+                    ba.apply_id as applyId,
+                    ba.apply_no as applyNo,
+                    ba.budget_year as budgetYear,
+                    ba.item_id as itemId,
+                    ba.item_code as itemCode,
+                    ba.item_name as itemName,
+                    ba.subject_id as subjectId,
+                    ba.subject_code as subjectCode,
+                    ba.subject_name as subjectName,
+                    ba.apply_amount as applyAmount,
+                    ba.apply_reason as applyReason,
+                    ba.status,
+                    ba.applicant_id as applicantId,
+                    ba.applicant_code as applicantCode,
+                    ba.applicant_name as applicantName,
+                    ba.dept_id as deptId,
+                    ba.dept_code as deptCode,
+                    COALESCE(d.dept_name, ba.dept_name, '') as deptName,
+                    COALESCE(ba.applicant_phone, e.emp_phone, '') as applicantPhone,
+                    DATE_FORMAT(ba.apply_date, '%Y-%m-%d %H:%i:%s') as applyDate,
+                    DATE_FORMAT(ba.create_time, '%Y-%m-%d %H:%i:%s') as createTime,
+                    DATE_FORMAT(ba.update_time, '%Y-%m-%d %H:%i:%s') as updateTime
+                FROM budget_apply ba
+                LEFT JOIN sys_emp e ON ba.applicant_id = e.emp_id
+                LEFT JOIN sys_dept d ON ba.dept_id = d.dept_id
+                WHERE ba.apply_no = #{businessKey}
+            </when>
+
+            <!-- 资产采购申请 -->
+            <when test="templateType == 'ASSET' or templateType == 'ASSET_TYPE' or templateType == 'ASSET_PURCHASE_APPLY'">
+                SELECT 
+                    apam.id as id,
+                    apam.apply_no as applyNo,
+                    apam.apply_emp_id as applyEmpId,
+                    se.emp_name as empName,
+                    apam.apply_dept_id as applyDeptId,
+                    d.dept_name as deptName,
+                    apam.demand_date as demandDate,
+                    apam.apply_reason as applyReason,
+                    apam.apply_money as applyMoney,
+                    apam.status,
+                    apam.template_config_id as templateConfigId,
+                    DATE_FORMAT(apam.apply_time, '%Y-%m-%d %H:%i:%s') as applyTime,
+                    DATE_FORMAT(apam.create_time, '%Y-%m-%d %H:%i:%s') as createTime,
+                    DATE_FORMAT(apam.update_time, '%Y-%m-%d %H:%i:%s') as updateTime
+                FROM asset_purchase_apply_main apam
+                LEFT JOIN sys_dept d ON apam.apply_dept_id = d.dept_id
+                left join sys_emp  se on se.emp_id=apam.apply_emp_id
+                WHERE apam.apply_no = #{businessKey}
+            </when>
+            
+            <!-- HR业务申请 -->
+            <when test="templateType == 'HR' or templateType == 'HR_APPLY' or templateType == 'HR_APPLY_TYPE'">
+                SELECT 
+                    a.apply_id as applyId,
+                    a.apply_no as applyNo,
+                    a.emp_id as empId,
+                    COALESCE(a.emp_code, e.emp_code, '') as empCode,
+                    COALESCE(a.emp_name, e.emp_name, '') as empName,
+                    COALESCE(a.emp_phone, e.emp_phone, '') as empPhone,
+                    COALESCE(a.dept_id, e.dept_id) as deptId,
+                    COALESCE(d.dept_name, a.dept_name, '') as deptName,
+                    a.hr_apply_type as hrApplyType,
+                    a.hr_apply_sub_type as hrApplySubType,
+                    DATE_FORMAT(a.start_time, '%Y-%m-%d %H:%i:%s') as startTime,
+                    DATE_FORMAT(a.end_time, '%Y-%m-%d %H:%i:%s') as endTime,
+                    a.supplement_id as supplementId,
+                    a.apply_day as applyDay,
+                    a.apply_reason as applyReason,
+                    a.main_attach_id as mainAttachId,
+                    a.status,
+                    a.template_config_id as templateConfigId,
+                    a.process_definition_id as processDefinitionId,
+                    a.process_instance_id as processInstanceId,
+                    a.remark,
+                    a.create_user as createUser,
+                    DATE_FORMAT(a.create_time, '%Y-%m-%d %H:%i:%s') as createTime,
+                    DATE_FORMAT(a.update_time, '%Y-%m-%d %H:%i:%s') as updateTime
+                FROM hr_apply a
+                LEFT JOIN sys_emp e ON a.emp_id = e.emp_id
+                LEFT JOIN sys_dept d ON COALESCE(a.dept_id, e.dept_id) = d.dept_id
+                WHERE a.apply_no = #{businessKey}
+            </when>
+            
+            <otherwise>
+                SELECT 1 as `dummy` WHERE 1 = 0
+            </otherwise>
+        </choose>
+    </select>
+
+    <!-- 查询支付明细（根据payout_id） -->
+    <select id="selectPaymentsByPayoutId" resultType="java.util.HashMap">
+        SELECT
+            cpp.payment_id as paymentId,
+            cpp.payout_id as payoutId,
+            cpp.payment_amount as paymentAmount,
+            cpp.payment_object as paymentObject,
+            sc.code_name as paymentMethod,
+            cpp.bank_name as bankName,
+            cpp.bank_account as bankAccount,
+            cpp.account_name as accountName,
+            cpp.remark
+        FROM ctrl_payout_payment cpp
+        left join sys_code sc on cpp.payment_method = sc.code_value
+        WHERE cpp.payout_id = #{payoutId}
+        ORDER BY cpp.payment_id
+    </select>
+
+    <!-- 查询发票信息（根据payout_id） -->
+    <select id="selectInvoicesByPayoutId" resultType="java.util.HashMap">
+        SELECT 
+            invoice_id as invoiceId,
+            payout_id as payoutId,
+            invoice_code as invoiceCode,
+            invoice_number as invoiceNumber,
+            DATE_FORMAT(invoice_date, '%Y-%m-%d %H:%i:%s') as invoiceDate,
+            invoice_amount as invoiceAmount,
+            invoice_type as invoiceType,
+            tax_amount as taxAmount,
+            remark
+        FROM ctrl_payout_invoice 
+        WHERE payout_id = #{payoutId}
+        ORDER BY invoice_id
+    </select>
+
+    <!-- 查询预算明细（根据business_no） -->
+    <select id="selectBudgetDetailsByBusinessNo" resultType="java.util.HashMap">
+        SELECT 
+            detail_id as detailId,
+            budget_year as budgetYear,
+            subject_id as subjectId,
+            subject_code as subjectCode,
+            subject_name as subjectName,
+            item_id as itemId,
+            item_code as itemCode,
+            item_name as itemName,
+            detail_type as detailType,
+            amount,
+            business_id as businessId,
+            business_no as businessNo,
+            dept_id as deptId,
+            dept_code as deptCode,
+            dept_name as deptName,
+            emp_id as empId,
+            emp_code as empCode,
+            emp_name as empName,
+            remark,
+            DATE_FORMAT(create_time, '%Y-%m-%d') as createTime
+        FROM budget_detail
+        WHERE business_no = #{businessNo}
+        ORDER BY detail_id
+    </select>
+
+    <!-- 查询资产采购申请明细（根据apply_no） -->
+    <select id="selectAssetPurchaseApplyDetailsByApplyNo" resultType="java.util.HashMap">
+        SELECT 
+            apad.id as id,
+            apad.apply_id as applyId,
+            apad.asset_code as assetCode,
+            apad.asset_name as assetName,
+            apad.spec as spec,
+            apad.manufacturer as manufacturer,
+            apad.unit as unit,
+            apad.apply_quantity as applyQuantity,
+            apad.price as price,
+            apad.total_price as totalPrice,
+            apad.remark as remark
+        FROM asset_purchase_apply_detail apad
+        INNER JOIN asset_purchase_apply_main apam ON apad.apply_id = apam.id
+        WHERE apam.apply_no = #{applyNo}
+        ORDER BY apad.id
+    </select>
+
+</mapper>
+

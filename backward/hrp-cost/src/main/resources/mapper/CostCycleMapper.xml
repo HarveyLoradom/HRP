@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.cost.mapper.CostCycleMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.CostCycle">
+        <id column="cycle_id" property="cycleId"/>
+        <result column="cycle_code" property="cycleCode"/>
+        <result column="cycle_name" property="cycleName"/>
+        <result column="cycle_type" property="cycleType"/>
+        <result column="start_date" property="startDate"/>
+        <result column="end_date" property="endDate"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT cycle_id, cycle_code, cycle_name, cycle_type, start_date, end_date, status, create_time
+        FROM cost_cycle
+        WHERE cycle_id = #{id}
+    </select>
+
+    <select id="selectByCode" resultMap="BaseResultMap">
+        SELECT cycle_id, cycle_code, cycle_name, cycle_type, start_date, end_date, status, create_time
+        FROM cost_cycle
+        WHERE cycle_code = #{cycleCode}
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT cycle_id, cycle_code, cycle_name, cycle_type, start_date, end_date, status, create_time
+        FROM cost_cycle
+        ORDER BY cycle_code DESC
+    </select>
+
+    <select id="selectByConditions" resultMap="BaseResultMap">
+        SELECT cycle_id, cycle_code, cycle_name, cycle_type, start_date, end_date, status, create_time
+        FROM cost_cycle
+        <where>
+            <if test="cycleCode != null and cycleCode != ''">
+                AND cycle_code LIKE CONCAT('%', #{cycleCode}, '%')
+            </if>
+            <if test="cycleName != null and cycleName != ''">
+                AND cycle_name LIKE CONCAT('%', #{cycleName}, '%')
+            </if>
+            <if test="cycleType != null and cycleType != ''">
+                AND cycle_type = #{cycleType}
+            </if>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+        ORDER BY cycle_code DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="cycleId">
+        INSERT INTO cost_cycle (cycle_code, cycle_name, cycle_type, start_date, end_date, status, create_time)
+        VALUES (#{cycleCode}, #{cycleName}, #{cycleType}, #{startDate}, #{endDate}, #{status}, NOW())
+    </insert>
+
+    <update id="updateById">
+        UPDATE cost_cycle
+        SET cycle_code = #{cycleCode},
+            cycle_name = #{cycleName},
+            cycle_type = #{cycleType},
+            start_date = #{startDate},
+            end_date = #{endDate},
+            status = #{status}
+        WHERE cycle_id = #{cycleId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM cost_cycle WHERE cycle_id = #{id}
+    </delete>
+
+</mapper>
+

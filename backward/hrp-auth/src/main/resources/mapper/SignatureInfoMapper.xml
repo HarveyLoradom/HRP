@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.auth.mapper.SignatureInfoMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.SignatureInfo">
+        <id column="id" property="id"/>
+        <result column="emp_id" property="empId"/>
+        <result column="emp_code" property="empCode"/>
+        <result column="emp_name" property="empName"/>
+        <result column="signature_name" property="signatureName"/>
+        <result column="signature_blob" property="signatureBlob" jdbcType="BLOB"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="file_type" property="fileType"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT * FROM signature_info WHERE id = #{id}
+    </select>
+
+    <select id="selectByEmpId" resultMap="BaseResultMap">
+        SELECT * FROM signature_info WHERE emp_id = #{empId} ORDER BY update_time DESC LIMIT 1
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.SignatureInfo" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO signature_info (emp_id, emp_code, emp_name, signature_name, signature_blob, file_size, file_type, create_time, update_time)
+        VALUES (#{empId}, #{empCode}, #{empName}, #{signatureName}, #{signatureBlob,jdbcType=BLOB}, #{fileSize}, #{fileType}, NOW(), NOW())
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.SignatureInfo">
+        UPDATE signature_info
+        <set>
+            <if test="signatureName != null">signature_name = #{signatureName},</if>
+            <if test="signatureBlob != null">signature_blob = #{signatureBlob,jdbcType=BLOB},</if>
+            <if test="fileSize != null">file_size = #{fileSize},</if>
+            <if test="fileType != null">file_type = #{fileType},</if>
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM signature_info WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteByEmpId">
+        DELETE FROM signature_info WHERE emp_id = #{empId}
+    </delete>
+
+</mapper>
+

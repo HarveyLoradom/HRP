@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.budg.mapper.BudgetAdjustmentMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.BudgetAdjustment">
+        <id column="adjustment_id" property="adjustmentId"/>
+        <result column="adjustment_no" property="adjustmentNo"/>
+        <result column="adjustment_type" property="adjustmentType"/>
+        <result column="related_bill_id" property="relatedBillId"/>
+        <result column="related_bill_no" property="relatedBillNo"/>
+        <result column="related_bill_type" property="relatedBillType"/>
+        <result column="budget_id" property="budgetId"/>
+        <result column="budget_no" property="budgetNo"/>
+        <result column="subject_id" property="subjectId"/>
+        <result column="subject_code" property="subjectCode"/>
+        <result column="item_id" property="itemId"/>
+        <result column="item_code" property="itemCode"/>
+        <result column="original_amount" property="originalAmount"/>
+        <result column="adjustment_amount" property="adjustmentAmount"/>
+        <result column="adjusted_amount" property="adjustedAmount"/>
+        <result column="adjustment_reason" property="adjustmentReason"/>
+        <result column="applicant_id" property="applicantId"/>
+        <result column="applicant_name" property="applicantName"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <resultMap id="DetailResultMap" type="com.hrp.common.entity.BudgetAdjustment" extends="BaseResultMap">
+        <result column="budget_name" property="budgetName"/>
+        <result column="subject_name" property="subjectName"/>
+        <result column="item_name" property="itemName"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="DetailResultMap">
+        SELECT a.*, b.budget_name, s.subject_name, i.item_name
+        FROM budget_adjustment a
+        LEFT JOIN budget b ON a.budget_id = b.budget_id
+        LEFT JOIN budget_subject s ON a.subject_id = s.subject_id
+        LEFT JOIN budget_item i ON a.item_id = i.item_id
+        WHERE a.adjustment_id = #{id}
+    </select>
+
+    <select id="selectByNo" resultMap="DetailResultMap">
+        SELECT a.*, b.budget_name, s.subject_name, i.item_name
+        FROM budget_adjustment a
+        LEFT JOIN budget b ON a.budget_id = b.budget_id
+        LEFT JOIN budget_subject s ON a.subject_id = s.subject_id
+        LEFT JOIN budget_item i ON a.item_id = i.item_id
+        WHERE a.adjustment_no = #{no}
+    </select>
+
+    <select id="selectAll" resultMap="DetailResultMap">
+        SELECT a.*, b.budget_name, s.subject_name, i.item_name
+        FROM budget_adjustment a
+        LEFT JOIN budget b ON a.budget_id = b.budget_id
+        LEFT JOIN budget_subject s ON a.subject_id = s.subject_id
+        LEFT JOIN budget_item i ON a.item_id = i.item_id
+        ORDER BY a.create_time DESC, a.adjustment_no
+    </select>
+
+    <select id="selectPage" resultMap="DetailResultMap">
+        SELECT a.*, b.budget_name, s.subject_name, i.item_name
+        FROM budget_adjustment a
+        LEFT JOIN budget b ON a.budget_id = b.budget_id
+        LEFT JOIN budget_subject s ON a.subject_id = s.subject_id
+        LEFT JOIN budget_item i ON a.item_id = i.item_id
+        WHERE 1=1
+        <if test="params.adjustmentType != null and params.adjustmentType != ''">
+            AND a.adjustment_type = #{params.adjustmentType}
+        </if>
+        <if test="params.subjectId != null">
+            AND a.subject_id = #{params.subjectId}
+        </if>
+        <if test="params.itemId != null">
+            AND a.item_id = #{params.itemId}
+        </if>
+        <if test="params.adjustmentNo != null and params.adjustmentNo != ''">
+            AND a.adjustment_no LIKE CONCAT('%', #{params.adjustmentNo}, '%')
+        </if>
+        ORDER BY a.create_time DESC, a.adjustment_no
+        LIMIT #{offset}, #{size}
+    </select>
+
+    <select id="countByConditions" resultType="long">
+        SELECT COUNT(*)
+        FROM budget_adjustment a
+        WHERE 1=1
+        <if test="params.adjustmentType != null and params.adjustmentType != ''">
+            AND a.adjustment_type = #{params.adjustmentType}
+        </if>
+        <if test="params.subjectId != null">
+            AND a.subject_id = #{params.subjectId}
+        </if>
+        <if test="params.itemId != null">
+            AND a.item_id = #{params.itemId}
+        </if>
+        <if test="params.adjustmentNo != null and params.adjustmentNo != ''">
+            AND a.adjustment_no LIKE CONCAT('%', #{params.adjustmentNo}, '%')
+        </if>
+    </select>
+
+    <select id="selectByItemId" resultMap="DetailResultMap">
+        SELECT a.*, b.budget_name, s.subject_name, i.item_name
+        FROM budget_adjustment a
+        LEFT JOIN budget b ON a.budget_id = b.budget_id
+        LEFT JOIN budget_subject s ON a.subject_id = s.subject_id
+        LEFT JOIN budget_item i ON a.item_id = i.item_id
+        WHERE a.item_id = #{itemId}
+        ORDER BY a.create_time DESC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.BudgetAdjustment" useGeneratedKeys="true" keyProperty="adjustmentId">
+        INSERT INTO budget_adjustment (adjustment_no, adjustment_type, related_bill_id, related_bill_no, related_bill_type,
+                                      budget_id, budget_no, subject_id, item_id,
+                                      original_amount, adjustment_amount, adjusted_amount, adjustment_reason,
+                                      applicant_id, applicant_name, create_user, create_time, update_time)
+        VALUES (#{adjustmentNo}, #{adjustmentType}, #{relatedBillId}, #{relatedBillNo}, #{relatedBillType},
+                #{budgetId}, #{budgetNo}, #{subjectId}, #{itemId},
+                #{originalAmount}, #{adjustmentAmount}, #{adjustedAmount}, #{adjustmentReason},
+                #{applicantId}, #{applicantName}, #{createUser}, #{createTime}, #{updateTime})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.BudgetAdjustment">
+        UPDATE budget_adjustment
+        <set>
+            <if test="adjustmentAmount != null">adjustment_amount = #{adjustmentAmount},</if>
+            <if test="adjustedAmount != null">adjusted_amount = #{adjustedAmount},</if>
+            <if test="adjustmentReason != null">adjustment_reason = #{adjustmentReason},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </set>
+        WHERE adjustment_id = #{adjustmentId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM budget_adjustment WHERE adjustment_id = #{id}
+    </delete>
+
+</mapper>
+

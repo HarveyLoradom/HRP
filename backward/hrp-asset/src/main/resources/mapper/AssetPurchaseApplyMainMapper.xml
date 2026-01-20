@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.asset.mapper.AssetPurchaseApplyMainMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.AssetPurchaseApplyMain">
+        <id column="id" property="id"/>
+        <result column="apply_no" property="applyNo"/>
+        <result column="apply_dept_id" property="applyDeptId"/>
+        <result column="apply_emp_id" property="applyEmpId"/>
+        <result column="apply_time" property="applyTime"/>
+        <result column="demand_date" property="demandDate"/>
+        <result column="apply_reason" property="applyReason"/>
+        <result column="apply_money" property="applyMoney"/>
+        <result column="status" property="status"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="template_config_id" property="templateConfigId"/>
+        <result column="main_attach_id" property="mainAttachId"/>
+        <!-- 扩展字段，用于前端显示 -->
+        <result column="apply_emp_name" property="applyEmpName"/>
+        <result column="apply_emp_code" property="applyEmpCode"/>
+        <result column="apply_dept_name" property="applyDeptName"/>
+        <result column="apply_dept_code" property="applyDeptCode"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT a.id, a.apply_no, a.apply_dept_id, a.apply_emp_id, a.apply_time, a.demand_date,
+               a.apply_reason, a.apply_money, a.status, a.create_user, a.create_time, a.update_time,
+               a.template_config_id, a.main_attach_id,
+               COALESCE(e.emp_name, '') AS apply_emp_name,
+               COALESCE(e.emp_code, '') AS apply_emp_code,
+               COALESCE(d.dept_name, '') AS apply_dept_name,
+               COALESCE(d.dept_code, '') AS apply_dept_code
+        FROM asset_purchase_apply_main a
+        LEFT JOIN sys_emp e ON a.apply_emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON (a.apply_dept_id = CAST(d.dept_id AS CHAR) OR a.apply_dept_id = d.dept_code)
+        WHERE a.id = #{id}
+    </select>
+
+    <select id="selectByApplyNo" resultMap="BaseResultMap">
+        SELECT a.id, a.apply_no, a.apply_dept_id, a.apply_emp_id, a.apply_time, a.demand_date,
+               a.apply_reason, a.apply_money, a.status, a.create_user, a.create_time, a.update_time,
+               a.template_config_id, a.main_attach_id,
+               COALESCE(e.emp_name, '') AS apply_emp_name,
+               COALESCE(e.emp_code, '') AS apply_emp_code,
+               COALESCE(d.dept_name, '') AS apply_dept_name,
+               COALESCE(d.dept_code, '') AS apply_dept_code
+        FROM asset_purchase_apply_main a
+        LEFT JOIN sys_emp e ON a.apply_emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON (a.apply_dept_id = CAST(d.dept_id AS CHAR) OR a.apply_dept_id = d.dept_code)
+        WHERE a.apply_no = #{applyNo}
+    </select>
+
+    <select id="selectByEmpId" resultMap="BaseResultMap">
+        SELECT a.id, a.apply_no, a.apply_dept_id, a.apply_emp_id, a.apply_time, a.demand_date,
+               a.apply_reason, a.apply_money, a.status, a.create_user, a.create_time, a.update_time,
+               a.template_config_id, a.main_attach_id,
+               COALESCE(e.emp_name, '') AS apply_emp_name,
+               COALESCE(e.emp_code, '') AS apply_emp_code,
+               COALESCE(d.dept_name, '') AS apply_dept_name,
+               COALESCE(d.dept_code, '') AS apply_dept_code
+        FROM asset_purchase_apply_main a
+        LEFT JOIN sys_emp e ON a.apply_emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON (a.apply_dept_id = CAST(d.dept_id AS CHAR) OR a.apply_dept_id = d.dept_code)
+        WHERE a.apply_emp_id = #{empId}
+        ORDER BY a.create_time DESC
+    </select>
+
+    <select id="selectByStatus" resultMap="BaseResultMap">
+        SELECT a.id, a.apply_no, a.apply_dept_id, a.apply_emp_id, a.apply_time, a.demand_date,
+               a.apply_reason, a.apply_money, a.status, a.create_user, a.create_time, a.update_time,
+               a.template_config_id, a.main_attach_id,
+               COALESCE(e.emp_name, '') AS apply_emp_name,
+               COALESCE(e.emp_code, '') AS apply_emp_code,
+               COALESCE(d.dept_name, '') AS apply_dept_name,
+               COALESCE(d.dept_code, '') AS apply_dept_code
+        FROM asset_purchase_apply_main a
+        LEFT JOIN sys_emp e ON a.apply_emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON (a.apply_dept_id = CAST(d.dept_id AS CHAR) OR a.apply_dept_id = d.dept_code)
+        WHERE a.status = #{status}
+        ORDER BY a.create_time DESC
+    </select>
+
+    <select id="selectByConditions" resultMap="BaseResultMap">
+        SELECT a.id, a.apply_no, a.apply_dept_id, a.apply_emp_id, a.apply_time, a.demand_date,
+               a.apply_reason, a.apply_money, a.status, a.create_user, a.create_time, a.update_time,
+               a.template_config_id, a.main_attach_id,
+               COALESCE(e.emp_name, '') AS apply_emp_name,
+               COALESCE(e.emp_code, '') AS apply_emp_code,
+               COALESCE(d.dept_name, '') AS apply_dept_name,
+               COALESCE(d.dept_code, '') AS apply_dept_code
+        FROM asset_purchase_apply_main a
+        LEFT JOIN sys_emp e ON a.apply_emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON (a.apply_dept_id = CAST(d.dept_id AS CHAR) OR a.apply_dept_id = d.dept_code)
+        WHERE 1=1
+        <if test="applyNo != null and applyNo != ''">
+            AND a.apply_no LIKE CONCAT('%', #{applyNo}, '%')
+        </if>
+        <if test="applyEmpName != null and applyEmpName != ''">
+            AND e.emp_name LIKE CONCAT('%', #{applyEmpName}, '%')
+        </if>
+        <if test="status != null and status != ''">
+            AND a.status = #{status}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND DATE(a.apply_time) &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND DATE(a.apply_time) &lt;= #{endDate}
+        </if>
+        ORDER BY a.create_time DESC
+    </select>
+
+    <select id="selectByApprover" resultMap="BaseResultMap">
+        SELECT DISTINCT a.id, a.apply_no, a.apply_dept_id, a.apply_emp_id, a.apply_time, a.demand_date,
+               a.apply_reason, a.apply_money, a.status, a.create_user, a.create_time, a.update_time,
+               a.template_config_id, a.main_attach_id,
+               COALESCE(e.emp_name, '') AS apply_emp_name,
+               COALESCE(e.emp_code, '') AS apply_emp_code,
+               COALESCE(d.dept_name, '') AS apply_dept_name,
+               COALESCE(d.dept_code, '') AS apply_dept_code
+        FROM asset_purchase_apply_main a
+        LEFT JOIN sys_emp e ON a.apply_emp_id = e.emp_id
+        LEFT JOIN sys_dept d ON (a.apply_dept_id = CAST(d.dept_id AS CHAR) OR a.apply_dept_id = d.dept_code)
+        WHERE a.status = 'PENDING'
+        ORDER BY a.create_time DESC
+    </select>
+
+    <select id="selectMaxApplyNoByPrefix" resultType="java.lang.String">
+        SELECT MAX(apply_no) 
+        FROM asset_purchase_apply_main 
+        WHERE apply_no LIKE CONCAT(#{prefix}, '%')
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.AssetPurchaseApplyMain" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO asset_purchase_apply_main (apply_no, apply_dept_id, apply_emp_id, apply_time, demand_date,
+                                               apply_reason, apply_money, status, create_user, template_config_id, main_attach_id)
+        VALUES (#{applyNo}, #{applyDeptId}, #{applyEmpId}, #{applyTime}, #{demandDate},
+                #{applyReason}, #{applyMoney}, #{status}, #{createUser}, #{templateConfigId}, #{mainAttachId})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.AssetPurchaseApplyMain">
+        UPDATE asset_purchase_apply_main
+        <set>
+            <if test="applyTime != null">apply_time = #{applyTime},</if>
+            <if test="demandDate != null">demand_date = #{demandDate},</if>
+            <if test="applyReason != null">apply_reason = #{applyReason},</if>
+            <if test="applyMoney != null">apply_money = #{applyMoney},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="templateConfigId != null">template_config_id = #{templateConfigId},</if>
+            <if test="mainAttachId != null">main_attach_id = #{mainAttachId},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM asset_purchase_apply_main WHERE id = #{id}
+    </delete>
+
+</mapper>
+

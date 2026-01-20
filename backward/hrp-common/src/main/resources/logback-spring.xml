@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 引入Spring Boot的默认配置 -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    
+    <!-- 日志路径配置（从Nacos或环境变量读取） -->
+    <springProperty scope="context" name="LOG_PATH" source="logging.file.path" defaultValue="F:/data/logs"/>
+    <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="hrp-app"/>
+    
+    <!-- 控制台输出 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+    
+    <!-- 文件输出 - 按日期和序号命名：log年月日序号.log -->
+    <!-- 序号从0开始，逐渐递增：log年月日0.log, log年月日1.log, log年月日2.log, ... -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 不指定file属性，让RollingFileAppender根据fileNamePattern自动生成当前活动文件名 -->
+        <!-- Logback会自动生成 log年月日0.log，然后按需递增：log年月日1.log, log年月日2.log, ... -->
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- 文件名格式：log年月日序号.log，序号从0开始递增 -->
+            <!-- 例如：log202601190.log, log202601191.log, log202601192.log, ... -->
+            <fileNamePattern>${LOG_PATH}/${APP_NAME}/log%d{yyyyMMdd}%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>10GB</totalSizeCap>
+            <cleanHistoryOnStart>false</cleanHistoryOnStart>
+        </rollingPolicy>
+        <!-- 确保日志目录存在 -->
+        <prudent>false</prudent>
+    </appender>
+    
+    <!-- 错误日志单独输出 -->
+    <!-- 序号从0开始，逐渐递增：error-年月日0.log, error-年月日1.log, error-年月日2.log, ... -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 不指定file属性，让RollingFileAppender根据fileNamePattern自动生成当前活动文件名 -->
+        <!-- Logback会自动生成 error-年月日0.log，然后按需递增：error-年月日1.log, error-年月日2.log, ... -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <!-- 滚动策略：按时间和文件大小滚动 -->
+        <!-- 文件名格式：error-年月日序号.log，序号从0开始递增 -->
+        <!-- 例如：error-202601190.log, error-202601191.log, error-202601192.log, ... -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${APP_NAME}/error-%d{yyyyMMdd}%i.log</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>10GB</totalSizeCap>
+            <cleanHistoryOnStart>false</cleanHistoryOnStart>
+        </rollingPolicy>
+    </appender>
+    
+    <!-- 异步输出，提高性能 -->
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="FILE"/>
+    </appender>
+    
+    <appender name="ASYNC_ERROR_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="ERROR_FILE"/>
+    </appender>
+    
+    <!-- 开发环境：控制台 + 文件 -->
+    <springProfile name="dev,local">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="ASYNC_FILE"/>
+            <appender-ref ref="ASYNC_ERROR_FILE"/>
+        </root>
+        <logger name="com.hrp" level="DEBUG"/>
+        <!-- MyBatis SQL日志配置 - 输出所有Mapper的SQL语句到日志文件 -->
+        <!-- 注意：需要确保MyBatis的log-impl设置为Slf4jImpl（在Nacos配置中） -->
+        <logger name="com.hrp.cost.mapper" level="DEBUG"/>
+        <logger name="com.hrp.auth.mapper" level="DEBUG"/>
+        <logger name="com.hrp.budg.mapper" level="DEBUG"/>
+        <logger name="com.hrp.reimb.mapper" level="DEBUG"/>
+        <logger name="com.hrp.contract.mapper" level="DEBUG"/>
+        <logger name="com.hrp.asset.mapper" level="DEBUG"/>
+        <logger name="com.hrp.hr.mapper" level="DEBUG"/>
+        <logger name="com.hrp.menu.mapper" level="DEBUG"/>
+        <!-- JDBC SQL日志 -->
+        <logger name="java.sql" level="DEBUG"/>
+        <logger name="java.sql.Statement" level="DEBUG"/>
+        <logger name="java.sql.PreparedStatement" level="DEBUG"/>
+        <logger name="java.sql.ResultSet" level="DEBUG"/>
+        <logger name="org.springframework.jdbc.core" level="DEBUG"/>
+        <logger name="com.alibaba.druid" level="DEBUG"/>
+        <!-- MyBatis框架日志 -->
+        <logger name="org.apache.ibatis" level="DEBUG"/>
+    </springProfile>
+    
+    <!-- 生产环境：仅文件 -->
+    <springProfile name="prod,production">
+        <root level="INFO">
+            <appender-ref ref="ASYNC_FILE"/>
+            <appender-ref ref="ASYNC_ERROR_FILE"/>
+        </root>
+        <logger name="com.hrp" level="INFO"/>
+    </springProfile>
+    
+    <!-- 默认配置（无profile或test环境） -->
+    <springProfile name="!dev,!local,!prod,!production">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="ASYNC_FILE"/>
+            <appender-ref ref="ASYNC_ERROR_FILE"/>
+        </root>
+        <logger name="com.hrp" level="DEBUG"/>
+        <!-- MyBatis SQL日志配置 - 输出所有Mapper的SQL语句到日志文件 -->
+        <logger name="com.hrp.cost.mapper" level="DEBUG"/>
+        <logger name="com.hrp.auth.mapper" level="DEBUG"/>
+        <logger name="com.hrp.budg.mapper" level="DEBUG"/>
+        <logger name="com.hrp.reimb.mapper" level="DEBUG"/>
+        <logger name="com.hrp.contract.mapper" level="DEBUG"/>
+        <logger name="com.hrp.asset.mapper" level="DEBUG"/>
+        <logger name="com.hrp.hr.mapper" level="DEBUG"/>
+        <logger name="com.hrp.menu.mapper" level="DEBUG"/>
+        <!-- JDBC SQL日志 -->
+        <logger name="java.sql" level="DEBUG"/>
+        <logger name="java.sql.Statement" level="DEBUG"/>
+        <logger name="java.sql.PreparedStatement" level="DEBUG"/>
+        <logger name="java.sql.ResultSet" level="DEBUG"/>
+        <logger name="org.springframework.jdbc.core" level="DEBUG"/>
+        <logger name="com.alibaba.druid" level="DEBUG"/>
+        <!-- MyBatis框架日志 -->
+        <logger name="org.apache.ibatis" level="DEBUG"/>
+    </springProfile>
+    
+</configuration>
+

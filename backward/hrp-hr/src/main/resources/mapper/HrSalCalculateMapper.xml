@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.hr.mapper.HrSalCalculateMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.HrSalCalculate">
+        <id column="calc_id" property="calcId"/>
+        <result column="emp_id" property="empId"/>
+        <result column="emp_code" property="empCode"/>
+        <result column="emp_name" property="empName"/>
+        <result column="calc_month" property="calcMonth"/>
+        <result column="basic_salary" property="basicSalary"/>
+        <result column="post_allowance" property="postAllowance"/>
+        <result column="overtime_salary" property="overtimeSalary"/>
+        <result column="leave_deduct" property="leaveDeduct"/>
+        <result column="absent_deduct" property="absentDeduct"/>
+        <result column="total_income" property="totalIncome"/>
+        <result column="social_security" property="socialSecurity"/>
+        <result column="provident_fund" property="providentFund"/>
+        <result column="personal_tax" property="personalTax"/>
+        <result column="net_salary" property="netSalary"/>
+        <result column="calc_status" property="calcStatus"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT c.calc_id, c.emp_id, c.calc_month, c.basic_salary, c.post_allowance,
+               c.overtime_salary, c.leave_deduct, c.absent_deduct, c.total_income,
+               c.social_security, c.provident_fund, c.personal_tax, c.net_salary,
+               c.calc_status, c.create_time, c.update_time,
+               COALESCE(e.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, '') AS emp_name
+        FROM hr_sal_calculate c
+        LEFT JOIN sys_emp e ON c.emp_id = e.emp_id
+        WHERE c.calc_id = #{calcId}
+    </select>
+
+    <select id="selectByEmpIdAndMonth" resultMap="BaseResultMap">
+        SELECT c.calc_id, c.emp_id, c.calc_month, c.basic_salary, c.post_allowance,
+               c.overtime_salary, c.leave_deduct, c.absent_deduct, c.total_income,
+               c.social_security, c.provident_fund, c.personal_tax, c.net_salary,
+               c.calc_status, c.create_time, c.update_time,
+               COALESCE(e.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, '') AS emp_name
+        FROM hr_sal_calculate c
+        LEFT JOIN sys_emp e ON c.emp_id = e.emp_id
+        WHERE c.emp_id = #{empId} AND c.calc_month = #{calcMonth}
+    </select>
+
+    <select id="selectByConditions" resultMap="BaseResultMap">
+        SELECT c.calc_id, c.emp_id, c.calc_month, c.basic_salary, c.post_allowance,
+               c.overtime_salary, c.leave_deduct, c.absent_deduct, c.total_income,
+               c.social_security, c.provident_fund, c.personal_tax, c.net_salary,
+               c.calc_status, c.create_time, c.update_time,
+               COALESCE(e.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, '') AS emp_name
+        FROM hr_sal_calculate c
+        LEFT JOIN sys_emp e ON c.emp_id = e.emp_id
+        WHERE 1=1
+        <if test="empId != null">
+            AND c.emp_id = #{empId}
+        </if>
+        <if test="empCode != null and empCode != ''">
+            AND e.emp_code LIKE CONCAT('%', #{empCode}, '%')
+        </if>
+        <if test="empName != null and empName != ''">
+            AND e.emp_name LIKE CONCAT('%', #{empName}, '%')
+        </if>
+        <if test="calcMonth != null and calcMonth != ''">
+            AND c.calc_month = #{calcMonth}
+        </if>
+        <if test="calcStatus != null and calcStatus != ''">
+            AND c.calc_status = #{calcStatus}
+        </if>
+        ORDER BY c.calc_month DESC, c.create_time DESC
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.HrSalCalculate" useGeneratedKeys="true" keyProperty="calcId">
+        INSERT INTO hr_sal_calculate (emp_id, calc_month, basic_salary, post_allowance, overtime_salary,
+                                     leave_deduct, absent_deduct, total_income, social_security, provident_fund,
+                                     personal_tax, net_salary, calc_status)
+        VALUES (#{empId}, #{calcMonth}, #{basicSalary}, #{postAllowance}, #{overtimeSalary},
+                #{leaveDeduct}, #{absentDeduct}, #{totalIncome}, #{socialSecurity}, #{providentFund},
+                #{personalTax}, #{netSalary}, #{calcStatus})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.HrSalCalculate">
+        UPDATE hr_sal_calculate
+        <set>
+            <if test="basicSalary != null">basic_salary = #{basicSalary},</if>
+            <if test="postAllowance != null">post_allowance = #{postAllowance},</if>
+            <if test="overtimeSalary != null">overtime_salary = #{overtimeSalary},</if>
+            <if test="leaveDeduct != null">leave_deduct = #{leaveDeduct},</if>
+            <if test="absentDeduct != null">absent_deduct = #{absentDeduct},</if>
+            <if test="totalIncome != null">total_income = #{totalIncome},</if>
+            <if test="socialSecurity != null">social_security = #{socialSecurity},</if>
+            <if test="providentFund != null">provident_fund = #{providentFund},</if>
+            <if test="personalTax != null">personal_tax = #{personalTax},</if>
+            <if test="netSalary != null">net_salary = #{netSalary},</if>
+            <if test="calcStatus != null">calc_status = #{calcStatus},</if>
+        </set>
+        WHERE calc_id = #{calcId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM hr_sal_calculate WHERE calc_id = #{calcId}
+    </delete>
+
+</mapper>

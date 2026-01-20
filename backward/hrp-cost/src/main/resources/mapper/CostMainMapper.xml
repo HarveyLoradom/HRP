@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.cost.mapper.CostMainMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.CostMain">
+        <id column="cost_id" property="costId"/>
+        <result column="cost_no" property="costNo"/>
+        <result column="cycle_id" property="cycleId"/>
+        <result column="cycle_code" property="cycleCode"/>
+        <result column="cycle_name" property="cycleName"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_code" property="deptCode"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="element_type" property="elementType"/>
+        <result column="cost_amount" property="costAmount"/>
+        <result column="occur_date" property="occurDate"/>
+        <result column="pay_type" property="payType"/>
+        <result column="remark" property="remark"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT cm.cost_id, cm.cost_no, cm.cycle_id, cc.cycle_code, cc.cycle_name,
+               cm.dept_id, d.dept_code, d.dept_name,
+               cm.element_type, cm.cost_amount, cm.occur_date, cm.pay_type, cm.remark,
+               cm.create_user, cm.create_time, cm.update_time
+        FROM cost_main cm
+        LEFT JOIN cost_cycle cc ON cm.cycle_id = cc.cycle_id
+        LEFT JOIN sys_dept d ON cm.dept_id = d.dept_id
+        WHERE cm.cost_id = #{id}
+    </select>
+
+    <select id="selectByNo" resultMap="BaseResultMap">
+        SELECT cm.cost_id, cm.cost_no, cm.cycle_id, cc.cycle_code, cc.cycle_name,
+               cm.dept_id, d.dept_code, d.dept_name,
+               cm.element_type, cm.cost_amount, cm.occur_date, cm.pay_type, cm.remark,
+               cm.create_user, cm.create_time, cm.update_time
+        FROM cost_main cm
+        LEFT JOIN cost_cycle cc ON cm.cycle_id = cc.cycle_id
+        LEFT JOIN sys_dept d ON cm.dept_id = d.dept_id
+        WHERE cm.cost_no = #{costNo}
+    </select>
+
+    <select id="selectAll" resultMap="BaseResultMap">
+        SELECT cm.cost_id, cm.cost_no, cm.cycle_id, cc.cycle_code, cc.cycle_name,
+               cm.dept_id, d.dept_code, d.dept_name,
+               cm.element_type, cm.cost_amount, cm.occur_date, cm.pay_type, cm.remark,
+               cm.create_user, cm.create_time, cm.update_time
+        FROM cost_main cm
+        LEFT JOIN cost_cycle cc ON cm.cycle_id = cc.cycle_id
+        LEFT JOIN sys_dept d ON cm.dept_id = d.dept_id
+        ORDER BY cm.create_time DESC
+    </select>
+
+    <select id="selectByConditions" resultMap="BaseResultMap">
+        SELECT cm.cost_id, cm.cost_no, cm.cycle_id, cc.cycle_code, cc.cycle_name,
+               cm.dept_id, d.dept_code, d.dept_name,
+               cm.element_type, cm.cost_amount, cm.occur_date, cm.pay_type, cm.remark,
+               cm.create_user, cm.create_time, cm.update_time
+        FROM cost_main cm
+        LEFT JOIN cost_cycle cc ON cm.cycle_id = cc.cycle_id
+        LEFT JOIN sys_dept d ON cm.dept_id = d.dept_id
+        <where>
+            <if test="cycleId != null">
+                AND cm.cycle_id = #{cycleId}
+            </if>
+            <if test="deptId != null">
+                AND cm.dept_id = #{deptId}
+            </if>
+            <if test="elementType != null and elementType != ''">
+                AND cm.element_type = #{elementType}
+            </if>
+            <if test="startDate != null and startDate != ''">
+                AND DATE(cm.occur_date) &gt;= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND DATE(cm.occur_date) &lt;= #{endDate}
+            </if>
+        </where>
+        ORDER BY cm.create_time DESC
+    </select>
+
+    <select id="selectByDeptId" resultMap="BaseResultMap">
+        SELECT cm.cost_id, cm.cost_no, cm.cycle_id, cc.cycle_code, cc.cycle_name,
+               cm.dept_id, d.dept_code, d.dept_name,
+               cm.element_type, cm.cost_amount, cm.occur_date, cm.pay_type, cm.remark,
+               cm.create_user, cm.create_time, cm.update_time
+        FROM cost_main cm
+        LEFT JOIN cost_cycle cc ON cm.cycle_id = cc.cycle_id
+        LEFT JOIN sys_dept d ON cm.dept_id = d.dept_id
+        WHERE cm.dept_id = #{deptId}
+        <if test="cycleId != null">
+            AND cm.cycle_id = #{cycleId}
+        </if>
+        <if test="elementType != null and elementType != ''">
+            AND cm.element_type = #{elementType}
+        </if>
+        ORDER BY cm.create_time DESC
+    </select>
+
+    <select id="countByConditions" resultType="long">
+        SELECT COUNT(1)
+        FROM cost_main cm
+        <where>
+            <if test="cycleId != null">
+                AND cm.cycle_id = #{cycleId}
+            </if>
+            <if test="deptId != null">
+                AND cm.dept_id = #{deptId}
+            </if>
+            <if test="elementType != null and elementType != ''">
+                AND cm.element_type = #{elementType}
+            </if>
+            <if test="startDate != null and startDate != ''">
+                AND DATE(cm.occur_date) &gt;= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND DATE(cm.occur_date) &lt;= #{endDate}
+            </if>
+        </where>
+    </select>
+
+    <select id="countByDeptId" resultType="long">
+        SELECT COUNT(1)
+        FROM cost_main cm
+        WHERE cm.dept_id = #{deptId}
+        <if test="cycleId != null">
+            AND cm.cycle_id = #{cycleId}
+        </if>
+    </select>
+
+    <select id="selectMaxCostNoByPrefix" resultType="string">
+        SELECT MAX(cost_no)
+        FROM cost_main
+        WHERE cost_no LIKE CONCAT(#{prefix}, '%')
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="costId">
+        INSERT INTO cost_main (cost_no, cycle_id, dept_id, element_type, cost_amount, occur_date, pay_type, remark, create_user, create_time, update_time)
+        VALUES (#{costNo}, #{cycleId}, #{deptId}, #{elementType}, #{costAmount}, #{occurDate}, #{payType}, #{remark}, #{createUser}, NOW(), NOW())
+    </insert>
+
+    <update id="updateById">
+        UPDATE cost_main
+        SET cycle_id = #{cycleId},
+            dept_id = #{deptId},
+            element_type = #{elementType},
+            cost_amount = #{costAmount},
+            occur_date = #{occurDate},
+            pay_type = #{payType},
+            remark = #{remark},
+            update_time = NOW()
+        WHERE cost_id = #{costId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM cost_main WHERE cost_id = #{id}
+    </delete>
+
+    <insert id="batchInsert" parameterType="list">
+        INSERT INTO cost_main (cost_no, cycle_id, dept_id, element_type, cost_amount, occur_date, pay_type, remark, create_user, create_time, update_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.costNo}, #{item.cycleId}, #{item.deptId}, #{item.elementType}, #{item.costAmount}, #{item.occurDate}, #{item.payType}, #{item.remark}, #{item.createUser}, NOW(), NOW())
+        </foreach>
+    </insert>
+
+</mapper>
+

@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.hr.mapper.HrAttRecordMapper">
+
+    <resultMap id="BaseResultMap" type="com.hrp.common.entity.HrAttRecord">
+        <id column="record_id" property="recordId"/>
+        <result column="emp_id" property="empId"/>
+        <result column="emp_code" property="empCode"/>
+        <result column="emp_name" property="empName"/>
+        <result column="att_date" property="attDate"/>
+        <result column="att_start_time" property="attStartTime"/>
+        <result column="att_end_time" property="attEndTime"/>
+        <result column="att_status" property="attStatus"/>
+        <result column="is_supplement" property="isSupplement"/>
+        <result column="att_type" property="attType"/>
+        <result column="att_sub_type" property="attSubType"/>
+        <result column="apply_id" property="applyId"/>
+        <result column="day" property="day"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT r.record_id, r.emp_id, r.att_date, r.att_start_time, r.att_end_time,
+               r.att_status, r.is_supplement, r.att_type, r.att_sub_type, r.apply_id, r.day,
+               r.create_time, r.update_time,
+               COALESCE(e.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, '') AS emp_name
+        FROM hr_att_record r
+        LEFT JOIN sys_emp e ON r.emp_id = e.emp_id
+        WHERE r.record_id = #{recordId}
+    </select>
+
+    <select id="selectByConditions" resultMap="BaseResultMap">
+        SELECT r.record_id, r.emp_id, r.att_date, r.att_start_time, r.att_end_time,
+               r.att_status, r.is_supplement, r.att_type, r.att_sub_type, r.apply_id, r.day,
+               r.create_time, r.update_time,
+               COALESCE(e.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, '') AS emp_name
+        FROM hr_att_record r
+        LEFT JOIN sys_emp e ON r.emp_id = e.emp_id
+        WHERE 1=1
+        <if test="empId != null">
+            AND r.emp_id = #{empId}
+        </if>
+        <if test="attDate != null and attDate != ''">
+            AND r.att_date = #{attDate}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND r.att_date &gt;= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND r.att_date &lt;= #{endDate}
+        </if>
+        <if test="attStatus != null and attStatus != ''">
+            AND r.att_status = #{attStatus}
+        </if>
+        <if test="attType != null and attType != ''">
+            AND r.att_type = #{attType}
+        </if>
+        <if test="attSubType != null and attSubType != ''">
+            AND r.att_sub_type = #{attSubType}
+        </if>
+        ORDER BY r.att_date DESC, r.att_start_time DESC
+    </select>
+
+    <select id="selectTodayByEmpId" resultMap="BaseResultMap">
+        SELECT r.record_id, r.emp_id, r.att_date, r.att_start_time, r.att_end_time,
+               r.att_status, r.is_supplement, r.att_type, r.att_sub_type, r.apply_id, r.day,
+               r.create_time, r.update_time,
+               COALESCE(e.emp_code, '') AS emp_code,
+               COALESCE(e.emp_name, '') AS emp_name
+        FROM hr_att_record r
+        LEFT JOIN sys_emp e ON r.emp_id = e.emp_id
+        WHERE r.emp_id = #{empId} AND r.att_date = #{attDate}
+        ORDER BY r.att_start_time DESC
+        LIMIT 1
+    </select>
+
+    <!-- 按周期汇总：按员工分组（正常出勤/请假/加班） -->
+    <select id="selectSummaryByRange" resultType="map">
+        SELECT
+            r.emp_id AS empId,
+            SUM(
+                CASE
+                    WHEN ((r.att_type != 'LEAVE' AND r.att_type != 'OVERTIME')
+                          OR (r.att_type = 'LEAVE' AND r.att_sub_type = 'ANNUAL'))
+                        THEN COALESCE(r.day, 0)
+                    ELSE 0
+                END
+            ) AS normalDays,
+            SUM(
+                CASE
+                    WHEN (r.att_type = 'LEAVE' AND (r.att_sub_type IS NULL OR r.att_sub_type != 'ANNUAL'))
+                        THEN COALESCE(r.day, 0)
+                    ELSE 0
+                END
+            ) AS leaveDays,
+            SUM(
+                CASE
+                    WHEN (r.att_type = 'OVERTIME')
+                        THEN COALESCE(r.day, 0)
+                    ELSE 0
+                END
+            ) AS overtimeDays
+        FROM hr_att_record r
+        WHERE r.att_date &gt;= #{startDate}
+          AND r.att_date &lt;= #{endDate}
+        GROUP BY r.emp_id
+    </select>
+
+    <insert id="insert" parameterType="com.hrp.common.entity.HrAttRecord" useGeneratedKeys="true" keyProperty="recordId">
+        INSERT INTO hr_att_record (emp_id, att_date, att_start_time, att_end_time, att_status,
+                                  is_supplement, att_type, att_sub_type, apply_id, day)
+        VALUES (#{empId}, #{attDate}, #{attStartTime}, #{attEndTime}, #{attStatus},
+                #{isSupplement}, #{attType}, #{attSubType}, #{applyId}, #{day})
+    </insert>
+
+    <update id="updateById" parameterType="com.hrp.common.entity.HrAttRecord">
+        UPDATE hr_att_record
+        <set>
+            <if test="attStartTime != null">att_start_time = #{attStartTime},</if>
+            <if test="attEndTime != null">att_end_time = #{attEndTime},</if>
+            <if test="attStatus != null">att_status = #{attStatus},</if>
+            <if test="isSupplement != null">is_supplement = #{isSupplement},</if>
+            <if test="attType != null">att_type = #{attType},</if>
+            <if test="attSubType != null">att_sub_type = #{attSubType},</if>
+            <if test="applyId != null">apply_id = #{applyId},</if>
+            <if test="day != null">day = #{day},</if>
+        </set>
+        WHERE record_id = #{recordId}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM hr_att_record WHERE record_id = #{recordId}
+    </delete>
+
+</mapper>
+

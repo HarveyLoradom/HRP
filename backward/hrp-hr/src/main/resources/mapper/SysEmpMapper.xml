@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hrp.hr.mapper.SysEmpMapper">
+
+    <select id="selectActiveEmpIds" resultType="java.lang.Long">
+        SELECT e.emp_id
+        FROM sys_emp e
+        WHERE (e.is_stop = 0 OR e.is_stop IS NULL)
+        ORDER BY e.emp_id ASC
+    </select>
+
+    <select id="selectEmpIdByCode" resultType="java.lang.Long">
+        SELECT emp_id
+        FROM sys_emp
+        WHERE emp_code = #{empCode}
+    </select>
+
+</mapper>
+
+
