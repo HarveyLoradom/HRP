@@ -103,7 +103,6 @@
         show-checkbox
         node-key="id"
         :props="{ children: 'children', label: 'menuName' }"
-        :default-checked-keys="checkedMenuIds"
       ></el-tree>
       <div slot="footer" class="dialog-footer">
         <el-button @click="menuDialogVisible = false">取消</el-button>
@@ -205,6 +204,41 @@ export default {
     this.loadDeptList()
   },
   methods: {
+    buildMenuIndex(menus) {
+      const index = new Map()
+      const walk = (list) => {
+        if (!list) return
+        for (const m of list) {
+          if (m && m.id !== undefined && m.id !== null) {
+            index.set(Number(m.id), m)
+          }
+          if (m && m.children && m.children.length > 0) {
+            walk(m.children)
+          }
+        }
+      }
+      walk(menus)
+      return index
+    },
+    /**
+     * 回显勾选时过滤掉“目录(menu_type=1)”：
+     * - 目录节点如果被当作“全选”回显，会导致其子节点全部显示勾选（造成“看起来全选了”）
+     * - 实际权限可继续在库里保留目录节点（用于侧边栏成树），但UI只勾选菜单/按钮(2/3)
+     */
+    getUiCheckedMenuIds(checkedIds) {
+      const ids = (checkedIds || [])
+        .map(id => Number(id))
+        .filter(id => !Number.isNaN(id))
+      if (!ids.length) return []
+
+      const index = this.buildMenuIndex(this.menuTreeData)
+      return ids.filter((id) => {
+        const node = index.get(id)
+        if (!node) return true // 找不到节点时不做过滤，避免误伤
+        // menu_type：1-目录，2-菜单，3-按钮
+        return node.menuType !== 1
+      })
+    },
     loadRoleData() {
       this.roleLoading = true
       // 从sys_code中获取USER_TYPE类型的用户类型
@@ -339,7 +373,8 @@ export default {
       // 对话框打开时，设置菜单树的勾选状态
       this.$nextTick(() => {
         if (this.$refs.menuTree && this.checkedMenuIds && this.checkedMenuIds.length > 0) {
-          this.$refs.menuTree.setCheckedKeys(this.checkedMenuIds)
+          const uiChecked = this.getUiCheckedMenuIds(this.checkedMenuIds)
+          this.$refs.menuTree.setCheckedKeys(uiChecked)
         } else if (this.$refs.menuTree) {
           this.$refs.menuTree.setCheckedKeys([])
         }
@@ -475,6 +510,8 @@ export default {
             if (response.code === 200 && response.data) {
               // 更新用户类型
               const userData = { ...response.data, type: parseInt(this.selectedUserType) }
+              // 重要：不要把后端返回的password（通常是已加密）再提交回去，否则会触发后端二次加密导致无法登录
+              if (userData.password) delete userData.password
               return updateUser(userData)
             }
             return Promise.resolve({ code: 500, message: '用户不存在' })
@@ -500,6 +537,8 @@ export default {
           if (response.code === 200 && response.data) {
             // 更新用户类型
             const userData = { ...response.data, type: parseInt(this.selectedUserType) }
+            // 重要：不要把后端返回的password（通常是已加密）再提交回去，否则会触发后端二次加密导致无法登录
+            if (userData.password) delete userData.password
             updateUser(userData).then(updateResponse => {
               if (updateResponse.code === 200) {
                 this.$message.success('分配成功')

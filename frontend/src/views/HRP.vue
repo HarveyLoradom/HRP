@@ -66,26 +66,34 @@
           <router-view v-if="$route.path !== '/hrp'" />
           <div v-else class="welcome-page">
             <div class="welcome-content">
-              <i class="el-icon-hospital welcome-icon"></i>
-              <h1>欢迎使用HRP医院资源规划系统</h1>
-              <p>请从左侧菜单选择功能模块</p>
-              <div class="quick-actions">
-                <el-card class="action-card" shadow="hover" @click.native="goToMenu('reimb/my-apply')">
-                  <i class="el-icon-money"></i>
-                  <p>我的申请</p>
-                </el-card>
-                <el-card class="action-card" shadow="hover" @click.native="goToMenu('contract/workbench')">
-                  <i class="el-icon-document-copy"></i>
-                  <p>合同管理</p>
-                </el-card>
-                <el-card class="action-card" shadow="hover" @click.native="goToMenu('asset/query')">
-                  <i class="el-icon-box"></i>
-                  <p>固定资产</p>
-                </el-card>
-                <el-card class="action-card" shadow="hover" @click.native="goToMenu('hr/salary')">
-                  <i class="el-icon-coin"></i>
-                  <p>薪酬管理</p>
-                </el-card>
+              <div class="medical-icon-wrapper">
+                <i class="el-icon-hospital welcome-icon"></i>
+                <div class="icon-pulse"></div>
+              </div>
+              <h1 class="medical-title">HRP医院资源规划系统</h1>
+              <div class="medical-subtitle">
+                <div class="subtitle-line"></div>
+                <span>Hospital Resource Planning System</span>
+                <div class="subtitle-line"></div>
+              </div>
+              <p class="medical-description">专业、高效、安全的医院资源管理平台</p>
+              <div class="medical-features">
+                <div class="feature-item">
+                  <i class="el-icon-folder-opened"></i>
+                  <span>资源整合</span>
+                </div>
+                <div class="feature-item">
+                  <i class="el-icon-data-analysis"></i>
+                  <span>数据分析</span>
+                </div>
+                <div class="feature-item">
+                  <i class="el-icon-lock"></i>
+                  <span>安全可靠</span>
+                </div>
+                <div class="feature-item">
+                  <i class="el-icon-coordinate"></i>
+                  <span>精细管理</span>
+                </div>
               </div>
             </div>
           </div>
@@ -195,9 +203,6 @@ export default {
         }
       }
       return result
-    },
-    goToMenu(path) {
-      this.$router.push(`/hrp/${path}`)
     },
     async handleProfileClose() {
       // 通知Profile组件清理未保存的数据
@@ -361,62 +366,176 @@ export default {
   justify-content: center;
   align-items: center;
   min-height: calc(100vh - 100px);
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8f4f8 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-page::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(64, 158, 255, 0.05) 0%, transparent 70%);
+  animation: pulse 8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
 }
 
 .welcome-content {
   text-align: center;
-  max-width: 800px;
+  max-width: 900px;
+  padding: 40px;
+  position: relative;
+  z-index: 1;
+}
+
+.medical-icon-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 30px;
 }
 
 .welcome-icon {
-  font-size: 80px;
-  color: #667eea;
-  margin-bottom: 20px;
+  font-size: 100px;
+  color: #409EFF;
+  margin-bottom: 0;
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 4px 12px rgba(64, 158, 255, 0.3));
+  animation: float 3s ease-in-out infinite;
 }
 
-.welcome-content h1 {
-  color: #333;
-  font-size: 32px;
-  font-weight: 600;
-  margin: 20px 0;
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
-.welcome-content p {
-  color: #909399;
+.icon-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120px;
+  height: 120px;
+  border: 3px solid #409EFF;
+  border-radius: 50%;
+  opacity: 0;
+  animation: ripple 2s ease-out infinite;
+}
+
+@keyframes ripple {
+  0% {
+    width: 100px;
+    height: 100px;
+    opacity: 0.6;
+  }
+  100% {
+    width: 180px;
+    height: 180px;
+    opacity: 0;
+  }
+}
+
+.medical-title {
+  color: #2c3e50;
+  font-size: 42px;
+  font-weight: 700;
+  margin: 30px 0 20px 0;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, #409EFF 0%, #67C23A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.medical-subtitle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin: 20px 0 30px 0;
+}
+
+.subtitle-line {
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #409EFF, transparent);
+}
+
+.medical-subtitle span {
+  color: #606266;
   font-size: 16px;
-  margin-bottom: 40px;
+  font-weight: 300;
+  letter-spacing: 3px;
+  font-style: italic;
 }
 
-.quick-actions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 20px;
-  margin-top: 40px;
+.medical-description {
+  color: #909399;
+  font-size: 18px;
+  margin: 30px 0 50px 0;
+  letter-spacing: 1px;
 }
 
-.action-card {
-  cursor: pointer;
-  text-align: center;
-  transition: transform 0.3s, box-shadow 0.3s;
-  border: none;
+.medical-features {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 50px;
+  flex-wrap: wrap;
 }
 
-.action-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 30px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  min-width: 120px;
 }
 
-.action-card i {
-  font-size: 40px;
-  color: #667eea;
-  margin-bottom: 10px;
+.feature-item:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 24px rgba(64, 158, 255, 0.2);
+  background: linear-gradient(135deg, #fff 0%, #f0f9ff 100%);
 }
 
-.action-card p {
-  margin: 0;
-  color: #333;
+.feature-item i {
+  font-size: 36px;
+  color: #409EFF;
+  transition: all 0.3s ease;
+}
+
+.feature-item:hover i {
+  transform: scale(1.2);
+  color: #67C23A;
+}
+
+.feature-item span {
+  color: #606266;
   font-size: 14px;
   font-weight: 500;
+  letter-spacing: 1px;
 }
 
 /* 滚动条样式 */
