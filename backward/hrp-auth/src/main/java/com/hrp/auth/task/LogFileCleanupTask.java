@@ -1,4 +1,4 @@
-package com.hrp.common.task;
+package com.hrp.auth.task;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
